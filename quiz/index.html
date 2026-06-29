@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>EVS - Quiz de Astronomia e Astrofísica</title>
+<link rel="icon" href="/assets/img/favicon.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body{
+margin:0;
+font-family:'Segoe UI', Arial, sans-serif;
+color:white;
+background:#0a0f2a;
+min-height:100vh;
+}
+
+/* 🌌 FUNDO ANIMADO */
+#stars{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+z-index:0;
+pointer-events:none;
+}
+
+/* CONTAINER PRINCIPAL */
+.quiz{
+min-height:100vh;
+display:flex;
+flex-direction:column;
+align-items:center;
+text-align:center;
+padding:20px;
+padding-bottom:100px;
+position:relative;
+z-index:1;
+}
+
+/* TÍTULO COM EFEITO */
+.titulo-container{
+margin-bottom:20px;
+animation:brilho 2s infinite;
+}
+
+h1{
+font-size:48px;
+margin:0;
+background:linear-gradient(45deg, #ffd700, #ffaa00, #ffd700);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+text-shadow:0 0 30px rgba(255,215,0,0.5);
+letter-spacing:2px;
+}
+
+.subtitulo{
+font-size:18px;
+color:#ffd95e;
+margin-top:-5px;
+opacity:0.9;
+}
+
+/* BOTÃO DE ABERTURA */
+.abertura-container{
+margin-bottom:20px;
+}
+
+.btn-abertura{
+background:linear-gradient(145deg, #293656, #1a1f3a);
+border:3px solid #ffd95e;
+color:#ffd95e;
+font-weight:bold;
+font-size:18px;
+padding:12px 35px;
+border-radius:60px;
+cursor:pointer;
+transition:0.3s;
+box-shadow:0 0 20px rgba(255,215,0,0.3);
+display:inline-flex;
+align-items:center;
+gap:12px;
+}
+
+.btn-abertura:hover{
+transform:scale(1.05);
+background:#3f4b70;
+color:white;
+box-shadow:0 0 40px gold;
+}
+
+.btn-abertura.tocando{
+animation:pulse 1s infinite;
+}
+
+/* QUESTÃO */
+.questao-container{
+width:100%;
+max-width:850px;
+margin:15px auto;
+}
+
+.questao{
+display:none;
+animation:fade 0.6s;
+background:rgba(0,0,0,0.7);
+padding:25px;
+border-radius:30px;
+border:2px solid #ffd95e;
+backdrop-filter:blur(8px);
+}
+
+.questao.ativa{
+display:block;
+}
+
+.enunciado{
+font-size:24px;
+margin-bottom:25px;
+line-height:1.4;
+font-weight:500;
+text-shadow:0 2px 5px black;
+}
+
+/* OPÇÕES */
+.opcoes{
+display:flex;
+justify-content:center;
+gap:25px;
+margin-top:25px;
+flex-wrap:wrap;
+}
+
+.opcao{
+flex:1;
+min-width:180px;
+max-width:220px;
+padding:15px;
+border-radius:20px;
+background:rgba(255,255,255,0.15);
+cursor:pointer;
+transition:0.3s;
+border:2px solid transparent;
+font-size:20px;
+font-weight:bold;
+}
+
+.opcao:hover{
+background:#ffd95e;
+color:black;
+transform:scale(1.03);
+border-color:white;
+}
+
+.opcao.selecionada{
+background:#ffd95e;
+color:black;
+border-color:white;
+box-shadow:0 0 25px gold;
+}
+
+/* BOTÕES DE NAVEGAÇÃO */
+.controles{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+display:flex;
+justify-content:center;
+gap:15px;
+z-index:20;
+background:rgba(10,15,42,0.95);
+padding:12px;
+backdrop-filter:blur(10px);
+border-top:1px solid #ffd95e;
+}
+
+.btn-nav{
+padding:10px 25px;
+border:none;
+border-radius:40px;
+cursor:pointer;
+background:#ffd95e;
+font-weight:bold;
+font-size:15px;
+transition:0.2s;
+}
+
+.btn-nav:hover:not(:disabled){
+transform:scale(1.05);
+background:white;
+box-shadow:0 0 15px gold;
+}
+
+.btn-nav:disabled{
+opacity:0.4;
+cursor:not-allowed;
+}
+
+.btn-finalizar{
+background:#ffaa00;
+padding:10px 30px;
+}
+
+/* PLACAR FINAL */
+#placar{
+font-size:48px;
+display:none;
+animation:fade 1s;
+background:rgba(0,0,0,0.85);
+padding:25px 40px;
+border-radius:60px;
+border:3px solid gold;
+margin:15px auto;
+max-width:320px;
+text-align:center;
+}
+
+#mensagem{
+font-size:22px;
+color:#ffd95e;
+margin:15px auto;
+text-align:center;
+padding:0 20px;
+max-width:600px;
+}
+
+/* CONTAINER DE RESULTADOS - CORRIGIDO */
+.resultados-container{
+display:none;
+width:95%;
+max-width:1000px;
+margin:20px auto;
+padding:25px 20px;
+background:rgba(0,0,0,0.8);
+border-radius:40px;
+border:2px solid #ffd95e;
+backdrop-filter:blur(5px);
+}
+
+.resultados-container h3{
+color:#ffd95e;
+font-size:26px;
+margin-bottom:25px;
+text-align:center;
+}
+
+/* GRÁFICO RADAR - TAMANHO CORRETO E VISÍVEL */
+.grafico-wrapper{
+width:100%;
+max-width:550px;
+margin:0 auto;
+background:rgba(10,15,42,0.7);
+border-radius:25px;
+padding:15px;
+}
+
+#radarChart {
+max-height: 450px;
+width: 100% !important;
+height: auto !important;
+}
+
+/* CARDS DE ESTATÍSTICAS */
+.estatisticas-categorias{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:15px;
+margin-top:30px;
+padding-top:20px;
+border-top:2px solid rgba(255,217,94,0.4);
+}
+
+.card-categoria{
+background:linear-gradient(135deg, rgba(255,217,94,0.2), rgba(255,217,94,0.05));
+border-radius:20px;
+padding:12px 18px;
+min-width:170px;
+text-align:center;
+border-left:4px solid #ffd95e;
+transition:0.2s;
+}
+
+.card-categoria:hover{
+transform:translateY(-3px);
+background:rgba(255,217,94,0.25);
+}
+
+.card-categoria h4{
+margin:0 0 8px 0;
+font-size:16px;
+color:#ffd95e;
+letter-spacing:1px;
+}
+
+.card-categoria .acertos{
+margin:0;
+font-size:28px;
+font-weight:bold;
+color:white;
+}
+
+.card-categoria .percentual{
+font-size:14px;
+color:#aaa;
+margin-top:5px;
+display:block;
+}
+
+/* INDICADORES */
+.indice{
+position:fixed;
+top:15px;
+right:15px;
+background:rgba(255,215,0,0.25);
+padding:6px 18px;
+border-radius:40px;
+font-size:14px;
+border:1px solid gold;
+backdrop-filter:blur(5px);
+z-index:15;
+font-weight:bold;
+}
+
+.progresso{
+position:fixed;
+top:15px;
+left:15px;
+background:rgba(255,215,0,0.25);
+padding:6px 18px;
+border-radius:40px;
+font-size:14px;
+border:1px solid gold;
+backdrop-filter:blur(5px);
+z-index:15;
+font-weight:bold;
+}
+
+@keyframes fade{
+from{opacity:0; transform:translateY(20px);}
+to{opacity:1; transform:translateY(0);}
+}
+
+@keyframes pulse{
+0%{box-shadow:0 0 20px gold;}
+50%{box-shadow:0 0 50px gold;}
+100%{box-shadow:0 0 20px gold;}
+}
+
+@keyframes brilho{
+0%{filter:brightness(1);}
+50%{filter:brightness(1.2);}
+100%{filter:brightness(1);}
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 700px){
+h1{font-size:32px;}
+.enunciado{font-size:18px;}
+.opcao{font-size:16px; padding:10px; min-width:140px;}
+.btn-nav{padding:8px 18px; font-size:13px;}
+.card-categoria{min-width:140px;}
+.card-categoria .acertos{font-size:22px;}
+.resultados-container h3{font-size:20px;}
+.grafico-wrapper{max-width:100%;}
+}
+
+@media (max-width: 480px){
+.quiz{padding-bottom:80px;}
+.card-categoria{min-width:130px; padding:8px 12px;}
+.card-categoria h4{font-size:13px;}
+}
+
+</style>
+</head>
+
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="quiz">
+
+<!-- TÍTULO -->
+<div class="titulo-container">
+<h1>⚡ Quiz de Astronomia e Astrofísica ⚡</h1>
+<div class="subtitulo">Teste seus conhecimentos sobre o Universo</div>
+<div class="subtitulo"><b>Julio e Luciano</b></div>
+</div>
+
+<!-- BOTÃO DE ABERTURA -->
+<div class="abertura-container">
+<button class="btn-abertura" id="btnAbertura">
+<span id="iconeAbertura">🎵</span>
+<span id="textoAbertura">Tocar Abertura</span>
+</button>
+</div>
+
+<!-- INDICADORES -->
+<div class="progresso" id="progresso">🌍 Hemisfério Sul</div>
+<div class="indice" id="indice">Questão 1/77</div>
+
+<!-- ÁREA DA QUESTÃO -->
+<div id="areaQuestao" class="questao-container"></div>
+
+<!-- PLACAR FINAL -->
+<div id="placar"></div>
+<div id="mensagem"></div>
+
+<!-- CONTAINER DE RESULTADOS -->
+<div id="resultadosContainer" class="resultados-container">
+    <h3>📊 DESEMPENHO POR ÁREA DO CONHECIMENTO</h3>
+    <div class="grafico-wrapper">
+        <canvas id="radarChart"></canvas>
+    </div>
+    <div id="estatisticasCategorias" class="estatisticas-categorias"></div>
+</div>
+
+<!-- BOTÕES DE NAVEGAÇÃO -->
+<div class="controles">
+<button class="btn-nav" onclick="anterior()" id="btnAnterior">◀ Anterior</button>
+<button class="btn-nav" onclick="proxima()" id="btnProxima">Próxima ▶</button>
+<button class="btn-nav btn-finalizar" onclick="finalizar()" id="btnFinalizar">🏁 Finalizar Quiz</button>
+</div>
+
+</div>
+
+<!-- ÁUDIOS -->
+<audio id="somAbertura" preload="auto">
+  <source src="https://www.myinstants.com/media/sounds/show-do-milhao2.mp3" type="audio/mpeg">
+</audio>
+<audio id="somPergunta" preload="auto">
+  <source src="https://www.myinstants.com/media/sounds/vinheta-show-do-milhao.mp3" type="audio/mpeg">
+</audio>
+<audio id="somClique" preload="auto">
+<source src="audio/click.mp3" type="audio/mpeg">
+</audio>
+<audio id="somSuspense" preload="auto">
+<source src="audio/suspense.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+
+/* 🌌 FUNDO ESTRELADO MELHORADO */
+const canvas = document.getElementById("stars");
+let ctx = canvas.getContext("2d");
+let estrelas = [];
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initEstrelas();
+}
+
+function initEstrelas() {
+    estrelas = [];
+    for(let i = 0; i < 250; i++) {
+        estrelas.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 2 + 0.8,
+            v: Math.random() * 0.3 + 0.05,
+            brilho: Math.random() * 0.5 + 0.3
+        });
+    }
+}
+
+function animarEstrelas() {
+    if(!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    estrelas.forEach(e => {
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(255, 255, 255, ${e.brilho})`;
+        ctx.fill();
+        
+        e.y += e.v;
+        if(e.y > canvas.height) {
+            e.y = 0;
+            e.x = Math.random() * canvas.width;
+        }
+    });
+    
+    requestAnimationFrame(animarEstrelas);
+}
+
+window.addEventListener('resize', () => {
+    resizeCanvas();
+});
+
+resizeCanvas();
+animarEstrelas();
+
+/* 🎵 CONTROLE DE ÁUDIO DA ABERTURA */
+const somAbertura = document.getElementById("somAbertura");
+const btnAbertura = document.getElementById("btnAbertura");
+const iconeAbertura = document.getElementById("iconeAbertura");
+const textoAbertura = document.getElementById("textoAbertura");
+let tocandoAbertura = false;
+
+btnAbertura.addEventListener("click", () => {
+    if(!tocandoAbertura){
+        somAbertura.play()
+            .then(() => {
+                tocandoAbertura = true;
+                btnAbertura.classList.add("tocando");
+                iconeAbertura.textContent = "⏸️";
+                textoAbertura.textContent = "Pausar Abertura";
+            })
+            .catch(e => {
+                console.log("Erro:", e);
+                alert("Clique na página primeiro para tocar o áudio!");
+            });
+    } else {
+        somAbertura.pause();
+        tocandoAbertura = false;
+        btnAbertura.classList.remove("tocando");
+        iconeAbertura.textContent = "🎵";
+        textoAbertura.textContent = "Tocar Abertura";
+    }
+});
+
+somAbertura.addEventListener("ended", () => {
+    tocandoAbertura = false;
+    btnAbertura.classList.remove("tocando");
+    iconeAbertura.textContent = "🎵";
+    textoAbertura.textContent = "Tocar Abertura";
+});
+
+/* ==================== QUIZ - 77 QUESTÕES ==================== */
+const questoes = [
+{ enunciado: "O Sol sempre nasce no Leste.", correto: false },
+{ enunciado: "Faz calor no verão porque a Terra está mais perto do Sol.", correto: false },
+{ enunciado: "Ao meio-dia, a sombra de um poste é sempre nula (some).", correto: false },
+{ enunciado: "A Terra possui apenas dois movimentos: rotação e translação.", correto: false },
+{ enunciado: "O norte indicado pela bússola aponta para o Polo Norte geográfico.", correto: false },
+{ enunciado: "As fases da Lua são causadas pela sombra da Terra.", correto: false },
+{ enunciado: "A Lua não tem rotação, por isso vemos sempre a mesma face.", correto: false },
+{ enunciado: "Existe um 'lado escuro' da Lua que nunca recebe luz do Sol.", correto: false },
+{ enunciado: "A Lua só pode ser vista durante a noite.", correto: false },
+{ enunciado: "Eclipses solares são fenômenos extremamente raros (ocorrem uma vez por década).", correto: false },
+{ enunciado: "Buracos negros são 'aspiradores cósmicos' que sugam tudo ao redor, como um vácuo.", correto: false },
+{ enunciado: "Mercúrio é o planeta mais quente do sistema solar por estar mais perto do Sol.", correto: false },
+{ enunciado: "Estrelas têm pontas (formato estrelado) quando observadas do espaço.", correto: false },
+{ enunciado: "As estrelas que formam uma constelação estão fisicamente próximas entre si.", correto: false },
+{ enunciado: "Telescópios refletores utilizam espelhos para captar e focar a luz dos astros.", correto: true },
+{ enunciado: "O Sol é uma gigantesca bola de fogo.", correto: false },
+{ enunciado: "Não há gravidade na Estação Espacial Internacional (os astronautas flutuam porque a gravidade é zero).", correto: false },
+{ enunciado: "O som se propaga no vácuo do espaço (como nas explosões de filmes).", correto: false },
+{ enunciado: "Meteoritos chegam à superfície da Terra pegando fogo, incandescentes.", correto: false },
+{ enunciado: "O Sol é amarelo (sua cor verdadeira, vista de perto, é amarela).", correto: false },
+{ enunciado: "Cinturões de asteroides são densos e perigosos de atravessar, cheios de rochas próximas.", correto: false },
+{ enunciado: "Um relógio de sol horizontal feito para a Europa funciona perfeitamente em qualquer cidade do Brasil.", correto: false },
+{ enunciado: "Em todo o Brasil, o Sol nasce no mar (oceano) porque o país tem costa leste.", correto: false },
+{ enunciado: "A constelação de Órion pode ser vista em qualquer Hemisfério.", correto: true },
+{ enunciado: "No polo Sul geográfico, o Sol nasce e se põe apenas uma vez por ano.", correto: true },
+{ enunciado: "Telescópios refratores foram inventados primeiro e usam lentes para desviar a luz.", correto: true },
+{ enunciado: "O eclipse solar total de 1919, observado por Eddington, confirmou a previsão de Einstein de que a luz se curva perto do Sol.", correto: true },
+{ enunciado: "Com um gnômon -haste vertical- e medindo sombras ao longo do dia, é possível determinar a hora do meio-dia solar e a direção norte-sul.", correto: true },
+{ enunciado: "O Cruzeiro do Sul é visível durante todo o ano em qualquer cidade do Brasil.", correto: false },
+{ enunciado: "A Lei da Gravitação Universal, proposta por Isaac Newton, afirma que todos os corpos com massa se atraem mutuamente.", correto: true },
+{ enunciado: "O Sol produz energia principalmente por meio de reações de Fusão Nuclear que ocorrem em seu núcleo.", correto: true },
+{ enunciado: "Os meteoroides podem ter origem em cometas ou asteroides.", correto: true },
+{ enunciado: "Um Eclipse Solar ocorre quando a Lua se posiciona entre o Sol e a Terra.", correto: true },
+{ enunciado: "Galileu descobriu as quatro maiores luas de Júpiter, provando que nem tudo orbitava a Terra.", correto: true },
+{ enunciado: "Usando um transferidor, um canudo e um peso, é possível construir um astrolábio simples para medir a altura das estrelas.", correto: true },
+{ enunciado: "Um Ano-luz é uma unidade utilizada em Astronomia para medir distâncias.", correto: true },
+{ enunciado: "Observatórios astronômicos são frequentemente construídos em locais altos e secos para evitar turbulência atmosférica.", correto: true },
+{ enunciado: "As estrelas observadas no céu noturno pertencem exclusivamente à Via Láctea.", correto: true },
+{ enunciado: "A cauda de um cometa aponta sempre para trás em relação ao seu movimento no espaço.", correto: false },
+{ enunciado: "O período de rotação da Lua é igual ao seu período de translação em torno da Terra.", correto: true },
+{ enunciado: "Plutão deixou de ser planeta.", correto: false },
+{ enunciado: "Se os planetas fossem frutas, e Júpiter fosse uma melancia, a Terra seria uma uva Itália.", correto: true },
+{ enunciado: "Ptolomeu, no século II, propôs um modelo geocêntrico do universo que perdurou por mais de 1000 anos.", correto: true },
+{ enunciado: "Johannes Kepler descobriu que as órbitas dos planetas são elípticas, não circulares.", correto: true },
+{ enunciado: "Atualmente, o Sistema Solar possui 5 planetas anões oficialmente reconhecidos pela IAU.", correto: true },
+{ enunciado: "Aristarco de Samos, ainda na Grécia Antiga, já havia proposto um modelo heliocêntrico, com o Sol no centro.", correto: true },
+{ enunciado: "Um relógio de sol analógico pode ser construído com papel, caneta e um palito, mas só funciona corretamente se ajustado para a latitude local.", correto: true },
+{ enunciado: "Os Meteoritos são aqueles risco no céu.", correto: false },
+{ enunciado: "Atualmente o planeta com mais luas no sistema solar é Saturno com 274 satélites.", correto: true },
+{ enunciado: "O Sol tem aproximadamente 400 vezes o diâmetro da Lua e está 400 vezes mais distante.", correto: true },
+{ enunciado: "William Herschel descobriu o planeta Urano em 1781, o primeiro planeta descoberto com telescópio.", correto: true },
+{ enunciado: "Interferometria é uma técnica que combina múltiplos telescópios para simular um espelho gigante.", correto: true },
+{ enunciado: "Alfenas está localizada no sul de Minas Gerais, ao sul da Linha do Equador e a leste de Greenwich.", correto: false },
+{ enunciado: "Albert Einstein explicou a órbita anômala de Mercúrio usando sua Teoria da Relatividade Geral.", correto: true },
+{ enunciado: "Edwin Hubble descobriu que o universo está em expansão ao observar o redshift das galáxias.", correto: true },
+{ enunciado: "A descoberta da radiação cósmica de fundo em 1965 fortaleceu a teoria do Big Bang.", correto: true },
+{ enunciado: "A missão espacial Voyager foi a primeira a enviar imagens detalhadas dos planetas exteriores.", correto: true },
+{ enunciado: "O primeiro exoplaneta foi descoberto na década de 1980, mas apenas confirmado nos anos 1990.", correto: true },
+{ enunciado: "Ceres, Plutão, Haumea, Makemake e Eris são planetas anões reconhecidos.", correto: true },
+{ enunciado: "O Sol é classificado como uma estrela anã amarela da sequência principal (tipo espectral G2V).", correto: true },
+{ enunciado: "Poluição luminosa é a principal inimiga dos observatórios astronômicos profissionais e amadores.", correto: true },
+{ enunciado: "Com barbante e contas coloridas, é possível construir um 'colar do Sistema Solar' com distâncias proporcionais entre os planetas.", correto: true },
+{ enunciado: "Uma estrela de nêutrons é o que resta após a explosão de uma estrela supergigante em supernova.", correto: true },
+{ enunciado: "O Brasil é atravessado pelo Trópico de Capricórnio.", correto: true },
+{ enunciado: "O Telescópio Espacial Hubble já observou galáxias a mais de 13 bilhões de anos-luz de distância.", correto: true },
+{ enunciado: "Umbra é a região de sombra total e penumbra é a região de sombra parcial.", correto: true },
+{ enunciado: "Nada, nem mesmo a luz, pode escapar de um buraco negro após ultrapassar seu horizonte de eventos.", correto: true },
+{ enunciado: "Usando papel cartão preto e um estilete, é possível construir um espectroscópio caseiro para observar linhas espectrais.", correto: true },
+{ enunciado: "Com uma caixa de papelão e uma lupa, é possível projetar imagens do Sol em uma folha branca para observar manchas solares com segurança.", correto: true },
+{ enunciado: "Eclipse Lunar: a Terra fica entre o Sol e a Lua.", correto: true },
+{ enunciado: "O Telescópio James Webb está posicionado no ponto Lagrange L2, a 1,5 milhão de km da Terra.", correto: true },
+{ enunciado: "No inverno do Hemisfério Norte, o Polo Norte passa pela Noite Polar.", correto: true },
+{ enunciado: "O tempo passa mais devagar próximo a um buraco negro devido à dilatação temporal gravitacional.", correto: true },
+{ enunciado: "A magnitude aparente de uma estrela depende tanto de seu brilho intrínseco quanto de sua distância da Terra.", correto: true },
+{ enunciado: "Meteoro, meteorito e meteoroide são a mesma coisa: fragmentos rochosos que queimam na atmosfera.", correto: false },
+{ enunciado: "Elementos como carbono, oxigênio e ferro são forjados no interior de estrelas massivas.", correto: true },
+{ enunciado: "Depois deste quiz, você ficou com vontade de aprender mais sobre Astronomia e Astrofísica.", correto: true }
+];
+
+let atual = 0;
+let respostas = new Array(questoes.length).fill(null);
+
+// Mapeamento das 77 questões para as 5 categorias
+const categoriasQuestoes = [
+    "Astronomia do Cotidiano", "Astronomia do Cotidiano", "Astronomia do Cotidiano", "Astronomia do Cotidiano", "Astronomia do Cotidiano",
+    "Astronomia Observacional", "Astronomia Observacional", "Astronomia Observacional", "Astronomia Observacional", "Astronomia Observacional",
+    "Astrofísica", "Sistema Solar", "Astronomia Observacional", "Astronomia Observacional", "História da Astronomia",
+    "Astrofísica", "Astrofísica", "Astrofísica", "Astrofísica", "Astrofísica",
+    "Sistema Solar", "Astronomia do Cotidiano", "Astronomia do Cotidiano", "Astronomia Observacional", "Astronomia do Cotidiano",
+    "História da Astronomia", "Sistema Solar", "Astronomia Observacional", "Astronomia Observacional", "Astrofísica",
+    "Astrofísica", "Sistema Solar", "Sistema Solar", "História da Astronomia", "Astronomia Observacional",
+    "Astronomia Observacional", "Astronomia Observacional", "Astronomia Observacional", "Sistema Solar", "Sistema Solar",
+    "Sistema Solar", "Sistema Solar", "História da Astronomia", "História da Astronomia", "Sistema Solar",
+    "História da Astronomia", "Astronomia Observacional", "Sistema Solar", "Sistema Solar", "Sistema Solar",
+    "História da Astronomia", "História da Astronomia", "Astronomia do Cotidiano", "Astrofísica", "Astrofísica",
+    "Astrofísica", "História da Astronomia", "História da Astronomia", "Sistema Solar", "Astrofísica",
+    "Astronomia Observacional", "Sistema Solar", "Astrofísica", "Astronomia do Cotidiano", "História da Astronomia",
+    "Astronomia Observacional", "Astrofísica", "Astronomia Observacional", "Astronomia Observacional", "Sistema Solar",
+    "História da Astronomia", "Astronomia do Cotidiano", "Astrofísica", "Astronomia Observacional", "Sistema Solar",
+    "Astrofísica", "História da Astronomia"
+];
+
+const areaQuestaoDiv = document.getElementById("areaQuestao");
+const indiceSpan = document.getElementById("indice");
+const progressoSpan = document.getElementById("progresso");
+const btnAnteriorEl = document.getElementById("btnAnterior");
+const btnProximaEl = document.getElementById("btnProxima");
+const placarDiv = document.getElementById("placar");
+const mensagemDiv = document.getElementById("mensagem");
+const resultadosContainer = document.getElementById("resultadosContainer");
+const estatisticasDiv = document.getElementById("estatisticasCategorias");
+
+const somPergunta = document.getElementById("somPergunta");
+const somClique = document.getElementById("somClique");
+const somSuspense = document.getElementById("somSuspense");
+
+function tocarSom(audio) {
+    if(audio) audio.play().catch(e => console.log("Áudio:", e));
+}
+
+function mostrar() {
+    const q = questoes[atual];
+    const html = `
+        <div class="questao ativa">
+            <div class="enunciado">${q.enunciado}</div>
+            <div class="opcoes">
+                <label class="opcao ${respostas[atual] === true ? 'selecionada' : ''}">
+                    <input type="radio" name="resposta" value="correto" style="display:none;" ${respostas[atual] === true ? 'checked' : ''}>
+                    <span>✅ CORRETO</span>
+                </label>
+                <label class="opcao ${respostas[atual] === false ? 'selecionada' : ''}">
+                    <input type="radio" name="resposta" value="incorreto" style="display:none;" ${respostas[atual] === false ? 'checked' : ''}>
+                    <span>❌ INCORRETO</span>
+                </label>
+            </div>
+        </div>
+    `;
+    areaQuestaoDiv.innerHTML = html;
+    indiceSpan.textContent = `Questão ${atual + 1}/${questoes.length}`;
+    
+    btnAnteriorEl.disabled = atual === 0;
+    btnProximaEl.disabled = atual === questoes.length - 1;
+    
+    document.querySelectorAll('.opcao').forEach((opt, idx) => {
+        opt.addEventListener('click', () => {
+            respostas[atual] = idx === 0;
+            document.querySelectorAll('.opcao').forEach(o => o.classList.remove('selecionada'));
+            opt.classList.add('selecionada');
+            tocarSom(somClique);
+        });
+    });
+}
+
+function proxima() {
+    if(atual < questoes.length - 1) {
+        atual++;
+        mostrar();
+        tocarSom(somPergunta);
+    }
+}
+
+function anterior() {
+    if(atual > 0) {
+        atual--;
+        mostrar();
+    }
+}
+
+function finalizar() {
+    btnAnteriorEl.disabled = true;
+    btnProximaEl.disabled = true;
+    document.getElementById('btnFinalizar').disabled = true;
+    tocarSom(somSuspense);
+    
+    setTimeout(() => {
+        const categorias = ["Astronomia do Cotidiano", "Astronomia Observacional", "Sistema Solar", "Astrofísica", "História da Astronomia"];
+        let acertosPorCategoria = {
+            "Astronomia do Cotidiano": { acertos: 0, total: 0 },
+            "Astronomia Observacional": { acertos: 0, total: 0 },
+            "Sistema Solar": { acertos: 0, total: 0 },
+            "Astrofísica": { acertos: 0, total: 0 },
+            "História da Astronomia": { acertos: 0, total: 0 }
+        };
+        
+        questoes.forEach((q, i) => {
+            let cat = categoriasQuestoes[i];
+            if(acertosPorCategoria[cat]) {
+                acertosPorCategoria[cat].total++;
+                if(respostas[i] === q.correto) acertosPorCategoria[cat].acertos++;
+            }
+        });
+        
+        let percentuais = categorias.map(cat => (acertosPorCategoria[cat].acertos / acertosPorCategoria[cat].total) * 100);
+        
+        // Esconder questão e indicadores
+        areaQuestaoDiv.style.display = "none";
+        progressoSpan.style.display = "none";
+        indiceSpan.style.display = "none";
+        
+        // Mostrar resultados
+        resultadosContainer.style.display = "block";
+        
+        // Criar gráfico radar
+        const ctxRadar = document.getElementById('radarChart').getContext('2d');
+        if(window.radarChartInstance) window.radarChartInstance.destroy();
+        
+        window.radarChartInstance = new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: categorias,
+                datasets: [{
+                    label: 'Acertos (%)',
+                    data: percentuais,
+                    backgroundColor: 'rgba(255, 217, 94, 0.35)',
+                    borderColor: '#ffd95e',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffd95e',
+                    pointBorderColor: '#ffffff',
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20,
+                            backdropColor: 'transparent',
+                            color: '#dddddd',
+                            font: { size: 10 }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.2)' },
+                        angleLines: { color: 'rgba(255,255,255,0.2)' },
+                        pointLabels: { color: '#ffd95e', font: { size: 11, weight: 'bold' } }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff', font: { size: 12 } }, position: 'bottom' },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw.toFixed(1)}%` } }
+                }
+            }
+        });
+        
+        // Cards de estatísticas
+        let statsHtml = '';
+        categorias.forEach(cat => {
+            let t = acertosPorCategoria[cat].total;
+            let a = acertosPorCategoria[cat].acertos;
+            let perc = (a / t * 100).toFixed(1);
+            statsHtml += `
+                <div class="card-categoria">
+                    <h4>${cat}</h4>
+                    <div class="acertos">${a}/${t}</div>
+                    <span class="percentual">${perc}%</span>
+                </div>
+            `;
+        });
+        estatisticasDiv.innerHTML = statsHtml;
+        
+        let totalPontos = 0;
+        questoes.forEach((q, i) => { if(respostas[i] === q.correto) totalPontos++; });
+        
+        let msg = "";
+        if(totalPontos === questoes.length) msg = "🌟 PERFEITO! Você é um astrônomo! 🌟";
+        else if(totalPontos >= 60) msg = "🔭 Excelente! Conhecimento fora de série!";
+        else if(totalPontos >= 45) msg = "⚡ Muito bom! Continue explorando o Universo!";
+        else if(totalPontos >= 30) msg = "🌗 Bom! Hora de revisar alguns conceitos!";
+        else msg = "🌎 Que tal estudar mais Astronomia e Astrofísica?";
+        
+        mensagemDiv.innerHTML = msg;
+        placarDiv.style.display = "block";
+        placarDiv.innerHTML = `🏆 Total: ${totalPontos}/${questoes.length}`;
+        
+        resultadosContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 1800);
+}
+
+mostrar();
+
+</script>
+</body>
+</html>

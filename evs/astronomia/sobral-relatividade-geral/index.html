@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EVS - Análise da Royal Society: Eclipse de Sobral (1919)</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <style>
+    :root {
+      --bg: #02050b;
+      --panel: rgba(7, 12, 24, 0.93);
+      --panel-border: rgba(255,255,255,0.12);
+      --text: #f2f5fb;
+      --muted: #cbd4e5;
+      --accent: #ffe38f;
+      --blue: #7fd8ff;
+      --red: #ff7676;
+      --moon: #c9c9c9;
+      --grid: rgba(120, 190, 255, 0.14);
+      --button: #1f6fff;
+      --button-hover: #4f8dff;
+      --button-alt: rgba(255,255,255,0.08);
+      --shadow: 0 10px 35px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #titleOverlay {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: clamp(18px, 2vw, 26px);
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-shadow: 0 0 14px rgba(0,0,0,0.9);
+      pointer-events: none;
+      text-align: center;
+      z-index: 3;
+    }
+
+    #ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: min(380px, 92vw);
+      height: 100vh;
+      padding: 18px;
+      overflow-y: auto;
+      background: var(--panel);
+      border-right: 1px solid var(--panel-border);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      z-index: 4;
+    }
+
+    h1 { margin: 0 0 5px; font-size: 22px; color: var(--accent); }
+    h2 { margin: 0 0 8px; font-size: 15px; color: var(--blue); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+    p { margin: 0 0 10px; line-height: 1.45; font-size: 13.5px; color: var(--muted); }
+
+    .dataBox {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .value { color: var(--accent); font-weight: 700; }
+    
+    select {
+      width: 100%;
+      padding: 8px;
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    label { display: block; font-size: 12.5px; margin-bottom: 6px; color: var(--text); }
+    input[type="range"] { width: 100%; margin-bottom: 6px; }
+
+    button {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 6px;
+      border: none;
+      border-radius: 8px;
+      background: var(--button);
+      color: white;
+      font-size: 13.5px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    button:hover { background: var(--button-hover); }
+    button.alt { background: var(--button-alt); }
+    button.alt:hover { background: rgba(255,255,255,0.14); }
+    .small { font-size: 11.5px; color: #aeb8cb; line-height: 1.35; }
+
+    #legend {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      width: 300px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px;
+      z-index: 3;
+      backdrop-filter: blur(8px);
+    }
+
+    .legendItem { display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+    .color { width: 14px; height: 14px; border-radius: 50%; flex: 0 0 auto; }
+
+    @media (max-width: 720px) {
+      #ui { width: 100vw; height: auto; max-height: 55vh; border-right: none; border-bottom: 1px solid var(--panel-border); }
+      #titleOverlay { top: auto; bottom: 12px; left: 50%; transform: translateX(-50%); width: 90vw; font-size: 16px; }
+      #legend { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="titleOverlay">Análise da Royal Society: Eclipse de Sobral (1919)</div>
+
+  <aside id="ui">
+    <h1 align="center">Dados Históricos</h1>
+    <p>Simulação baseada nos dados analisados pela Royal Society e na geometria real das Híades.</p>
+<p align="center">Prof. Luciano Soares Pedroso</p>
+
+    <div class="dataBox">
+      <h2>Instrumentos e Expedições</h2>
+      <label for="expeditionSelect">Escolha o conjunto de dados:</label>
+      <select id="expeditionSelect">
+        <option value="sobral4" selected>Sobral - Lente de 4" (1,98" ± 0,12")</option>
+        <option value="principe">Ilha do Príncipe - Lente de 13" (1,61" ± 0,30")</option>
+        <option value="sobral13_def">Sobral - Lente de 13" Defeituosa (0,93")</option>
+        <option value="sobral13_corr">Sobral - Lente de 13" Reanalisada (1,87")</option>
+      </select>
+      <p class="small" id="datasetDescription">O astrógrafo de 4 polegadas em Sobral forneceu os dados mais nítidos e incontestáveis que confirmaram a teoria de Einstein.</p>
+    </div>
+
+    <div class="dataBox">
+      <h2>Equação Física</h2>
+      <p id="equationDisplay" class="value">α = 4GM / (c²b)</p>
+      <p id="physicsLawLabel" class="small">Na Relatividade Geral, a deflexão na borda solar prevê aproximadamente 1,75" (escalonada pelos dados reais do instrumento).</p>
+    </div>
+
+    <div class="dataBox">
+      <h2>Escala Didática</h2>
+      <label for="massSlider">Multiplicador da massa solar: <span id="massValue" class="value">1.0</span> M☉</label>
+      <input id="massSlider" type="range" min="0.2" max="3.0" step="0.1" value="1.0" />
+    </div>
+
+    <div class="dataBox">
+      <h2>Controles Físicos</h2>
+      <button id="toggleRelativity">Mudar para Modelo de Newton</button>
+      <button id="toggleGrid" class="alt">Mostrar malha ilustrativa</button>
+      <button id="toggleRays" class="alt">Ocultar trajetórias de luz</button>
+      <button id="resetScene" class="alt">Reiniciar Posições</button>
+    </div>
+
+    <div class="dataBox">
+      <h2>Medições em Tempo Real (κ¹ Tauri)</h2>
+      <p>Modelo Físico Ativo:</p>
+      <p id="activeModelLabel" class="value" style="color: var(--blue);">Relatividade Geral (Einstein)</p>
+      <p style="margin-top: 8px;">Desvio na Borda do Instrumento: <span id="limbValue" class="value">1,98"</span></p>
+      <p style="margin-top: 4px;">Desvio Real Calculado para a Estrela: <span id="starValue" class="value">1,28"</span></p>
+    </div>
+
+    <div class="dataBox">
+      <h2>Ofuscamento Atmosférico</h2>
+      <p>Luz Solar Difusa: <span id="glareValue" class="value">100%</span></p>
+      <p class="small">Arraste a Lua com o mouse sobre o Sol para revelar o campo estelar ocultado pelo brilho do dia.</p>
+    </div>
+  </aside>
+
+  <div id="legend">
+    <div class="legendItem"><div class="color" style="background:#ffe066"></div><div>Sol</div></div>
+    <div class="legendItem"><div class="color" style="background:#c9c9c9"></div><div>Lua (Arrastável)</div></div>
+    <div class="legendItem"><div class="color" style="background:#ffe38f"></div><div>Posição Aparente (Móvel/Observada)</div></div>
+    <div class="legendItem"><div class="color" style="background:#ff7676"></div><div>Posição Real (Fixa/Física de Fundo)</div></div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const uiWidthDesktop = 380;
+    let relativity = true;
+    let showGrid = false;
+    let showRays = true; // Inicializado como verdadeiro para exibir trajetórias
+    let eclipseFactor = 0.0;
+    let cameraZoom = 1.0;
+    let cameraPanX = 0;
+    let cameraPanY = 0;
+    let pulseTime = 0;
+
+    let isDraggingMoon = false;
+    let isDraggingCamera = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    const datasets = {
+      sobral4: { limb: 1.98, desc: "O astrógrafo de 4 polegadas em Sobral obteve 7 placas excelentes. O resultado de 1,98\" superou as expectativas e provou a deflexão de Einstein." },
+      principe: { limb: 1.61, desc: "Eddington enfrentou mau tempo na Ilha do Príncipe. Apenas duas placas mostraram estrelas parciais, resultando em uma margem de erro maior (±0,30\")." },
+      sobral13_def: { limb: 0.93, desc: "O instrumento principal de 13\" de Sobral sofreu distorção térmica no espelho do celóstato, gerando imagens distorcidas e o desvio anômalo de 0,93\"." },
+      sobral13_corr: { limb: 1.87, desc: "Em 1979, computadores modernos reanalisaram as placas desfocadas de 13\" e encontraram 1,87\", validando Einstein retroativamente." }
+    };
+
+    let currentDataset = "sobral4";
+
+    const sun = { x: 0, y: 0, radius: 90, massScale: 1.0 };
+    const moon = { x: 0, y: 0, radius: 92 };
+    const stars = [];
+
+    function formatarBR(valor) {
+      return valor.toFixed(2).replace('.', ',');
+    }
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const isMobile = window.innerWidth <= 720;
+      const leftOffset = isMobile ? 0 : Math.min(uiWidthDesktop, window.innerWidth * 0.28);
+      const freeWidth = window.innerWidth - leftOffset;
+
+      const oldSunX = sun.x;
+      const oldSunY = sun.y;
+      sun.x = leftOffset + freeWidth * 0.58;
+      sun.y = isMobile ? window.innerHeight * 0.62 : window.innerHeight * 0.5;
+
+      if (oldSunX === 0 && oldSunY === 0) {
+        moon.x = sun.x + 300;
+        moon.y = sun.y;
+      } else {
+        moon.x += (sun.x - oldSunX);
+        moon.y += (sun.y - oldSunY);
+      }
+    }
+
+    function createStars() {
+      stars.length = 0;
+      
+      const kappaAngle = Math.PI * 1.18; 
+      const kappaDistance = sun.radius * 1.55; 
+
+      stars.push({
+        realX: sun.x + Math.cos(kappaAngle) * kappaDistance,
+        realY: sun.y - Math.sin(kappaAngle) * kappaDistance,
+        size: 3.8,
+        brightness: 1.0,
+        name: "κ¹ Tauri (Histórica)"
+      });
+
+      for (let i = 0; i < 70; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = (sun.radius + 40) + Math.random() * (Math.min(canvas.width, canvas.height) * 0.6);
+        const x = sun.x + Math.cos(angle) * distance;
+        const y = sun.y + Math.sin(angle) * distance;
+
+        if (Math.sqrt((x - stars[0].realX)**2 + (y - stars[0].realY)**2) < 40) { i--; continue; }
+        
+        stars.push({
+          realX: x, realY: y,
+          size: 1.2 + Math.random() * 2.2,
+          brightness: 0.45 + Math.random() * 0.55,
+          name: null
+        });
+      }
+    }
+
+    function computeDeflection(star) {
+      const dx = star.realX - sun.x;
+      const dy = star.realY - sun.y;
+      const r = Math.max(Math.sqrt(dx * dx + dy * dy), sun.radius + 1);
+      
+      const bFactor = sun.radius / r;
+      let baseLimbValue = datasets[currentDataset].limb * sun.massScale;
+      
+      if (!relativity) {
+        baseLimbValue = baseLimbValue / 2;
+      }
+
+      const alphaArcsec = baseLimbValue * bFactor;
+
+      // Escala de separação em pixels hiper ampliada para visibilidade garantida em tempo real
+      const visualScale = 12000; 
+      const shiftPixels = (alphaArcsec / 3600) * visualScale;
+
+      return {
+        x: star.realX + (dx / r) * shiftPixels,
+        y: star.realY + (dy / r) * shiftPixels,
+        alphaArcsec: alphaArcsec
+      };
+    }
+
+    function updatePhysics() {
+      const dx = moon.x - sun.x;
+      const dy = moon.y - sun.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist <= 6) eclipseFactor = 1.0;
+      else if (dist >= 180) eclipseFactor = 0.0;
+      else eclipseFactor = 1.0 - ((dist - 6) / (180 - 6));
+
+      const glareEl = document.getElementById('glareValue');
+      if (glareEl) glareEl.innerText = `${Math.round((1 - eclipseFactor) * 100)}%`;
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const glare = 1 - eclipseFactor;
+      if (glare > 0) {
+        const glow = ctx.createRadialGradient(sun.x, sun.y, sun.radius, sun.x, sun.y, Math.max(canvas.width, canvas.height) * 0.7);
+        glow.addColorStop(0, `rgba(50, 130, 230, ${glare * 0.85})`);
+        glow.addColorStop(0.35, `rgba(16, 42, 85, ${glare * 0.6})`);
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function drawGrid() {
+      if (!showGrid) return;
+      ctx.save();
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid') || 'rgba(120, 190, 255, 0.14)';
+      ctx.lineWidth = 1 / cameraZoom;
+      const size = 45;
+      const warpFactor = relativity ? 9000 : 4500;
+      
+      const startX = Math.floor((-cameraPanX - canvas.width * 2) / size) * size;
+      const endX = Math.ceil((-cameraPanX + canvas.width * 3) / size) * size;
+      const startY = Math.floor((-cameraPanY - canvas.height * 2) / size) * size;
+      const endY = Math.ceil((-cameraPanY + canvas.height * 3) / size) * size;
+
+      for (let x = startX; x <= endX; x += size) {
+        ctx.beginPath();
+        for (let y = startY; y <= endY; y += 10) {
+          const dx = x - sun.x;
+          const dy = y - sun.y;
+          const r = Math.sqrt(dx*dx + dy*dy);
+          const warp = (warpFactor * sun.massScale) / (r + 120);
+          const ox = (dx / (r+1)) * warp;
+          if (y === startY) ctx.moveTo(x - ox, y); else ctx.lineTo(x - ox, y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawSunAndMoon() {
+      const coronaRad = sun.radius + (1 - eclipseFactor) * 350 + eclipseFactor * 50;
+      const glow = ctx.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, coronaRad);
+      glow.addColorStop(0, `rgba(255, 238, 180, ${0.4 + (1 - eclipseFactor) * 0.6})`);
+      glow.addColorStop(0.25, `rgba(255, 185, 80, ${0.3 + (1 - eclipseFactor) * 0.5})`);
+      glow.addColorStop(0.6, `rgba(255, 105, 0, ${(1 - eclipseFactor) * 0.3})`);
+      glow.addColorStop(1, 'rgba(255,120,0,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(sun.x, sun.y, coronaRad, 0, Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = '#ffe066';
+      ctx.beginPath(); ctx.arc(sun.x, sun.y, sun.radius, 0, Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = '#11141c';
+      ctx.beginPath(); ctx.arc(moon.x, moon.y, moon.radius, 0, Math.PI*2); ctx.fill();
+    }
+
+    // REESCRITO: Desenha as linhas de luz cruzando o espaço para dar profundidade e nunca sumirem
+    function drawLightRay(star, apparent, currentOpacity) {
+      if (!showRays || currentOpacity <= 0) return;
+      
+      ctx.save();
+      // Linha indicadora pontilhada unindo a posição REAL de fundo à observada APARENTE
+      ctx.strokeStyle = `rgba(127, 216, 255, ${0.8 * currentOpacity})`;
+      ctx.lineWidth = 1.8 / cameraZoom;
+      ctx.setLineDash([4, 4]); 
+      ctx.beginPath();
+      ctx.moveTo(star.realX, star.realY);
+      ctx.lineTo(apparent.x, apparent.y);
+      ctx.stroke();
+
+      // Projeção extendida do feixe simulado vindo de fora do ecrã passando de raspão pelo Sol
+      ctx.strokeStyle = `rgba(255, 120, 120, ${0.25 * currentOpacity})`;
+      ctx.lineWidth = 1.0 / cameraZoom;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(star.realX - (apparent.x - star.realX) * 5, star.realY - (apparent.y - star.realY) * 5);
+      ctx.lineTo(apparent.x, apparent.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawStars() {
+      pulseTime += 0.04;
+      let kappaObserved = 0;
+
+      for (const star of stars) {
+        const apparent = computeDeflection(star);
+        if (star.name) kappaObserved = apparent.alphaArcsec;
+
+        const opacity = star.brightness * eclipseFactor;
+        if (opacity <= 0) continue;
+
+        // Desenha primeiro os raios por baixo das estrelas para organização visual limpa
+        drawLightRay(star, apparent, eclipseFactor);
+
+        ctx.save();
+        // Posição Real Física de fundo (Círculo Vermelho - Imutável)
+        ctx.fillStyle = '#ff7676';
+        ctx.globalAlpha = 0.85 * eclipseFactor;
+        ctx.beginPath();
+        ctx.arc(star.realX, star.realY, star.size / Math.sqrt(cameraZoom), 0, Math.PI * 2);
+        ctx.fill();
+
+        // Posição Observada/Aparente (Círculo Dourado/Azul - Move-se visivelmente)
+        ctx.fillStyle = star.name ? '#ffe38f' : '#7fd8ff';
+        ctx.globalAlpha = opacity;
+        ctx.beginPath();
+        ctx.arc(apparent.x, apparent.y, (star.size + 0.6) / Math.sqrt(cameraZoom), 0, Math.PI * 2);
+        ctx.fill();
+
+        if (star.name) {
+          ctx.strokeStyle = `rgba(255, 227, 143, ${0.4 * eclipseFactor * (Math.sin(pulseTime) + 1.2)})`;
+          ctx.lineWidth = 1.5 / cameraZoom;
+          ctx.beginPath();
+          ctx.arc(apparent.x, apparent.y, (star.size + 6 + Math.sin(pulseTime)*3) / Math.sqrt(cameraZoom), 0, Math.PI*2);
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.font = `bold ${Math.max(10, 12 / Math.sqrt(cameraZoom))}px Arial`;
+          ctx.textAlign = 'center';
+          const offsetText = (star.size + 15) / Math.sqrt(cameraZoom);
+          ctx.fillText(star.name, apparent.x, apparent.y + offsetText);
+        }
+        ctx.restore();
+      }
+
+      let baseLimbValue = datasets[currentDataset].limb * sun.massScale;
+      document.getElementById('limbValue').innerText = `${formatarBR(relativity ? baseLimbValue : baseLimbValue/2)}"`;
+      document.getElementById('starValue').innerText = `${formatarBR(kappaObserved)}"`;
+    }
+
+    function drawScale() {
+      if (eclipseFactor <= 0.1) return;
+      const x = canvas.width - 285;
+      const y = canvas.height - 72;
+
+      ctx.save();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 145, y); ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '14px Segoe UI';
+      ctx.fillText('Escala angular ampliada (visual)', x, y - 12);
+      ctx.restore();
+    }
+
+    function animate() {
+      updatePhysics();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(cameraPanX, cameraPanY);
+      ctx.scale(cameraZoom, cameraZoom);
+
+      drawBackground();
+      drawGrid();
+      drawStars();
+      drawSunAndMoon();
+
+      ctx.restore();
+      if (window.innerWidth > 720) drawScale();
+      requestAnimationFrame(animate);
+    }
+
+    function screenToWorld(sx, sy) {
+      return { x: (sx - cameraPanX) / cameraZoom, y: (sy - cameraPanY) / cameraZoom };
+    }
+
+    function onStart(e) {
+      const r = canvas.getBoundingClientRect();
+      const mx = (e.clientX || e.touches[0].clientX) - r.left;
+      const my = (e.clientY || e.touches[0].clientY) - r.top;
+      const world = screenToWorld(mx, my);
+
+      const dMoon = Math.sqrt((world.x - moon.x)**2 + (world.y - moon.y)**2);
+      if (dMoon <= moon.radius && !e.shiftKey) {
+        isDraggingMoon = true;
+        dragOffsetX = world.x - moon.x;
+        dragOffsetY = world.y - moon.y;
+        canvas.style.cursor = 'grabbing';
+      } else {
+        isDraggingCamera = true;
+        lastMouseX = e.clientX || e.touches[0].clientX;
+        lastMouseY = e.clientY || e.touches[0].clientY;
+        canvas.style.cursor = 'move';
+      }
+    }
+
+    function onMove(e) {
+      const r = canvas.getBoundingClientRect();
+      const cx = e.clientX || (e.touches && e.touches[0].clientX);
+      const cy = e.clientY || (e.touches && e.touches[0].clientY);
+      if (!cx) return;
+
+      if (isDraggingMoon) {
+        const world = screenToWorld(cx - r.left, cy - r.top);
+        moon.x = world.x - dragOffsetX;
+        moon.y = world.y - dragOffsetY;
+      } else if (isDraggingCamera) {
+        cameraPanX += cx - lastMouseX;
+        cameraPanY += cy - lastMouseY;
+        lastMouseX = cx;
+        lastMouseY = cy;
+      }
+    }
+
+    function onEnd() { isDraggingMoon = false; isDraggingCamera = false; canvas.style.cursor = 'default'; }
+
+    canvas.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    canvas.addEventListener('touchstart', onStart);
+    canvas.addEventListener('touchmove', onMove);
+    window.addEventListener('touchend', onEnd);
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect();
+      const world = screenToWorld(e.clientX - r.left, e.clientY - r.top);
+      cameraZoom = e.deltaY < 0 ? Math.min(8, cameraZoom * 1.1) : Math.max(1, cameraZoom / 1.1);
+      cameraPanX = (e.clientX - r.left) - world.x * cameraZoom;
+      cameraPanY = (e.clientY - r.top) - world.y * cameraZoom;
+    }, { passive: false });
+
+    const expSelect = document.getElementById('expeditionSelect');
+    const expDesc = document.getElementById('datasetDescription');
+    const relBtn = document.getElementById('toggleRelativity');
+    const gridBtn = document.getElementById('toggleGrid');
+    const raysBtn = document.getElementById('toggleRays');
+    const massSlider = document.getElementById('massSlider');
+    const massValue = document.getElementById('massValue');
+
+    expSelect.addEventListener('change', () => {
+      currentDataset = expSelect.value;
+      expDesc.innerText = datasets[currentDataset].desc;
+    });
+
+    massSlider.addEventListener('input', () => {
+      sun.massScale = parseFloat(massSlider.value);
+      massValue.innerText = sun.massScale.toFixed(1);
+    });
+
+    relBtn.addEventListener('click', () => {
+      relativity = !relativity;
+      relBtn.innerText = relativity ? 'Mudar para Modelo de Newton' : 'Mudar para Relatividade Geral';
+      document.getElementById('activeModelLabel').innerText = relativity ? "Relatividade Geral (Einstein)" : "Física Clássica (Newton)";
+      document.getElementById('activeModelLabel').style.color = relativity ? "var(--blue)" : "var(--red)";
+      document.getElementById('equationDisplay').innerText = relativity ? "α = 4GM / (c²b)" : "α = 2GM / (c²b)";
+      document.getElementById('physicsLawLabel').innerHTML = relativity ? 
+        'Na Relatividade Geral, a deflexão na borda solar prevê aproximadamente 1,75" (multiplicada pela massa e calibrada pelo instrumento).' : 
+        'A deflexão clássica newtoniana segue o modelo de espaço plano de Soldner: metade da previsão einsteiniana.';
+    });
+
+    gridBtn.addEventListener('click', () => {
+      showGrid = !showGrid;
+      gridBtn.innerText = showGrid ? 'Ocultar malha ilustrativa' : 'Mostrar malha ilustrativa';
+    });
+
+    // CORREÇÃO: Comutação com sincronismo total texto-variável
+    raysBtn.addEventListener('click', () => {
+      showRays = !showRays;
+      raysBtn.innerText = showRays ? 'Ocultar trajetórias de luz' : 'Mostrar trajetórias de luz';
+    });
+
+    document.getElementById('resetScene').addEventListener('click', () => {
+      cameraZoom = 1.0; cameraPanX = 0; cameraPanY = 0;
+      sun.massScale = 1.0; massSlider.value = 1.0; massValue.innerText = "1.0";
+      moon.x = sun.x + 300; moon.y = sun.y;
+      createStars();
+    });
+
+    window.addEventListener('resize', () => { resize(); createStars(); });
+
+    resize();
+    createStars();
+    animate();
+  </script>
+</body>
+</html>

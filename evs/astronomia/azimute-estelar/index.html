@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta charset="utf-8"/>
+
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calibração - Azimute e Altitude (Hemisfério Sul)</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;line-height:1.4;margin:0;padding:20px;background:#f5f7fa;color:#1a1a1a}
+    h1,h2{color:#0a2463}
+    .card{background:linear-gradient(180deg,#ffffff, #f0f4f8);border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,0.1);border:1px solid #e0e6ed}
+    label{display:block;margin-top:8px;font-weight:500}
+    input,select,button,textarea{font-size:1rem;padding:8px;border-radius:6px;border:1px solid #a0aec0;display:block;width:100%;box-sizing:border-box;background:#ffffff;color:#2d3748}
+    .row{display:flex;gap:12px;align-items:flex-start}
+    .col{flex:1}
+    .small{font-size:0.9rem;color:#4a5568}
+    table{width:100%;border-collapse:collapse;}
+    th,td{padding:10px;border-bottom:1px solid rgba(0,0,0,0.08);text-align:center}
+    .interactive-table tbody tr{cursor:pointer;transition:background 0.2s}
+    .interactive-table tbody tr:hover{background:#e2e8f0}
+    .result{font-size:1.2rem;padding:12px;border-radius:8px;background:rgba(0,0,0,0.03);margin-top:8px}
+    .eq{background:#f8fafc;padding:12px;border-radius:8px;color:#2d3748;border:1px solid #e2e8f0}
+    .foot{font-size:0.9rem;color:#4a5568}
+    code{background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#1e293b}
+    .inline{display:inline-block;width:auto}
+    th{background:#f7fafc;font-weight:600}
+  </style>
+</head>
+<body>
+  <h1 align="center">Calibração: Azimute e Altitude de 10 estrelas 
+	(Hemisfério Sul)</h1>
+	<p align="center">&nbsp;</p>
+	<p align="center">Prof. Dr. Artur Justiniano Roberto Junior</p>
+	<p align="center">Prof. Dr. Luciano Soares Pedroso</p>
+	<p align="center" class="subtitle">
+	<font color="#000000" style="box-sizing: border-box; margin: 0; padding: 0">Discente: Julio 
+	Marcos de Oliveira Domingues</font></p>
+	<p align="center" class="subtitle">
+	<font color="#000000" style="box-sizing: border-box; margin: 0; padding: 0">Discente: 
+	Camila Cristina da Silva Ximenes</font></p>
+  <p class="small" align="center">Clique em uma estrela da lista para calcular 
+	seu azimute e sua altitude.</p>
+
+  <div class="card">
+    <h2 align="center">Entradas</h2>
+    <div class="row">
+      <div class="col">
+        <label>Data local</label>
+        <input id="date" type="date" value="" />
+      </div>
+      <div class="col">
+        <label>Hora local (HH:MM:SS)</label>
+        <input id="time" type="time" step="1" value="" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label>Latitude (graus) — sul negativo, norte positivo</label>
+        <input id="lat" placeholder="ex: -21,4294" />
+      </div>
+      <div class="col">
+        <label>Longitude (graus) — oeste negativo, leste positivo</label>
+        <input id="lon" placeholder="ex: -45,9471" />
+      </div>
+    </div>
+
+    <div style="margin-top:8px">
+      <label>Fuso horário (offset em horas em relação ao UTC). Ex: -3 para 
+		Brasil (horário padrão)</label>
+      <input id="tz" placeholder="ex: -3" value="-3" />
+    </div>
+
+  </div>
+
+  <div class="card">
+    <h2 align="center">Estrelas (clique para selecionar)</h2>
+    <p class="small">As coordenadas RA estão em horas (h) e Declinação em 
+	graus (°) — época J2000.0</p>
+    <table class="interactive-table">
+        <thead>
+            <tr>
+                <th>Estrela</th>
+                <th>Constelação</th>
+                <th>RA (h)</th>
+                <th>Dec (°)</th>
+                <th>mag</th>
+            </tr>
+        </thead>
+        <tbody id="star-table">
+            </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Resultado</h2>
+    <div id="result" class="result">Selecione uma estrela para calcular.</div>
+    <div class="small foot">Observações: o cálculo usa coordenadas 
+		equatoriais J2000.0 e um método prático para Tempo Sideral Local 
+		(precisão típica melhor que alguns segundos para propósitos de 
+		apontamento e calibração).</div>
+  </div>
+
+  <div class="card">
+    <h2>Equações usadas</h2>
+    <div class="eq">
+      <p><font face="Segoe UI"><strong>1)</strong><b> Conversão para <em>Julian Date</em> (JD) para data 
+		e hora em UTC:</b></font></p>
+      <pre><font size="3" face="Segoe UI">JD = JD_2000 + d, onde d = número de dias (incluindo fração) desde 2000-01-01 12:00 UT (J2000.0).
+Uma implementação prática é calcular JD diretamente a partir de ano, mês, dia, hora, minuto e segundo.</font></pre>
+
+      <p><font face="Segoe UI"><strong>2)</strong><b> Tempo Sideral Médio de Greenwich (GMST) 
+		aproximado</b>: Este é o tempo sideral no meridiano de Greenwich (longitude 
+		0°). O tempo sideral é um sistema de cronometragem baseado na rotação da 
+		Terra em relação às estrelas distantes, e não ao Sol. Um dia sideral é 
+		um pouco mais curto que um dia solar, com duração de aproximadamente 23 
+		horas, 56 minutos e 4 segundos. O GMST serve como um ponto de referência 
+		fundamental para o tempo sideral em todo o planeta.</font></p>
+      <pre><font size="3" face="Segoe UI">GMST (horas) = 18.697374558 + 24.06570982441908 * d
+onde d = JD - 2451545.0</font></pre>
+
+      <p><font face="Segoe UI"><strong>3)</strong><b> Tempo Sideral Local (LST)</b>: Este é o tempo sideral para a localização específica de um observador na Terra. Ele é calculado a partir do GMST e da longitude do observador. O LST é de extrema importância prática, pois indica a ascensão reta de uma estrela que está cruzando o meridiano local do observador (a linha imaginária que passa de norte a sul diretamente acima do observador). Em outras palavras, o LST informa qual "fatia" do céu está diretamente acima de você naquele momento.</font></p>
+      <pre><font size="3" face="Segoe UI">LST (horas) = GMST + longitude/15
+(observação: longitude em graus; leste positivo)</font></pre>
+
+      <p><font face="Segoe UI"><strong>4)</strong><b> Ângulo horário (HA)</b>: O Ângulo Horário de uma estrela é a medida do quão a oeste do meridiano local a estrela está. É medido em horas, minutos e segundos, com um valor positivo indicando que a estrela já passou pelo meridiano e está a oeste, e um valor negativo indicando que ela está a leste e se aproximando do meridiano. Um Ângulo Horário de 0h significa que a estrela está exatamente no meridiano, no seu ponto mais alto no céu.</font></p>
+      <pre><font size="3" face="Segoe UI">HA (horas) = LST - RA
+converter HA para radianos: HA_rad = HA * 15° * π/180</font></pre>
+
+      <p><font face="Segoe UI"><strong>5)</strong><b> Altitude (h) usando fórmulas de Astronomia 
+		Esférica:</b></font></p>
+      <pre><font size="3" face="Segoe UI">sen(h) = sen(δ) * sen(φ) + cos(δ) * cos(φ) * cos(HA)
+onde δ = declinação (rad), φ = latitude (rad), HA = ângulo horário (rad)
+então h = arcsen(sen(h))</font></pre>
+
+      <p><font face="Segoe UI"><strong>6)</strong><b> Azimute (A):</b></font></p>
+      <pre><font size="3" face="Segoe UI">A_rad = atan2(sen(HA), cos(HA) * sen(φ) - tan(δ) * cos(φ))
+
+Isso dá A no sistema: 0 = norte, aumenta para leste (radianos). 
+Convertido para graus e normalmente transformado para azimute astronômico (0° = norte, 90° = leste, 180° = sul, 270° = oeste).</font></pre>
+    </div>
+  </div>
+
+  <script>
+    // Lista das 10 estrelas com RA (horas) e Dec (graus), magnitude e constelação
+    const STARS = [
+      {name: 'Canopus', constellation: 'Carina', ra: 6.3992, dec: -52.6957, mag: -0.72},
+      {name: 'Achernar', constellation: 'Eridanus', ra: 1.6286, dec: -57.2367, mag: 0.45},
+      {name: 'Rigel Kentaurus', constellation: 'Centaurus', ra: 14.6601, dec: -60.8339, mag: -0.27},
+      {name: 'Hadar', constellation: 'Centaurus', ra: 14.0637, dec: -60.3730, mag: 0.61},
+      {name: 'Acrux', constellation: 'Crux', ra: 12.4433, dec: -63.0991, mag: 0.76},
+      {name: 'Mimosa', constellation: 'Crux', ra: 12.7953, dec: -59.6888, mag: 1.25},
+      {name: 'Antares', constellation: 'Scorpius', ra: 16.4901, dec: -26.4320, mag: 0.96},
+      {name: 'Fomalhaut', constellation: 'Piscis Austrinus', ra: 22.9608, dec: -29.6222, mag: 1.16},
+      {name: 'Spica', constellation: 'Virgo', ra: 13.4199, dec: -11.1614, mag: 0.98},
+      {name: 'Altair', constellation: 'Aquila', ra: 19.8464, dec: 8.8683, mag: 0.77}
+    ];
+
+    // Preencher tabela interativa
+    const tableBody = document.getElementById('star-table');
+    STARS.forEach((s, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${s.name}</td><td>${s.constellation}</td><td>${s.ra.toFixed(4)}</td><td>${s.dec.toFixed(4)}</td><td>${s.mag}</td>`;
+      tr.onclick = () => computeForStar(i);
+      tableBody.appendChild(tr);
+    });
+
+    // Utilidades: aceitar vírgula como separador decimal
+    function parseNumberWithComma(str){
+      if(!str && str !== 0) return NaN;
+      str = (''+str).trim();
+      if(str === '') return NaN;
+      str = str.replace(',', '.');
+      return parseFloat(str);
+    }
+
+    function formatWithComma(x, digits=4){
+      if(!isFinite(x)) return '—';
+      return x.toFixed(digits).replace('.', ',');
+    }
+
+    // Cálculo: data/hora local -> UTC -> JD -> GMST -> LST -> HA -> Alt/Azimute
+    function computeForStar(index){
+      const star = STARS[index];
+      const dateStr = document.getElementById('date').value;
+      const timeStr = document.getElementById('time').value;
+      const latStr = document.getElementById('lat').value;
+      const lonStr = document.getElementById('lon').value;
+      const tzStr = document.getElementById('tz').value;
+
+      if(!dateStr || !timeStr){
+        alert('Preencha data e hora locais.');
+        return;
+      }
+
+      const lat = parseNumberWithComma(latStr);
+      const lon = parseNumberWithComma(lonStr);
+      const tz = parseNumberWithComma(tzStr);
+      if(isNaN(lat) || isNaN(lon) || isNaN(tz)){
+        alert('Latitude, longitude ou fuso inválido. Use vírgula ou ponto como separador decimal.');
+        return;
+      }
+
+      // Monta objeto Date local (JS cria date em local timezone) — melhor construir em UTC usando campos
+      // dateStr: YYYY-MM-DD, timeStr: HH:MM:SS
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const [hh, mm, ss] = timeStr.split(':').map(Number);
+
+      // Converter hora local para UTC usando offset tz (horas)
+      // Cria data em UTC: year, monthIndex, day, hour, minute, second
+      // Atenção: mês em JS é 0-based
+      const utcHour = hh - tz;
+      const dateUTC = new Date(Date.UTC(y, m-1, d, utcHour, mm, ss));
+
+      // Função para calcular Julian Date (JD)
+      function julianDate(date){
+        // date is a JS Date in UTC
+        const Y = date.getUTCFullYear();
+        let M = date.getUTCMonth() + 1; // 1-12
+        const D = date.getUTCDate() + (date.getUTCHours()/24) + (date.getUTCMinutes()/1440) + (date.getUTCSeconds()/86400);
+
+        let A = Math.floor(Y/100);
+        let B = 2 - A + Math.floor(A/4);
+        let YY = Y;
+        let MM = M;
+        if(M <= 2){ YY = Y - 1; MM = M + 12; }
+        const JD = Math.floor(365.25*(YY + 4716)) + Math.floor(30.6001*(MM + 1)) + D + B - 1524.5;
+        return JD;
+      }
+
+      const JD = julianDate(dateUTC);
+      const d_since_J2000 = JD - 2451545.0;
+
+      // GMST em horas (aprox. método Meeus)
+      let GMST = 18.697374558 + 24.06570982441908 * d_since_J2000;
+      // normalizar para [0,24)
+      GMST = ((GMST % 24) + 24) % 24;
+
+      // LST: adicionar longitude (leste positivo) /15
+      const LST = ((GMST + lon/15) % 24 + 24) % 24;
+
+      // HA em horas
+      let HA = LST - star.ra;
+      HA = ((HA % 24) + 24) % 24; // 0..24
+      if(HA > 12) HA -= 24; // preferir -12..+12
+
+      // converter para radianos
+      const deg2rad = Math.PI/180;
+      const HA_rad = HA * 15 * deg2rad;
+      const dec_rad = star.dec * deg2rad;
+      const lat_rad = lat * deg2rad;
+
+      // calcular altitude h
+      const sen_h = Math.sin(dec_rad)*Math.sin(lat_rad) + Math.cos(dec_rad)*Math.cos(lat_rad)*Math.cos(HA_rad);
+      const h_rad = Math.asin(Math.max(-1, Math.min(1, sen_h)));
+      const h_deg = h_rad / deg2rad;
+
+      // calcular azimute A usando fórmula CORRIGIDA
+      // Fórmula mais comum e confiável:
+      const A_rad = Math.atan2(Math.sin(HA_rad), 
+                              Math.cos(HA_rad) * Math.sin(lat_rad) - Math.tan(dec_rad) * Math.cos(lat_rad));
+      
+      // converter para graus e normalizar 0..360 (0 = norte, 90 = leste)
+      let A_deg = A_rad / deg2rad;
+      if (A_deg < 0) A_deg += 360;
+
+      // Preparar saída com vírgula decimal
+      const resultDiv = document.getElementById('result');
+      const lines = [];
+      lines.push(`<strong>Estrela:</strong> ${star.name} (${star.constellation})`);
+      lines.push(`<strong>Data (local):</strong> ${dateStr} ${timeStr}`);
+      lines.push(`<strong>Latitude:</strong> ${formatWithComma(lat,6)}°  — <strong>Longitude:</strong> ${formatWithComma(lon,6)}°`);
+      lines.push(`<strong>Julian Date (UTC):</strong> ${formatWithComma(JD,6)}`);
+      lines.push(`<strong>GMST (h):</strong> ${formatWithComma(GMST,6)}`);
+      lines.push(`<strong>LST (h):</strong> ${formatWithComma(LST,6)}`);
+      lines.push(`<strong>HA (h):</strong> ${formatWithComma(HA,6)}`);
+      lines.push(`<strong>Altitude (h):</strong> ${formatWithComma(h_deg,4)}°`);
+      lines.push(`<strong>Azimute (A):</strong> ${formatWithComma(A_deg,4)}°  <span class='small'>(0° = norte, 90° = leste, 180° = sul)</span>`);
+
+      resultDiv.innerHTML = lines.map(l => `<div>${l}</div>`).join('\n');
+    }
+
+  </script>
+
+</body>
+</html>

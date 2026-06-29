@@ -1,0 +1,147 @@
+.card{
+
+    background:rgba(255,255,255,.05);
+
+    border-radius:14px;
+
+    padding:18px;
+
+    text-decoration:none;
+
+    color:white;
+
+    border:1px solid
+    rgba(255,255,255,.1);
+
+    transition:0.3s;
+
+
+}
+
+.card:hover{
+
+    transform:
+    translateY(-8px)
+    scale(1.03);
+
+    background:
+    rgba(255,255,255,.1);
+
+    box-shadow:
+    0 0 15px
+    rgba(0,150,255,.4);
+}
+
+
+.menu{
+
+    display:flex;
+
+    gap:15px;
+
+    flex-wrap:wrap;
+}
+
+.menu a{
+
+    text-decoration:none;
+
+    color:white;
+
+    padding:10px 18px;
+
+    border-radius:12px;
+
+    background:
+    rgba(255,255,255,.05);
+
+    border:1px solid
+    rgba(255,255,255,.08);
+
+    transition:.3s;
+
+    font-size:.95rem;
+}
+
+.menu a:hover{
+
+    transform:translateY(-2px);
+
+    background:rgba(255,255,255,.1);
+
+    border-color:
+    rgba(0,191,255,.5);
+
+    box-shadow:
+    0 0 12px
+    rgba(0,191,255,.3);
+}
+
+
+.subsection{
+
+    margin:36px 0 50px;
+}
+
+.subsection h3{
+    position: relative;
+    isolation: isolate;
+
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    margin: 0 0 20px;
+    padding: 12px 18px;
+
+    border-radius: 12px;
+    overflow: hidden;
+
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(0,191,255,0.22);
+
+    color: #dbeafe;
+    font-size: 1.05rem;
+    font-weight: 600;
+
+    box-shadow:
+        0 0 10px rgba(0,191,255,0.12),
+        inset 0 0 8px rgba(255,255,255,0.03);
+}
+
+.card-bloco{
+
+    background:rgba(255,255,255,.05);
+
+    padding:25px;
+
+    border-radius:16px;
+
+    margin-bottom:25px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(8px);
+
+}
+
+.card-bloco h2{
+
+    color:#00bfff;
+
+    margin-top:0;
+
+}
+
+.card-bloco ul{
+
+    padding-left:20px;
+
+}
+
+.card-bloco li{
+
+    margin-bottom:10px;
+
+}
+

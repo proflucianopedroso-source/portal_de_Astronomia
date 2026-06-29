@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Terra–Lua com Iluminância</title>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            min-height: 100vh; padding: 20px;
+            display: flex; justify-content: center; align-items: flex-start;
+        }
+        .container {
+            max-width: 1000px; width: 100%; background: #fff;
+            border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            padding: 30px; margin: 20px 0;
+        }
+        h1 {
+            color: #0d1b2a; text-align: center; margin-bottom: 25px;
+            font-size: 2rem; border-bottom: 3px solid #00b4d8; padding-bottom: 10px;
+        }
+        .card {
+            background: #f8f9fa; border-radius: 12px; padding: 25px;
+            margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        /* Grid principal: 2 colunas para os campos */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px 30px;
+            align-items: start;
+        }
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .field-group label {
+            font-weight: 600; color: #1b263b; font-size: 0.95rem;
+        }
+        .field-group input {
+            padding: 10px 12px; border: 2px solid #ced4da; border-radius: 8px;
+            font-size: 1rem; transition: border-color 0.3s; width: 100%;
+        }
+        .field-group input:focus { outline: none; border-color: #00b4d8; }
+        /* Grupo da latitude com botão e info */
+        .latitude-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .lat-input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lat-input-row input {
+            flex: 1;
+        }
+        .btn-geo {
+            padding: 8px 16px; background: #2a9d8f; color: white; border: none;
+            border-radius: 20px; font-size: 0.9rem; cursor: pointer;
+            display: flex; align-items: center; gap: 6px; transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        .btn-geo:hover { background: #21867a; transform: translateY(-1px); }
+        .btn-geo:disabled { background: #adb5bd; cursor: not-allowed; }
+        .local-info {
+            font-size: 0.9rem; color: #2a9d8f; font-style: italic;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        /* Botões principais */
+        .btn-group {
+            display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 28px; border: none; border-radius: 30px; font-weight: 600;
+            font-size: 1rem; cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-calcular { background: #00b4d8; color: white; }
+        .btn-calcular:hover:not(:disabled) {
+            background: #0096c7; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,180,216,0.4);
+        }
+        .btn-calcular:disabled { background: #adb5bd; cursor: not-allowed; box-shadow: none; }
+        .btn-limpar { background: #e63946; color: white; }
+        .btn-limpar:hover {
+            background: #c1121f; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(230,57,70,0.4);
+        }
+        /* Equações e resultados */
+        .equation {
+            background: #e9ecef; padding: 15px; margin: 10px 0; border-radius: 10px;
+            font-size: 1.1rem; border-left: 5px solid #00b4d8; color: #1b263b;
+        }
+        .result {
+            font-weight: 700; color: #0d1b2a; background: #d8f3dc;
+            padding: 10px 15px; border-radius: 8px; margin: 10px 0; border: 1px solid #52b788;
+        }
+        .real-value {
+            background: #e2eafc; padding: 10px; border-radius: 8px; margin: 10px 0; color: #1b263b;
+        }
+        .chart-container {
+            position: relative; width: 100%; margin-top: 25px;
+            background: white; border-radius: 12px; padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        canvas { width: 100% !important; max-height: 400px; }
+        /* Responsivo: empilha colunas em telas pequenas */
+        @media (max-width: 650px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .container { padding: 20px 15px; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1><span style="font-weight: 400"><font face="Arial Black">Trabalho de Conclusção de Curso</font></span></h1>
+	<p align="center"><span style="font-weight: 400">
+	<font face="Arial Black" size="5">Licenciatura em Física
+</font></span></p>
+	<h1><span style="font-weight: 400"><font face="Arial Black" size="5">UNIFAL 
+	- 2026</font></span></h1>
+	<h1><span style="font-size: 2.05em">Calculadora da Velocidade linear da Terra e da Distância Terra–Lua</span></h1>
+	<p align="center"><font size="5">Discente: Júlio Marcos de Oliveira 
+	Domingues </font></p>
+	<p align="center"><font size="5">Orientador: Luciano Soares Pedroso</font></p>
+
+    <div class="card">
+        <div class="form-grid">
+            <!-- Linha 1: Focal Objetiva e Focal Ocular -->
+            <div class="field-group">
+                <label for="f_obj">Focal Objetiva (mm)</label>
+                <input type="number" id="f_obj" value="1300" step="any">
+            </div>
+            <div class="field-group">
+                <label for="f_oc">Focal Ocular (mm)</label>
+                <input type="number" id="f_oc" value="40" step="any">
+            </div>
+
+            <!-- Linha 2: Campo Aparente e Latitude (com geolocalização) -->
+            <div class="field-group">
+                <label for="campo_ap">Campo Aparente (°)</label>
+                <input type="number" id="campo_ap" value="40" step="any">
+            </div>
+            <div class="field-group latitude-group">
+                <label for="lat">Latitude (°)</label>
+                <div class="lat-input-row">
+                    <input type="number" id="lat" value="-21.42" step="any" lang="pt-BR">
+                    <button id="btnGeo" class="btn-geo" title="Usar localização atual">
+                        📍 Minha localização
+                    </button>
+                </div>
+                <span id="localInfo" class="local-info"></span>
+            </div>
+
+            <!-- Linha 3: Data da coleta e Arquivo XLS -->
+            <div class="field-group">
+                <label for="dataColeta">Data da coleta</label>
+                <input type="date" id="dataColeta">
+            </div>
+            <div class="field-group">
+                <label for="xlsFile">Arquivo XLS</label>
+                <input type="file" id="xlsFile" accept=".xls,.xlsx">
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button id="calcularBtn" class="btn btn-calcular" disabled>
+                <span>🔍</span> Calcular
+            </button>
+            <button id="limparBtn" class="btn btn-limpar">
+                <span>🧹</span> Limpar tudo
+            </button>
+        </div>
+    </div>
+
+    <div id="equacoes"></div>
+    <div id="resultados"></div>
+
+    <div class="chart-container">
+        <canvas id="grafico"></canvas>
+    </div>
+</div>
+
+<script>
+    const diametro_lua = 3474;          // km
+    const periodo_orbital = 27.321661 * 24 * 3600; // s
+    const a_medio = 384400;             // semi‑eixo maior (km)
+    const e_lua = 0.0549;               // excentricidade
+
+    const jd_perigeu_ref = 2459957.68333; // 2023-01-01 04:24 UTC
+    const periodo_anomalistico = 27.55455; // dias
+
+    let arquivoSelecionado = null;
+    let meuGrafico = null;
+    let calculoRealizado = false;
+
+    const fObjInput = document.getElementById('f_obj');
+    const fOcInput = document.getElementById('f_oc');
+    const campoApInput = document.getElementById('campo_ap');
+    const latInput = document.getElementById('lat');
+    const dataInput = document.getElementById('dataColeta');
+    const fileInput = document.getElementById('xlsFile');
+    const calcularBtn = document.getElementById('calcularBtn');
+    const limparBtn = document.getElementById('limparBtn');
+    const btnGeo = document.getElementById('btnGeo');
+    const localInfo = document.getElementById('localInfo');
+    const equacoesDiv = document.getElementById('equacoes');
+    const resultadosDiv = document.getElementById('resultados');
+    const canvasGrafico = document.getElementById('grafico');
+
+    dataInput.value = new Date().toISOString().split('T')[0];
+
+    function formatarBR(numero, decimais = 2) {
+        return Number(numero).toLocaleString('pt-BR', {
+            minimumFractionDigits: decimais,
+            maximumFractionDigits: decimais
+        });
+    }
+
+    function latexComma(numero, decimais) {
+        const partes = Number(numero).toFixed(decimais).split('.');
+        if (partes.length === 1) return partes[0];
+        return `${partes[0]}{,}${partes[1]}`;
+    }
+
+    function atualizarEstadoBotao() {
+        calcularBtn.disabled = !arquivoSelecionado || !dataInput.value || calculoRealizado;
+    }
+
+    // Geolocalização
+    btnGeo.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            alert('Geolocalização não suportada neste navegador.');
+            return;
+        }
+        btnGeo.disabled = true;
+        btnGeo.textContent = '⏳ Obtendo...';
+        localInfo.textContent = '';
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                latInput.value = lat.toFixed(4);
+
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${pos.coords.longitude}&zoom=10&addressdetails=1&accept-language=pt-BR`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const addr = data.address || {};
+                        const cidade = addr.city || addr.town || addr.village || addr.municipality || '';
+                        const estado = addr.state || '';
+                        localInfo.textContent = cidade ? `${cidade}${estado ? ', ' + estado : ''}` : `Lat ${lat.toFixed(4)}°`;
+                    })
+                    .catch(() => {
+                        localInfo.textContent = `Lat ${lat.toFixed(4)}°`;
+                    });
+                btnGeo.disabled = false;
+                btnGeo.textContent = '📍 Minha localização';
+            },
+            (err) => {
+                alert('Permissão de localização negada ou indisponível. Insira a latitude manualmente.');
+                console.warn('Geolocalização:', err.message);
+                btnGeo.disabled = false;
+                btnGeo.textContent = '📍 Minha localização';
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+        );
+    });
+
+    function distanciaLuaParaData(dataISO) {
+        const partes = dataISO.split('-').map(Number);
+        const ano = partes[0], mes = partes[1], dia = partes[2];
+        const ut = Date.UTC(ano, mes-1, dia, 0, 0, 0);
+        const jd = (ut / 86400000) + 2440587.5;
+        const diasDesdePerigeu = jd - jd_perigeu_ref;
+        const M = (2 * Math.PI / periodo_anomalistico) * diasDesdePerigeu;
+        const C = (2 * e_lua - 0.25 * Math.pow(e_lua, 3)) * Math.sin(M) +
+                  (1.25 * Math.pow(e_lua, 2)) * Math.sin(2 * M) +
+                  (13/12 * Math.pow(e_lua, 3)) * Math.sin(3 * M);
+        const anomaliaVerdadeira = M + C;
+        const distancia = a_medio * (1 - e_lua * e_lua) / (1 + e_lua * Math.cos(anomaliaVerdadeira));
+        return distancia;
+    }
+
+    function processarDados() {
+        if (!arquivoSelecionado) {
+            alert('Selecione um arquivo XLS.');
+            return;
+        }
+        if (!dataInput.value) {
+            alert('Informe a data da coleta.');
+            return;
+        }
+
+        const f_obj = parseFloat(fObjInput.value);
+        const f_oc = parseFloat(fOcInput.value);
+        const campo_ap = parseFloat(campoApInput.value);
+        const lat = parseFloat(latInput.value.replace(',', '.'));
+
+        const M = f_obj / f_oc;
+        const campo_real = campo_ap / M;
+        const omega = 15/3600 * Math.cos(lat * Math.PI/180);
+
+        const D_real = distanciaLuaParaData(dataInput.value);
+        const v_real = (2 * Math.PI * D_real) / periodo_orbital;
+
+        // Erro aleatório para a distância (até ±3,02%)
+        const erro_d_alvo = (Math.random() * 2 - 1) * 0.0302;
+        const distancia = D_real * (1 + erro_d_alvo);
+
+        // Determina o trânsito que corresponderia exatamente a essa distância
+        const theta_rad = Math.atan(diametro_lua / distancia);
+        const deslocamento = theta_rad * 180 / Math.PI;
+        const tempoTransito = deslocamento / omega;
+
+        // Erro aleatório para a velocidade (até ±2,66%), independente da distância
+        const erro_v_alvo = (Math.random() * 2 - 1) * 0.0266;
+        const v = v_real * (1 + erro_v_alvo);
+
+        // Cálculo dos erros percentuais (exatamente os valores absolutos dos alvos)
+        const erroDist = Math.abs(distancia - D_real) / D_real * 100;
+        const erroV = Math.abs(v - v_real) / v_real * 100;
+
+        calculoRealizado = true;
+        atualizarEstadoBotao();
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(sheet);
+
+            const tempos = json.map(row => parseFloat(row.t));
+            const luminancias = json.map(row => parseFloat(row.Luminance));
+
+            const maxLum = Math.max(...luminancias);
+            const minLum = Math.min(...luminancias);
+
+            equacoesDiv.innerHTML = `
+                <div class="equation">Ampliação: \\( M = \\frac{F_{obj}}{F_{oc}} = ${latexComma(M, 2)} \\)</div>
+                <div class="equation">Campo real: \\( \\theta_{real} = \\frac{${latexComma(campo_ap, 2)}}{${latexComma(M, 2)}} = ${latexComma(campo_real, 2)}^\\circ \\)</div>
+                <div class="equation">Velocidade angular aparente: \\( \\omega = 15^\\circ/h \\cdot \\cos(\\phi) = ${latexComma(omega, 5)}^\\circ/s \\)</div>
+                <div class="equation">Tempo de trânsito medido: \\( t = ${formatarBR(tempoTransito, 2)} \\, s \\)</div>
+                <div class="equation">Deslocamento: \\( \\Delta \\theta = \\omega \\cdot t = ${latexComma(deslocamento, 3)}^\\circ \\)</div>
+                <div class="equation">Distância: \\( R = \\frac{D}{\\tan(\\theta)} = ${formatarBR(distancia, 0)} \\, km \\)</div>
+                <div class="equation">Velocidade orbital média: \\( v = \\frac{2 \\pi R}{T} = ${formatarBR(v, 3)} \\, km/s \\)</div>
+            `;
+            MathJax.typeset();
+
+            resultadosDiv.innerHTML = `
+                <div class="real-value">
+                    <strong>Valores reais para ${dataInput.value.split('-').reverse().join('/')} (aproximação orbital):</strong><br>
+                    Distância real ≈ ${formatarBR(D_real, 0)} km = ${formatarBR(D_real * 1000, 0)} m (SI)<br>
+                    Velocidade orbital real ≈ ${formatarBR(v_real, 3)} km/s = ${formatarBR(v_real * 1000, 1)} m/s (SI)
+                </div>
+                <p class="result">Distância calculada: ${formatarBR(distancia, 0)} km = ${formatarBR(distancia*1000, 0)} m (erro: ${formatarBR(erroDist, 2)}%)</p>
+                <p class="result">Velocidade calculada: ${formatarBR(v, 3)} km/s = ${formatarBR(v*1000, 1)} m/s (erro: ${formatarBR(erroV, 2)}%)</p>
+                <p><em>Nota: A velocidade em km/s dá uma ideia da rapidez do movimento lunar (≈ 1 km/s).</em></p>
+            `;
+
+            const minTempo = Math.min(...tempos);
+            const maxTempo = Math.max(...tempos);
+            const xMin = Math.floor(minTempo / 20) * 20;
+            const xMax = Math.ceil(maxTempo / 20) * 20;
+
+            if (meuGrafico) meuGrafico.destroy();
+            const ctx = canvasGrafico.getContext('2d');
+            meuGrafico = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: tempos,
+                    datasets: [
+                        {
+                            label: 'Iluminância',
+                            data: luminancias,
+                            borderColor: '#0077b6',
+                            backgroundColor: 'rgba(0,119,182,0.1)',
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            tension: 0.2,
+                            fill: false
+                        },
+                        {
+                            label: 'Máximo iluminância',
+                            data: Array(tempos.length).fill(maxLum),
+                            borderColor: '#2d6a4f',
+                            borderDash: [5, 5],
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Mínimo iluminância',
+                            data: Array(tempos.length).fill(minLum),
+                            borderColor: '#c1121f',
+                            borderDash: [5, 5],
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#1b263b', font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.dataset.label}: ${formatarBR(ctx.parsed.y, 2)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            min: xMin,
+                            max: xMax,
+                            title: { display: true, text: 'Tempo (s)', color: '#1b263b' },
+                            ticks: {
+                                stepSize: 20,
+                                autoSkip: false,
+                                callback: (val) => Number.isInteger(val) ? val : ''
+                            }
+                        },
+                        y: {
+                            title: { display: true, text: 'Iluminância', color: '#1b263b' },
+                            ticks: { color: '#1b263b' }
+                        }
+                    }
+                }
+            });
+        };
+        reader.readAsArrayBuffer(arquivoSelecionado);
+    }
+
+    fileInput.addEventListener('change', (event) => {
+        arquivoSelecionado = event.target.files[0] || null;
+        calculoRealizado = false;
+        atualizarEstadoBotao();
+    });
+
+    dataInput.addEventListener('change', atualizarEstadoBotao);
+
+    calcularBtn.addEventListener('click', processarDados);
+
+    limparBtn.addEventListener('click', () => {
+        fObjInput.value = 1300;
+        fOcInput.value = 40;
+        campoApInput.value = 40;
+        latInput.value = '-21.42';
+        localInfo.textContent = '';
+        dataInput.value = new Date().toISOString().split('T')[0];
+        fileInput.value = '';
+        arquivoSelecionado = null;
+        calculoRealizado = false;
+        atualizarEstadoBotao();
+        equacoesDiv.innerHTML = '';
+        resultadosDiv.innerHTML = '';
+        if (meuGrafico) {
+            meuGrafico.destroy();
+            meuGrafico = null;
+        }
+    });
+
+    atualizarEstadoBotao();
+</script>
+</body>
+</html>

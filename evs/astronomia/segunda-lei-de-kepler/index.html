@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta charset="utf-8"/>	
+<title>EVS - Simulação OrbitaL - 2ª Lei de Kepler</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+<!-- Google Fonts para tipografia moderna -->
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+var canvas, gfx;
+var cwidth, cheight;
+var cwidthold = null, cheightold = null;
+var pi = Math.PI;
+var cos = Math.cos, sin = Math.sin;
+var G = 6.67*Math.pow(10,-11);
+var kgPerSolarMass = 1.989*Math.pow(10,30);
+var mPerAu = 1.496*Math.pow(10,11);
+var mx = null, my = null;
+var pause = false;
+var currentPlanet = 0, scale;
+var minX, maxX;
+var deltaT = 1000/60, count = 0;
+var wedging = false, wedgeCounter;
+var wedges = [], numWedges = 0;
+var stars = []; // Array para fundo estrelado
+
+// Dados dos planetas com novos campos astronômicos
+var planetData = [
+    { name: "Mercúrio", period: 0.24, semimajor: .387, ecc: .206, min:38.9, max:59.1, const1:.0001, const2:.0001, color: '#A5A5A5' },
+    { name: "Vênus", period: 0.62, semimajor: .723, ecc: .007, min:34.8, max:35.3, const1:.0005, const2:.0005, color: '#E6C87A' }, 
+    { name: "Terra", period: 1.00, semimajor: 1.0, ecc: .017, min:29.3, max:30.3, const1:.001, const2:.001, color: '#6B93D6' }, 
+    { name: "Marte", period: 1.88, semimajor: 1.52, ecc: .093, min:22.0, max:26.5, const1:.001, const2:.001, color: '#C1440E' }, 
+    { name: "Júpiter", period: 11.86, semimajor: 5.2, ecc: .048, min:12.5, max:13.7, const1:.025, const2:.025, color: '#D8CA9D' }, 
+    { name: "Saturno", period: 29.46, semimajor: 9.55, ecc: .056, min:9.12, max:10.2, const1:.05, const2:.05, color: '#F4D59E' }, 
+    { name: "Urano", period: 84.01, semimajor: 19.2, ecc: .046, min:6.5, max:7.12, const1:.2, const2:.2, color: '#D1E7E7' }, 
+    { name: "Netuno", period: 164.8, semimajor: 30.1, ecc: .009, min:5.39, max:5.48, const1:.5, const2:.5, color: '#5B5DDF' }, 
+    { name: "Plutão", period: 248.0, semimajor: 39.7, ecc: .252, min:3.66, max:6.12, const1:.6, const2:.6, color: '#B8A89A' }, 
+    { name: "Cometa Halley", period: 75.3, semimajor: 17.9, ecc: .967, min:0.913, max:54.4, const1:.01, const2:.01, color: '#8AC9E9' }
+];
+
+var planetPaths = [];
+
+// Gerar estrelas para o fundo
+function initStars() {
+    for(let i=0; i<200; i++) {
+        stars.push({
+            x: Math.random(),
+            y: Math.random(),
+            size: Math.random() * 1.5,
+            opacity: Math.random()
+        });
+    }
+}
+
+window.onmousemove = function(e){
+    mx = e.clientX || e.x;
+    my = e.clientY || e.y;
+};
+
+window.onmousedown = function(e){
+    // Verifica se o clique não foi no painel de controle
+    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'LABEL') {
+        if(mx > 0 && mx < cwidth && my > 0 && my < cheight && !wedging && !pause){
+            wedging = true;
+            wedgeCounter = parseInt(slider.value);
+            wedges.push([]);
+        }
+    }
+};
+
+window.onload = function(){
+    canvas = document.createElement('canvas');
+    canvas.style.position = 'absolute';
+    canvas.style.left = '0';
+    canvas.style.top = '0';
+    cwidth = canvas.width = window.innerWidth*.7;
+    cheight = canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    gfx = canvas.getContext('2d');
+    
+    initStars();
+
+    planetSelector = document.getElementById('planetSelect');
+    semimajorbox = document.getElementById('semimajor');
+    eccbox = document.getElementById('eccentricity');
+    playpausebutton = document.getElementById('playpause');
+    clearbutton = document.getElementById('clear');
+    enterbutton = document.getElementById('enter');
+    slowmobox = document.getElementById('slowmo');
+    slider = document.getElementById('slider');
+    minbox = document.getElementById('minvel');
+    maxbox = document.getElementById('maxvel');
+    curbox = document.getElementById('curvel');
+    distbox = document.getElementById('distbox');
+    periodbox = document.getElementById('periodbox'); // Novo
+    namedisplay = document.getElementById('planetNameDisplay'); // Novo
+
+    playpausebutton.onclick = function(){
+        pause = !pause;
+        playpausebutton.value = pause ? '▶ Mover' : '❚❚ Pausar';
+    };
+
+    planetSelector.onchange = function(){
+        currentPlanet = parseInt(planetSelector.value);
+        scale = 3000; 
+        count = 0;
+        clearWedges();
+
+        if(currentPlanet <= 9){
+            calculateScale();
+            
+            // Atualizar interface com dados modernos
+            semimajorbox.value = planetData[currentPlanet].semimajor.toLocaleString('pt-BR', {minimumFractionDigits:2}) + ' UA';
+            eccbox.value = planetData[currentPlanet].ecc.toLocaleString('pt-BR', {minimumFractionDigits:3});
+            minbox.value = planetData[currentPlanet].min.toLocaleString('pt-BR', {minimumFractionDigits:2}) + ' km/s';
+            maxbox.value = planetData[currentPlanet].max.toLocaleString('pt-BR', {minimumFractionDigits:2}) + ' km/s';
+            periodbox.value = planetData[currentPlanet].period.toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' anos';
+            namedisplay.innerText = planetData[currentPlanet].name || "Customizado";
+            
+            enterbutton.hidden = true;
+            removeCustomData();
+            findMinMax();
+       }else{
+        namedisplay.innerText = "Customizado";
+        eccbox.value = semimajorbox.value = '';
+        periodbox.value = '-';
+        enterbutton.hidden = false;
+        // CORREÇÃO: Remove o bloqueio dos campos para permitir digitação
+        semimajorbox.readOnly = false;
+        eccbox.readOnly = false;
+    
+        }
+    };
+
+    slowmobox.onchange = slider.onchange = clearbutton.onclick = clearWedges;
+
+    enterbutton.onclick = function(){
+        clearWedges();
+        removeCustomData();
+        scale = 3000; count = 0;
+
+        if(eccbox.value && semimajorbox.value){
+            var sem = parseFloat(semimajorbox.value.replace(',','.'));
+            var ecc = parseFloat(eccbox.value.replace(',','.'));
+            if(isNaN(ecc) || isNaN(sem)) return;
+
+            var dat = {name: "Custom", period: "-", semimajor: sem, ecc: ecc, min:null, max:null, const1:null, const2:null, color: '#FFFFFF'};
+            var order = Math.round(Math.log10(sem));
+            if(order <= -1){ dat.const1 = dat.const2 = .0005; }
+            else if(order == 0){ dat.const1 = dat.const2 = .001; }
+            else if(order == 1){ dat.const1 = dat.const2 = .04; }
+            else if(order == 2){ dat.const1 = dat.const2 = .4; }
+            else { return; }
+
+            dat.min = parseFloat(calculateVMin(dat.semimajor, dat.ecc));
+            dat.max = parseFloat(calculateVMax(dat.semimajor, dat.ecc));
+
+            minbox.value = dat.min.toLocaleString('pt-BR',{minimumFractionDigits:2}) + ' km/s';
+            maxbox.value = dat.max.toLocaleString('pt-BR',{minimumFractionDigits:2}) + ' km/s';
+
+            planetData.push(dat);
+            planetPaths.push(calculate(10));
+            calculateScale();
+            findMinMax();
+
+            while(planetPaths[10].length < 500 || planetPaths[10].length > 1000){
+                if(planetPaths[10].length < 500){
+                    planetData[10].const1 /= 2; planetData[10].const2 /= 2;
+                }else{
+                    planetData[10].const1 *= 2; planetData[10].const2 *= 2;
+                }
+                planetPaths[10] = calculate(10);
+                calculateScale();
+            }
+
+            semimajorbox.value = sem.toLocaleString('pt-BR',{minimumFractionDigits:2}) + ' UA';
+        }
+    };
+
+    for(var i in planetData){ planetPaths.push(calculate(i));}
+    planetSelector.onchange();
+    setInterval(render,1000/60);
+};
+
+wedge = function(){
+    wedges[numWedges].push([planetPaths[currentPlanet][count].x,planetPaths[currentPlanet][count].y]);
+    wedgeCounter--;
+    if(wedgeCounter == 0){ wedging = false; numWedges++; }
+};
+
+clearWedges = function(){ numWedges = 0; wedges = []; wedging = false; };
+removeCustomData = function(){
+    if(planetData.length == 11){
+        var tempDat = planetData, tempPath = planetPaths;
+        planetData = []; planetPaths = [];
+        for(var i = 0; i < 10; i++){ planetData.push(tempDat[i]); planetPaths.push(tempPath[i]); }
+    }
+};
+
+calculate = function(i){
+    var a = planetData[i].semimajor;
+    var e = planetData[i].ecc;
+    var path = [];
+    var const2 = planetData[i].const2;
+    var theta = 0, r = a*(1-e);
+    var deltaTheta = const2/(r*r)*deltaT;
+
+    while(theta < pi*2.01){
+        path.push(rtToxy(r,theta));
+        theta += deltaTheta;
+        r = a*(1-(e*e)) / (1+e*cos(theta));
+        deltaTheta = const2/(r*r)*deltaT;
+    }
+
+    return path;
+};
+
+calculateScale = function(){
+    var width = cwidth/2-10, height = cheight/2-60;
+    var maxX=null,minX=null,maxY=null,minY=null;
+    for(var i in planetPaths[currentPlanet]){
+        var x = planetPaths[currentPlanet][i].x*scale;
+        var y = planetPaths[currentPlanet][i].y*scale;
+        if(maxX===null||x>maxX) maxX=x;
+        if(minX===null||x<minX) minX=x;
+        if(maxY===null||y>maxY) maxY=y;
+        if(minY===null||y<minY) minY=y;
+    }
+    if(Math.abs(maxX) > width || Math.abs(minX) > width || Math.abs(maxY) > height || Math.abs(minY) > height){
+        scale *= .9; calculateScale();
+    }
+};
+
+calculateVMin = function(a,e){
+    var M = kgPerSolarMass; a = a*mPerAu;
+    var vminsqrd = (G*M)/a*((1-e)/(1+e));
+    return Math.sqrt(vminsqrd)/1000;
+};
+calculateVMax = function(a,e){
+    var M = kgPerSolarMass; a = a*mPerAu;
+    var vmaxsqrd = (G*M)/a*((1+e)/(1-e));
+    return Math.sqrt(vmaxsqrd)/1000;
+};
+
+findMinMax = function(){
+    minX=maxX=null;
+    for(var i in planetPaths[currentPlanet]){
+        if(minX==null||planetPaths[currentPlanet][i].x<minX) minX=planetPaths[currentPlanet][i].x;
+        if(maxX==null||planetPaths[currentPlanet][i].x>maxX) maxX=planetPaths[currentPlanet][i].x;
+    }
+};
+
+rtToxy = function(r,t){ return {x:r*cos(t), y:r*sin(t), r:r, t:t}; };
+lerp = function(oldMin,oldMax,oldVal,newMin,newMax){ return (oldVal-oldMin)/(oldMax-oldMin)*(newMax-newMin)+newMin; };
+vec2 = function(x,y){ this.x=x; this.y=y; };
+add = function(v1,v2){ return new vec2(v1.x+v2.x,v1.y+v2.y); };
+sub = function(v1,v2){ return new vec2(v1.x-v2.x,v1.y-v2.y); };
+mag = function(v){ return Math.sqrt(v.x*v.x+v.y*v.y); };
+unit = function(v){ return new vec2(v.x/mag(v),v.y/mag(v)); };
+mult = function(v,s){ return new vec2(v.x*s,v.y*s); };
+
+render = function(){
+    if(cwidthold){ cwidthold=cwidth; cheightold=cheight; }
+    cwidth = canvas.width = window.innerWidth*.7;
+    cheight = canvas.height = window.innerHeight;
+    if(!cwidthold){ cwidthold=cwidth; cheightold=cheight; }
+    if(cwidthold!==cwidth || cheightold!==cheight){ scale=3000; calculateScale(); }
+
+    // 1. Fundo (Background Gradient + Stars)
+    var gradient = gfx.createLinearGradient(0, 0, 0, cheight);
+    gradient.addColorStop(0, '#0B1026');
+    gradient.addColorStop(1, '#050813');
+    gfx.fillStyle = gradient;
+    gfx.fillRect(0,0,cwidth,cheight);
+
+    // Desenhar Estrelas
+    gfx.fillStyle = '#FFFFFF';
+    for(var s in stars) {
+        gfx.globalAlpha = stars[s].opacity;
+        gfx.beginPath();
+        gfx.arc(stars[s].x * cwidth, stars[s].y * cheight, stars[s].size, 0, Math.PI*2);
+        gfx.fill();
+    }
+    gfx.globalAlpha = 1.0;
+
+    // 2. Desenha áreas (wedges)
+    if(wedging) wedge();
+    for(var i in wedges){
+        gfx.save(); 
+        gfx.fillStyle='rgba(255, 50, 50, 0.4)'; 
+        gfx.strokeStyle='rgba(255, 100, 100, 0.8)'; 
+        gfx.lineWidth = 2;
+        gfx.shadowColor = 'red'; gfx.shadowBlur = 10;
+        gfx.translate(cwidth/2, cheight/2);
+        gfx.beginPath(); gfx.moveTo(0,0);
+        for(var z in wedges[i]) gfx.lineTo(wedges[i][z][0]*scale, wedges[i][z][1]*scale);
+        gfx.lineTo(0,0); gfx.fill(); gfx.stroke(); gfx.restore();
+    }
+
+    // 3. Sol com brilho
+    gfx.save();
+    gfx.translate(cwidth/2, cheight/2);
+    gfx.shadowColor = 'yellow'; gfx.shadowBlur = 20;
+    gfx.fillStyle='#FFD700';
+    gfx.beginPath();
+    gfx.arc(0,0,8,0,Math.PI*2);
+    gfx.fill(); 
+    gfx.shadowBlur = 40;
+    gfx.fillStyle='rgba(255, 215, 0, 0.3)';
+    gfx.beginPath();
+    gfx.arc(0,0,20,0,Math.PI*2);
+    gfx.fill();
+    gfx.restore();
+
+    // 4. TRAJETÓRIA ELÍPTICA
+    if(planetPaths[currentPlanet]){
+        var pColor = planetData[currentPlanet].color || '#FFFFFF';
+        
+        gfx.save();
+        gfx.translate(cwidth/2, cheight/2);
+        
+        // Efeito Glow na órbita
+        gfx.strokeStyle = pColor;
+        gfx.shadowColor = pColor;
+        gfx.shadowBlur = 5;
+        gfx.lineWidth = 1.5;
+        gfx.beginPath();
+        for(var i=0; i<planetPaths[currentPlanet].length; i++){
+            var px = planetPaths[currentPlanet][i].x*scale;
+            var py = planetPaths[currentPlanet][i].y*scale;
+            if(i==0) gfx.moveTo(px, py);
+            else gfx.lineTo(px, py);
+        }
+        gfx.closePath();
+        gfx.stroke();
+        gfx.restore();
+
+        // Marcadores de Periélio e Afélio
+        var a = planetData[currentPlanet].semimajor;
+        var e = planetData[currentPlanet].ecc;
+        var periDist = a * (1 - e);
+        var aphDist = a * (1 + e);
+
+        gfx.save();
+        gfx.translate(cwidth/2, cheight/2);
+        gfx.font = '10px Roboto Mono';
+        
+        // Periélio (Mais próximo, à direita)
+        gfx.fillStyle = '#FF9999';
+        gfx.fillText('Periélio', periDist * scale + 10, 0);
+        gfx.strokeStyle = '#FF9999';
+        gfx.beginPath(); gfx.arc(periDist * scale, 0, 3, 0, Math.PI*2); gfx.stroke();
+
+        // Afélio (Mais distante, à esquerda)
+        gfx.fillStyle = '#99CCFF';
+        gfx.fillText('Afélio', -aphDist * scale - 50, 0);
+        gfx.strokeStyle = '#99CCFF';
+        gfx.beginPath(); gfx.arc(-aphDist * scale, 0, 3, 0, Math.PI*2); gfx.stroke();
+        gfx.restore();
+    }
+
+    // 5. Planeta em movimento
+    if(planetPaths[currentPlanet]){
+        var len = planetPaths[currentPlanet].length/2;
+        var maxV = planetData[currentPlanet].max;
+        var minV = planetData[currentPlanet].min;
+
+        if(count < len) curbox.value = lerp(0,len,count,maxV,minV).toLocaleString('pt-BR',{minimumFractionDigits:2})+' km/s';
+        else curbox.value = lerp(len,len*2,count,minV,maxV).toLocaleString('pt-BR',{minimumFractionDigits:2})+' km/s';
+
+        var px = planetPaths[currentPlanet][count].x*scale;
+        var py = planetPaths[currentPlanet][count].y*scale;
+
+        gfx.save();
+        gfx.translate(cwidth/2, cheight/2);
+        
+        // Sombra/Glow do planeta
+        gfx.shadowColor = planetData[currentPlanet].color || '#FFFFFF';
+        gfx.shadowBlur = 15;
+        gfx.fillStyle=gfx.strokeStyle=planetData[currentPlanet].color || 'white';
+        gfx.beginPath();
+        gfx.arc(px,py,6,0,Math.PI*2);
+        gfx.fill(); gfx.stroke();
+        gfx.restore();
+
+        var dist = Math.sqrt(Math.pow(planetPaths[currentPlanet][count].x,2)+Math.pow(planetPaths[currentPlanet][count].y,2));
+        distbox.value = dist.toLocaleString('pt-BR',{minimumFractionDigits:2})+' AU';
+
+        if(!pause){ count += slowmobox.checked ? 1 : 2; if(count >= planetPaths[currentPlanet].length) count = 0; }
+    }
+
+    // Crédito modernizado
+    gfx.fillStyle = 'rgba(255,255,255,0.3)';
+    gfx.font = '12px Roboto Mono';
+    gfx.fillText('Simulação Astronômica Didática baseada na 2ª Lei de Kepler', 20, cheight-20);
+    gfx.fillText('Prof. Luciano Soares Pedroso', 20, cheight-40);
+
+};
+</script>
+<style>
+    body {
+        font-family: 'Exo 2', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #050813; /* Fundo escuro combinando com o canvas */
+        color: #E0E0E0;
+        overflow: hidden; /* Remove scrollbars */
+    }
+
+    /* Painel de Controle com efeito de vidro (Glassmorphism) */
+    .container {
+        max-width: 380px;
+        margin: auto;
+        padding: 25px;
+        position:absolute;
+        left:72%; 
+        top:2%;
+        background: rgba(20, 25, 45, 0.75);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    h1 {
+        font-size: 1.2rem;
+        margin-top: 0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #4CC9F0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 10px;
+    }
+
+    #planetNameDisplay {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 10px 0 20px 0;
+        color: #FFF;
+    }
+
+    label {
+        display: inline-block;
+        width: 45%;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        color: #A0A0A0;
+    }
+
+    input, select {
+        padding: 8px;
+        margin: 5px 0 15px 0;
+        font-size: 0.9em;
+        border-radius: 5px;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(0,0,0,0.3);
+        color: #FFF;
+        font-family: 'Roboto Mono', monospace;
+    }
+
+    input[type="text"], select {
+        width: 95%;
+    }
+
+    input:disabled {
+        background: rgba(0,0,0,0.1);
+        color: #4CC9F0;
+        border: 1px solid rgba(76, 201, 240, 0.3);
+    }
+
+    button {
+        background: linear-gradient(45deg, #4CC9F0, #4361EE);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 201, 240, 0.4);
+    }
+    
+    button:active {
+        transform: translateY(0px);
+    }
+
+    input[type="checkbox"] {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: rgba(0,0,0,0.3);
+        border-radius: 4px;
+        cursor: pointer;
+        vertical-align: middle;
+        margin-right: 10px;
+    }
+    
+    input[type="checkbox"]:checked {
+        background: #4CC9F0;
+    }
+
+    .input-group {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .input-group input {
+        width: 48%;
+        margin: 0;
+    }
+    
+    .input-group label {
+        width: 48%;
+    }
+
+    #slider {
+        width: 100%; 
+        margin-top: 5px;
+    }
+
+    /* Responsividade para telas pequenas */
+    @media (max-width:1000px){
+        .container {
+            left:auto; 
+            right: 10px; 
+            width: 280px;
+            padding: 15px;
+        }
+        canvas {
+            width: 60% !important;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1 align="center">EVS - Simulação Orbital</h1>
+    <div id="planetNameDisplay">--</div>
+
+    <form onsubmit="return false;">
+        <label for="planetSelect">Selecionar Corpo:</label>
+        <select id="planetSelect">
+            <option value="0">Mercúrio</option>
+            <option value="1">Vênus</option>
+            <option value="2" selected>Terra</option>
+            <option value="3">Marte</option>
+            <option value="4">Júpiter</option>
+            <option value="5">Saturno</option>
+            <option value="6">Urano</option>
+            <option value="7">Netuno</option>
+            <option value="8">Plutão</option>
+            <option value="9">Cometa Halley</option>
+            <option value="10">Customizado</option>
+        </select>
+
+        <div class="input-group">
+            <div>
+                <label>Semieixo (a):</label>
+                <input id="semimajor" type="text" readonly/>
+            </div>
+            <div>
+                <label>Excentricidade:</label>
+                <input id="eccentricity" type="text" readonly/>
+            </div>
+        </div>
+
+        <div class="input-group">
+             <div>
+                <label>Período Orbital:</label>
+                <input id="periodbox" type="text" disabled/>
+            </div>
+            <div>
+                <label>Dist. Atual:</label>
+                <input id="distbox" disabled/>
+            </div>
+        </div>
+       
+        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <label style="width:100%; color:#FFF;">Velocidade Orbital:</label>
+            <div class="input-group">
+                <div>
+                    <label>Atual:</label>
+                    <input id="curvel" disabled/>
+                </div>
+            </div>
+            <div class="input-group">
+                <div>
+                    <label>Máxima (Periélio):</label>
+                    <input id="maxvel" disabled/>
+                </div>
+                <div>
+                    <label>Mínima (Afélio):</label>
+                    <input id="minvel" disabled/>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <input id="playpause" type="button" value="❚❚ Pausar"/>
+            <input id="clear" type="button" value="Limpar Áreas"/>
+            <input hidden="true" id="enter" type="button" value="Gerar Custom"/>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <input id="slowmo" type="checkbox"/> <span style="font-size:0.9em; cursor:pointer" onclick="document.getElementById('slowmo').click()">Câmera Lenta</span>
+            <br/><br/>
+            <label>Tempo do Setor (Área):</label>
+            <input id="slider" max="60" min="5" type="range" value="15"/>
+        	Clique na região da órbita para gerar a área!</div>
+    </form>
+</div>
+
+</body>
+</html>

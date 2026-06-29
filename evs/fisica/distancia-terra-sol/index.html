@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - Diâmetro do Sol</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0f1a;
+            --bg-secondary: #111827;
+            --fg: #f0f4f8;
+            --muted: #6b7a90;
+            --accent: #f59e0b;
+            --accent-glow: rgba(245, 158, 11, 0.3);
+            --card: rgba(17, 24, 39, 0.8);
+            --border: rgba(245, 158, 11, 0.2);
+            --sun-core: #fbbf24;
+            --sun-mid: #f59e0b;
+            --sun-outer: #d97706;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Animated background */
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245, 158, 11, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(217, 119, 6, 0.1), transparent),
+                linear-gradient(180deg, var(--bg) 0%, #0f172a 100%);
+            z-index: -2;
+        }
+
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Sun illustration */
+        .sun-illustration {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+
+        .sun-core {
+            position: absolute;
+            inset: 15%;
+            background: radial-gradient(circle, var(--sun-core) 0%, var(--sun-mid) 60%, var(--sun-outer) 100%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 30px var(--sun-core),
+                0 0 60px rgba(251, 191, 36, 0.5),
+                0 0 90px rgba(245, 158, 11, 0.3);
+            animation: sunPulse 3s ease-in-out infinite;
+        }
+
+        .sun-rays {
+            position: absolute;
+            inset: 0;
+            animation: sunRotate 30s linear infinite;
+        }
+
+        .sun-ray {
+            position: absolute;
+            width: 2px;
+            height: 16px;
+            background: linear-gradient(to top, transparent, var(--accent));
+            left: 50%;
+            transform-origin: center 50px;
+        }
+
+        @keyframes sunPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        @keyframes sunRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Form elements */
+        .input-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            padding-right: 3rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--fg);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .input-field::placeholder {
+            color: rgba(107, 122, 144, 0.5);
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            font-size: 0.8rem;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        /* Mode toggle */
+        .mode-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .mode-btn:not(.active):hover {
+            color: var(--fg);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        /* Calculate button */
+        .calc-btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--accent), var(--sun-outer));
+            border: none;
+            border-radius: 10px;
+            color: var(--bg);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calc-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        .calc-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .calc-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--accent-glow);
+        }
+
+        .calc-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Results */
+        .result-card {
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(30, 41, 59, 0.95));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .result-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--fg);
+            margin-bottom: 0.25rem;
+        }
+
+        .result-scientific {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--accent);
+            padding: 0.5rem 1rem;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        /* Error comparison card */
+        .comparison-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+
+        .error-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .error-badge.excellent {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .error-badge.good {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .error-badge.moderate {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+            border: 1px solid rgba(251, 146, 60, 0.3);
+        }
+
+        .error-badge.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .progress-fill.excellent { background: linear-gradient(90deg, #10b981, #34d399); }
+        .progress-fill.good { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .progress-fill.moderate { background: linear-gradient(90deg, #ea580c, #fb923c); }
+        .progress-fill.high { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+        /* Formula display */
+        .formula-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid var(--accent);
+            padding: 1rem 1.25rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .formula-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .formula-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--fg);
+        }
+
+        /* Entrance animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .result-value {
+                font-size: 1.25rem;
+            }
+            .result-scientific {
+                font-size: 1rem;
+            }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Experiment image */
+        .experiment-image {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin: 1rem 0;
+        }
+
+        .experiment-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .image-caption {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        /* Info tooltip */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: var(--border);
+            border-radius: 50%;
+            font-size: 0.7rem;
+            color: var(--accent);
+            margin-left: 0.5rem;
+            cursor: help;
+            transition: all 0.2s ease;
+        }
+
+        .info-icon:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        /* Reference values */
+        .reference-box {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(245, 158, 11, 0.05);
+            border-radius: 8px;
+            border: 1px dashed rgba(245, 158, 11, 0.3);
+        }
+
+        .reference-item {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .reference-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+        }
+
+        .reference-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="max-w-3xl mx-auto px-4 py-8 md:py-12">
+        <!-- Header -->
+        <header class="text-center mb-8 fade-in">
+            <div class="sun-illustration mb-6">
+                <div class="sun-core"></div>
+                <div class="sun-rays" id="sunRays"></div>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2" style="letter-spacing: -0.02em;">
+                Calculadora Câmara Escura</h1>
+		<h1 class="text-3xl md:text-4xl font-bold mb-2" style="letter-spacing: -0.02em;" align="center">
+                <span style="font-weight: 400"><font size="3">Prof. Luciano 
+				Soares Pedroso </font></span>
+            </h1>
+            <p class="text-base md:text-lg" style="color: var(--muted);">
+                Determine o diâmetro do Sol ou a distância Terra-Sol
+            </p>
+        </header>
+
+        <!-- Experiment image -->
+        <div class="experiment-image fade-in delay-1">
+            <img src="https://z-cdn-media.chatglm.cn/files/91161b59-31c4-4030-9cdc-4b12f2ea9d5e.png?auth_key=1878150249-b45db674887940929ba572632a5b10f7-0-6c60a549b15af797c822310216e080e7" alt="Experimento de câmara escura ao ar livre">
+            <div class="image-caption">
+                Experimento de câmara escura para medição do diâmetro solar
+            </div>
+        </div>
+
+        <!-- Main calculator -->
+        <main class="mt-6">
+            <div class="bg-card backdrop-blur-sm rounded-2xl p-6 md:p-8 border border-solid fade-in delay-2" style="background: var(--card); border-color: var(--border);">
+                
+                <!-- Mode toggle -->
+                <div class="mode-toggle" role="tablist" aria-label="Modo de cálculo">
+                    <button class="mode-btn active" role="tab" aria-selected="true" data-mode="diameter" id="btnDiameter">
+                        Calcular Diâmetro do Sol
+                    </button>
+                    <button class="mode-btn" role="tab" aria-selected="false" data-mode="distance" id="btnDistance">
+                        Calcular Distância Terra-Sol
+                    </button>
+                </div>
+
+                <!-- Formula -->
+                <div class="formula-box">
+                    <div class="formula-title">Fórmula da Câmara Escura</div>
+                    <div class="formula-text" id="formulaDisplay">
+                        D_sol = D_ts × (d_imagem / L_tubo)
+                    </div>
+                </div>
+
+                <!-- Input form -->
+                <form id="calcForm" aria-label="Formulário de cálculo">
+                    <div id="distanceInputGroup" class="input-group">
+                        <label class="input-label" for="distanceInput">
+                            Distância Terra-Sol
+                            <span class="info-icon" title="Distância média: 149.600.000 km">?</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="text" 
+                                   id="distanceInput" 
+                                   class="input-field" 
+                                   placeholder="Ex: 149.600.000"
+                                   inputmode="numeric"
+                                   aria-describedby="distanceHint">
+                            <span class="input-unit">km</span>
+                        </div>
+                        <small id="distanceHint" style="color: var(--muted); font-size: 0.75rem;">Use vírgula ou ponto para separar milhares</small>
+                    </div>
+
+                    <div id="diameterInputGroup" class="input-group" style="display: none;">
+                        <label class="input-label" for="diameterSolInput">
+                            Diâmetro do Sol
+                            <span class="info-icon" title="Diâmetro real: 1.392.700 km">?</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="text" 
+                                   id="diameterSolInput" 
+                                   class="input-field" 
+                                   placeholder="Ex: 1.392.700"
+                                   inputmode="numeric">
+                            <span class="input-unit">km</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label class="input-label" for="imageDiameter">
+                                Diâmetro da imagem projetada
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" 
+                                       id="imageDiameter" 
+                                       class="input-field" 
+                                       placeholder="Ex: 12,5"
+                                       inputmode="decimal"
+                                       required>
+                                <span class="input-unit">mm</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label" for="tubeLength">
+                                Comprimento do tubo
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" 
+                                       id="tubeLength" 
+                                       class="input-field" 
+                                       placeholder="Ex: 150"
+                                       inputmode="decimal"
+                                       required>
+                                <span class="input-unit">cm</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="calc-btn mt-6">
+                        Calcular
+                    </button>
+                </form>
+
+                <!-- Results -->
+                <div id="resultsContainer"></div>
+            </div>
+        </main>
+
+        <!-- Footer info -->
+        <footer class="mt-8 text-center fade-in delay-3" style="color: var(--muted); font-size: 0.85rem;">
+            <p>Baseado no princípio óptico da câmara escura (pinhole camera)</p>
+            <p class="mt-1">Valores de referência: D_sol = 1.392.700 km | D_ts = 149.600.000 km</p>
+        </footer>
+    </div>
+
+    <script>
+        // Scientific reference values
+        const REFERENCE = {
+            sunDiameter: 1392700,      // km
+            earthSunDistance: 149600000 // km
+        };
+
+        // Initialize sun rays
+        const sunRaysContainer = document.getElementById('sunRays');
+        if (sunRaysContainer) {
+            for (let i = 0; i < 12; i++) {
+                const ray = document.createElement('div');
+                ray.className = 'sun-ray';
+                ray.style.transform = `rotate(${i * 30}deg)`;
+                sunRaysContainer.appendChild(ray);
+            }
+        }
+
+        // State
+        let currentMode = 'diameter';
+
+        // DOM Elements
+        const btnDiameter = document.getElementById('btnDiameter');
+        const btnDistance = document.getElementById('btnDistance');
+        const distanceInputGroup = document.getElementById('distanceInputGroup');
+        const diameterInputGroup = document.getElementById('diameterInputGroup');
+        const distanceInput = document.getElementById('distanceInput');
+        const diameterSolInput = document.getElementById('diameterSolInput');
+        const imageDiameter = document.getElementById('imageDiameter');
+        const tubeLength = document.getElementById('tubeLength');
+        const calcForm = document.getElementById('calcForm');
+        const formulaDisplay = document.getElementById('formulaDisplay');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        // Mode toggle handlers
+        btnDiameter.addEventListener('click', () => switchMode('diameter'));
+        btnDistance.addEventListener('click', () => switchMode('distance'));
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Update buttons
+            btnDiameter.classList.toggle('active', mode === 'diameter');
+            btnDistance.classList.toggle('active', mode === 'distance');
+            btnDiameter.setAttribute('aria-selected', mode === 'diameter');
+            btnDistance.setAttribute('aria-selected', mode === 'distance');
+            
+            // Update form fields
+            if (mode === 'diameter') {
+                distanceInputGroup.style.display = 'block';
+                diameterInputGroup.style.display = 'none';
+                distanceInput.required = true;
+                diameterSolInput.required = false;
+                formulaDisplay.textContent = 'D_sol = D_ts × (d_imagem / L_tubo)';
+            } else {
+                distanceInputGroup.style.display = 'none';
+                diameterInputGroup.style.display = 'block';
+                distanceInput.required = false;
+                diameterSolInput.required = true;
+                formulaDisplay.textContent = 'D_ts = D_sol × (L_tubo / d_imagem)';
+            }
+            
+            // Clear results
+            resultsContainer.innerHTML = '';
+        }
+
+        // Parse Brazilian number format
+        function parseNumber(str) {
+            if (!str) return NaN;
+            // Remove thousand separators (dots) and convert comma to dot
+            const normalized = str.toString()
+                .replace(/\./g, '')
+                .replace(',', '.');
+            return parseFloat(normalized);
+        }
+
+        // Format number with Brazilian notation
+        function formatNumber(num, decimals = 0) {
+            return num.toLocaleString('pt-BR', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        // Format in scientific notation (Brazilian style)
+        function formatScientific(num) {
+            if (num === 0) return '0';
+            
+            const exponent = Math.floor(Math.log10(Math.abs(num)));
+            const mantissa = num / Math.pow(10, exponent);
+            
+            // Format mantissa with Brazilian decimal separator
+            const mantissaStr = mantissa.toLocaleString('pt-BR', {
+                minimumFractionDigits: 4,
+                maximumFractionDigits: 4
+            });
+            
+            return `${mantissaStr} × 10<sup>${exponent}</sup>`;
+        }
+
+        // Calculate percentage error
+        function calculateError(measured, real) {
+            return Math.abs((measured - real) / real) * 100;
+        }
+
+        // Get error classification
+        function getErrorClassification(errorPercent) {
+            if (errorPercent <= 5) return { class: 'excellent', label: 'Excelente', icon: '★★★' };
+            if (errorPercent <= 15) return { class: 'good', label: 'Bom', icon: '★★' };
+            if (errorPercent <= 30) return { class: 'moderate', label: 'Moderado', icon: '★' };
+            return { class: 'high', label: 'Alto', icon: '' };
+        }
+
+        // Calculate and display results
+        calcForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const imageDiam = parseNumber(imageDiameter.value); // mm
+            const tubeLen = parseNumber(tubeLength.value); // cm
+            
+            // Validation
+            if (isNaN(imageDiam) || imageDiam <= 0) {
+                showError('Por favor, insira um valor válido para o diâmetro da imagem.');
+                return;
+            }
+            
+            if (isNaN(tubeLen) || tubeLen <= 0) {
+                showError('Por favor, insira um valor válido para o comprimento do tubo.');
+                return;
+            }
+            
+            // Convert tube length to mm for consistency
+            const tubeLenMm = tubeLen * 10;
+            
+            let result;
+            let resultName;
+            let inputName;
+            let inputValue;
+            let referenceValue;
+            
+            if (currentMode === 'diameter') {
+                const distTS = parseNumber(distanceInput.value); // km
+                
+                if (isNaN(distTS) || distTS <= 0) {
+                    showError('Por favor, insira um valor válido para a distância Terra-Sol.');
+                    return;
+                }
+                
+                // D_sol = D_ts × (d_imagem / L_tubo)
+                result = distTS * (imageDiam / tubeLenMm);
+                resultName = 'Diâmetro do Sol';
+                inputName = 'Distância Terra-Sol';
+                inputValue = distTS;
+                referenceValue = REFERENCE.sunDiameter;
+            } else {
+                const diamSol = parseNumber(diameterSolInput.value); // km
+                
+                if (isNaN(diamSol) || diamSol <= 0) {
+                    showError('Por favor, insira um valor válido para o diâmetro do Sol.');
+                    return;
+                }
+                
+                // D_ts = D_sol × (L_tubo / d_imagem)
+                result = diamSol * (tubeLenMm / imageDiam);
+                resultName = 'Distância Terra-Sol';
+                inputName = 'Diâmetro do Sol';
+                inputValue = diamSol;
+                referenceValue = REFERENCE.earthSunDistance;
+            }
+            
+            const errorPercent = calculateError(result, referenceValue);
+            const errorClass = getErrorClassification(errorPercent);
+            
+            displayResults(result, resultName, imageDiam, tubeLenMm, inputName, inputValue, referenceValue, errorPercent, errorClass);
+        });
+
+        function showError(message) {
+            resultsContainer.innerHTML = `
+                <div class="result-card visible" style="border-color: #ef4444;">
+                    <p style="color: #f87171;">${message}</p>
+                </div>
+            `;
+        }
+
+        function displayResults(result, resultName, imageDiam, tubeLenMm, inputName, inputValue, referenceValue, errorPercent, errorClass) {
+            const formattedResult = formatNumber(Math.round(result));
+            const scientificResult = formatScientific(result);
+            const formattedReference = formatNumber(referenceValue);
+            const scientificReference = formatScientific(referenceValue);
+            
+            // Calculate accuracy percentage (for progress bar)
+            const accuracyPercent = Math.max(0, 100 - errorPercent);
+            
+            const html = `
+                <div class="result-card" id="resultCard">
+                    <!-- Main Result -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <div class="result-title">Resultado Calculado</div>
+                            <div class="result-value">${resultName}</div>
+                            <div style="color: var(--fg); font-size: 1.75rem; font-weight: 300;">
+                                ${formattedResult} km
+                            </div>
+                        </div>
+                        <div>
+                            <div class="result-title">Notação Científica</div>
+                            <div class="result-scientific">${scientificResult} km</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Comparison Card -->
+                    <div class="comparison-card">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="result-title">Valor de Referência (Literatura)</div>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: var(--fg);">
+                                    ${formattedReference} km
+                                </div>
+                                <div class="mono" style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;">
+                                    ${scientificReference} km
+                                </div>
+                            </div>
+                            <div>
+                                <div class="result-title">Erro Percentual</div>
+                                <div class="error-badge ${errorClass.class}">
+                                    <span>${errorClass.icon}</span>
+                                    <span>${errorPercent.toFixed(2)}%</span>
+                                    <span style="font-weight: 400; font-size: 0.85rem;">(${errorClass.label})</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Accuracy Progress Bar -->
+                        <div style="margin-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.5rem;">
+                                <span>Precisão do experimento</span>
+                                <span>${accuracyPercent.toFixed(1)}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill ${errorClass.class}" style="width: ${Math.min(accuracyPercent, 100)}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Input Data Summary -->
+                    <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+                        <div class="result-title">Dados Utilizados no Cálculo</div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+                            <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: var(--muted);">${inputName}</div>
+                                <div class="mono" style="color: var(--fg);">${formatNumber(inputValue)} km</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: var(--muted);">Diâmetro da imagem</div>
+                                <div class="mono" style="color: var(--fg);">${formatNumber(imageDiam, 2)} mm</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px;">
+                                <div style="font-size: 0.75rem; color: var(--muted);">Comprimento do tubo</div>
+                                <div class="mono" style="color: var(--fg);">${formatNumber(tubeLenMm, 1)} mm</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultsContainer.innerHTML = html;
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                const card = document.getElementById('resultCard');
+                if (card) card.classList.add('visible');
+            });
+            
+            // Scroll to results
+            setTimeout(() => {
+                const resultCard = document.getElementById('resultCard');
+                if (resultCard) {
+                    resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }, 100);
+        }
+
+        // Keyboard navigation for mode buttons
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const nextMode = currentMode === 'diameter' ? 'distance' : 'diameter';
+                    switchMode(nextMode);
+                    const nextBtn = document.getElementById(nextMode === 'diameter' ? 'btnDiameter' : 'btnDistance');
+                    if (nextBtn) nextBtn.focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

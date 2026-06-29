@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVS - Evolução Estelar</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+    }
+    canvas { display: block; }
+    
+    #interface {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(8, 12, 25, 0.92);
+      padding: 16px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(100, 150, 255, 0.5);
+      max-width: 380px;
+      box-shadow: 0 0 25px rgba(70, 130, 255, 0.4);
+      z-index: 100;
+    }
+    #interface h2 {
+      margin-bottom: 10px;
+      color: #8ad4ff;
+      font-size: 1.4em;
+      border-bottom: 1px solid rgba(100, 150, 255, 0.4);
+      padding-bottom: 10px;
+    }
+    #fase {
+      font-weight: bold;
+      color: #ffd700;
+      font-size: 1.15em;
+      margin: 6px 0;
+      min-height: 1.4em;
+    }
+    #tempoInfo {
+      font-size: 0.95em;
+      color: #aaa;
+      margin: 4px 0;
+    }
+    #progresso {
+      width: 100%;
+      height: 10px;
+      background: rgba(40, 55, 85, 0.8);
+      border-radius: 5px;
+      margin: 12px 0 8px 0;
+      overflow: hidden;
+      border: 1px solid rgba(100, 130, 180, 0.4);
+    }
+    #barra {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4a90e2, #7dd3fc, #ffd700, #ff8c69, #c0c0c0);
+      border-radius: 5px;
+      transition: width 0.2s ease;
+    }
+    
+    .slider-container { margin: 15px 0 10px 0; }
+    .slider-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.85em; color: #ccc; margin-bottom: 6px;
+    }
+    input[type="range"] {
+      width: 100%; height: 24px; -webkit-appearance: none;
+      background: rgba(30, 45, 75, 0.9); border-radius: 12px;
+      outline: none; border: 1px solid rgba(100, 130, 180, 0.5);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 28px; height: 28px;
+      border-radius: 50%; background: linear-gradient(135deg, #5a9fd4, #3a7bc8);
+      cursor: pointer; border: 2px solid #fff;
+      box-shadow: 0 0 10px rgba(100, 180, 255, 0.7);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, #5a9fd4, #3a7bc8);
+      cursor: pointer; border: 2px solid #fff;
+      box-shadow: 0 0 10px rgba(100, 180, 255, 0.7);
+    }
+    
+    #controles { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      background: linear-gradient(135deg, #253550, #3a5075);
+      color: #fff; border: none; padding: 7px 14px; border-radius: 7px;
+      cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+      flex: 1; min-width: 75px; border: 1px solid rgba(100, 140, 200, 0.4);
+    }
+    button:hover {
+      background: linear-gradient(135deg, #2f4260, #455d85);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+    }
+    button:active { transform: translateY(0); }
+    
+    /* ✅ CORREÇÃO 3: Box ampliado em 25% (420px → 525px) */
+    #info {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      background: rgba(8, 12, 25, 0.92);
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-size: 0.9em;
+      line-height: 1.7;
+      max-width: 525px;
+      border: 1px solid rgba(100, 150, 255, 0.4);
+      z-index: 100;
+    }
+    #info strong { color: #8ad4ff; }
+    .destaque { color: #ffd700; font-weight: 600; }
+    .fase-cor { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+    
+    #instrucoesMouse {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(8, 12, 25, 0.88);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.8em;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      z-index: 100;
+      line-height: 1.5;
+    }
+    #instrucoesMouse strong { color: #8ad4ff; }
+    .tecla { 
+      display: inline-block;
+      background: rgba(50, 70, 110, 0.7); 
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      border: 1px solid rgba(100, 130, 180, 0.5);
+    }
+    
+    /* ✅ CORREÇÃO 1: Gráfico ampliado em 50% (container ajustado) */
+    #graficoContainer {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      background: rgba(8, 12, 25, 0.92);
+      border-radius: 12px;
+      border: 1px solid rgba(100, 150, 255, 0.4);
+      padding: 14px;
+      z-index: 100;
+    }
+    #graficoContainer h3 {
+      font-size: 1em;
+      color: #8ad4ff;
+      margin-bottom: 10px;
+      text-align: center;
+      border-bottom: 1px solid rgba(100, 150, 255, 0.3);
+      padding-bottom: 8px;
+    }
+    #graficoLuminosidade {
+      border-radius: 6px;
+      cursor: crosshair;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas3d"></canvas>
+  
+  <div id="interface">
+    <h2>🌌 EVS - Evolução Estelar 3D</h2>
+	<p align="center"><font size="2">Prof. Luciano Soares Pedroso</font></p>
+	<p align="center">&nbsp;</p>
+    <div>Fase: <span id="fase">Nebulosa Interestelar</span></div>
+    <div id="tempoInfo">Tempo: <span id="tempo">0,00</span> <span id="unidade">milhões de anos</span></div>
+    <div id="progresso"><div id="barra"></div></div>
+    
+    <div class="slider-container">
+      <div class="slider-label">
+        <span>Velocidade da simulação</span>
+        <span id="velocidadeValor">1× <small>(1 mil. anos/s)</small></span>
+      </div>
+      <input type="range" id="sliderVelocidade" min="0" max="100" value="20">
+    </div>
+    
+    <div>Luminosidade: <span id="luminosidadeAtual">0,00</span> L☉</div>
+    <div>Partículas: <span id="acumuladas">0</span>/<span id="total">800</span> acumuladas</div>
+    
+    <div id="controles">
+      <button id="btnPausar">⏸️ Pausar</button>
+      <button id="btnReiniciar">🔄 Reiniciar</button>
+    </div>
+  </div>
+  
+  <div id="info">
+    <strong>Ciclo de vida estelar (estrela tipo Sol):</strong><br>
+    <span class="fase-cor" style="background:#8ab4f8"></span> <span class="destaque">Nebulosa:</span> 0 - 5 Mi anos — Colapso da nuvem<br>
+    <span class="fase-cor" style="background:#a0c4ff"></span> <span class="destaque">Protoestrela:</span> 5 - 50 Mi anos — Disco de acreção, aquecimento<br>
+    <span class="fase-cor" style="background:#ffd700"></span> <span class="destaque">Sequência Principal:</span> 50 Mi - 10 Bi anos — Fusão H→He 🌞<br>
+    <span class="fase-cor" style="background:#ff8c69"></span> <span class="destaque">Gigante Vermelha:</span> 10 - 11,5 Bi anos — Expansão, fusão de He<br>
+    <span class="fase-cor" style="background:#ffb3d9"></span> <span class="destaque">Nebulosa Planetária:</span> 11,5 - 12 Bi anos — Ejeção das camadas externas<br>
+    <span class="fase-cor" style="background:#c0c0c0"></span> <span class="destaque">Anã Branca:</span> >12 Bi anos — Remanescente denso, resfriamento lento
+  </div>
+  
+  
+
+  <div id="graficoContainer">
+    <h3>📈 Luminosidade × Tempo</h3>
+    <canvas id="graficoLuminosidade" width="480" height="270"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas3d");
+    const ctx = canvas.getContext("2d");
+    const canvasGrafico = document.getElementById("graficoLuminosidade");
+    const ctxGrafico = canvasGrafico.getContext("2d");
+    
+    let FOV = 400;
+    const FOV_MIN = 200;
+    const FOV_MAX = 800;
+    let anguloCameraX = 0.15;
+    let anguloCameraY = 0;
+    
+    let mouseArrastando = false;
+    let mouseXAnterior = 0, mouseYAnterior = 0;
+    const SENSIBILIDADE_ROTACAO = 0.005;
+    
+    canvas.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      FOV += e.deltaY > 0 ? 15 : -15;
+      FOV = Math.max(FOV_MIN, Math.min(FOV_MAX, FOV));
+    }, { passive: false });
+    
+    canvas.addEventListener('mousedown', function(e) {
+      mouseArrastando = true;
+      mouseXAnterior = e.clientX;
+      mouseYAnterior = e.clientY;
+      canvas.style.cursor = 'grabbing';
+    });
+    
+    window.addEventListener('mousemove', function(e) {
+      if (!mouseArrastando) return;
+      const dx = e.clientX - mouseXAnterior;
+      const dy = e.clientY - mouseYAnterior;
+      anguloCameraY += dx * SENSIBILIDADE_ROTACAO;
+      anguloCameraX += dy * SENSIBILIDADE_ROTACAO;
+      anguloCameraX = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, anguloCameraX));
+      mouseXAnterior = e.clientX;
+      mouseYAnterior = e.clientY;
+    });
+    
+    window.addEventListener('mouseup', function() {
+      mouseArrastando = false;
+      canvas.style.cursor = 'default';
+    });
+    
+    canvas.addEventListener('dblclick', function() {
+      anguloCameraX = 0.15;
+      anguloCameraY = 0;
+      FOV = 400;
+    });
+    
+    let toqueAnterior = null;
+    canvas.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        mouseArrastando = true;
+        mouseXAnterior = e.touches[0].clientX;
+        mouseYAnterior = e.touches[0].clientY;
+      }
+    });
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (mouseArrastando && e.touches.length === 1) {
+        const dx = e.touches[0].clientX - mouseXAnterior;
+        const dy = e.touches[0].clientY - mouseYAnterior;
+        anguloCameraY += dx * SENSIBILIDADE_ROTACAO;
+        anguloCameraX += dy * SENSIBILIDADE_ROTACAO;
+        anguloCameraX = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, anguloCameraX));
+        mouseXAnterior = e.touches[0].clientX;
+        mouseYAnterior = e.touches[0].clientY;
+      }
+    }, { passive: false });
+    canvas.addEventListener('touchend', function() { mouseArrastando = false; });
+    
+    function redimensionar() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    redimensionar();
+    window.addEventListener('resize', redimensionar);
+
+    let tempoSimulado = 0;
+    let velocidadeBase = 1;
+    let fatorAceleracao = 1;
+    let pausado = false;
+    const duracaoTotal = 13000;
+    
+    const fases = [
+      { nome: "Nebulosa Interestelar", limite: 5, corBase: [140, 170, 240], corEstrela: null, raioEstrela: 0, luminosidade: 0 },
+      { nome: "Protoestrela + Disco", limite: 50, corBase: [180, 200, 245], corEstrela: [220, 130, 85], raioEstrela: 20, luminosidade: 3 },
+      { nome: "⭐ Sequência Principal", limite: 10000, corBase: [240, 235, 190], corEstrela: [255, 248, 200], raioEstrela: 45, luminosidade: 1 },
+      { nome: "🔴 Gigante Vermelha", limite: 11500, corBase: [255, 140, 100], corEstrela: [255, 100, 60], raioEstrela: 100, luminosidade: 2000 },
+      { nome: "🌸 Nebulosa Planetária", limite: 12000, corBase: [200, 180, 240], corEstrela: [200, 220, 255], raioEstrela: 18, luminosidade: 80 },
+      { nome: "⚪ Anã Branca", limite: duracaoTotal, corBase: [220, 220, 240], corEstrela: [240, 245, 255], raioEstrela: 10, luminosidade: 0.001 }
+    ];
+    
+    let faseAtual = 0;
+    
+    const dadosGrafico = [];
+    const INTERVALO_AMOSTRAGEM = 50;
+    let ultimoTempoAmostragem = 0;
+
+    function calcularLuminosidade() {
+      if (faseAtual === 0) return 0;
+      if (faseAtual === 5) return 0.001;
+      
+      const fase = fases[faseAtual];
+      const faseAnterior = fases[faseAtual - 1];
+      const progresso = (tempoSimulado - faseAnterior.limite) / (fase.limite - faseAnterior.limite);
+      const p = Math.min(1, Math.max(0, progresso));
+      
+      const logL1 = Math.log10(Math.max(0.0001, faseAnterior.luminosidade));
+      const logL2 = Math.log10(Math.max(0.0001, fase.luminosidade));
+      const logAtual = logL1 + (logL2 - logL1) * p;
+      
+      return Math.pow(10, logAtual);
+    }
+
+    class Particula3D {
+      constructor() { this.reset(); }
+      reset() {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const raioInicial = 200 + Math.random() * 350;
+        this.x = raioInicial * Math.sin(phi) * Math.cos(theta);
+        this.y = raioInicial * Math.sin(phi) * Math.sin(theta);
+        this.z = raioInicial * Math.cos(phi);
+        const vel = 0.15 + Math.random() * 0.2;
+        this.vx = -Math.sin(theta) * vel + (Math.random() - 0.5) * 0.08;
+        this.vy = (Math.random() - 0.5) * 0.1;
+        this.vz = Math.cos(theta) * vel * 0.3 + (Math.random() - 0.5) * 0.05;
+        this.sizeBase = Math.random() * 1.5 + 0.6;
+        this.acumulada = false;
+        this.brilho = Math.random() * 0.4 + 0.4;
+      }
+      projetar() {
+        let x = this.x * Math.cos(anguloCameraY) - this.z * Math.sin(anguloCameraY);
+        let z = this.x * Math.sin(anguloCameraY) + this.z * Math.cos(anguloCameraY);
+        let y = this.y;
+        const yTemp = y * Math.cos(anguloCameraX) - z * Math.sin(anguloCameraX);
+        z = y * Math.sin(anguloCameraX) + z * Math.cos(anguloCameraX);
+        y = yTemp;
+        z += Math.abs(FOV * 2);
+        if (z <= 10) return null;
+        const fator = FOV / z;
+        return {
+          x: canvas.width / 2 + x * fator,
+          y: canvas.height / 2 + y * fator,
+          size: this.sizeBase * fator * 2.5,
+          z,
+          profundidade: Math.max(0, Math.min(1, (z - 50) / 1600))
+        };
+      }
+      atualizar() {
+        if (this.acumulada) return false;
+        const distancia = Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
+        const fatorGravidade = 0.000008 + (tempoSimulado / 500) * 0.00003;
+        this.vx += -this.x * fatorGravidade;
+        this.vy += -this.y * fatorGravidade;
+        this.vz += -this.z * fatorGravidade;
+        const arrasto = 0.998 - (tempoSimulado / duracaoTotal) * 0.005;
+        this.vx *= arrasto; this.vy *= arrasto; this.vz *= arrasto;
+        if (faseAtual >= 1 && faseAtual <= 2) {
+          const fatorRot = 0.0015 * (faseAtual === 1 ? 1.5 : 0.4);
+          const tempVx = this.vx;
+          this.vx = this.vx * Math.cos(fatorRot) - this.vz * Math.sin(fatorRot);
+          this.vz = tempVx * Math.sin(fatorRot) + this.vz * Math.cos(fatorRot);
+        }
+        this.x += this.vx; this.y += this.vy; this.z += this.vz;
+        if (distancia < 35 && tempoSimulado > 10) { this.acumulada = true; return true; }
+        return false;
+      }
+      desenhar(proj) {
+        if (!proj || this.acumulada) return;
+        const fase = fases[Math.min(faseAtual, fases.length - 1)];
+        const tempFactor = Math.min(1, tempoSimulado / 8000);
+        const r = Math.floor(fase.corBase[0] + (255 - fase.corBase[0]) * tempFactor * 0.6);
+        const g = Math.floor(fase.corBase[1] + (240 - fase.corBase[1]) * tempFactor * 0.6);
+        const b = Math.floor(fase.corBase[2] * (1 - tempFactor * 0.5));
+        const depthFactor = 1 - proj.profundidade * 0.6;
+        const alpha = this.brilho * depthFactor * (1 - tempoSimulado / duracaoTotal * 0.3);
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, Math.max(0.3, proj.size), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        ctx.fill();
+        if (proj.size > 2 && alpha > 0.3 && proj.profundidade < 0.4) {
+          const grad = ctx.createRadialGradient(proj.x, proj.y, 0, proj.x, proj.y, proj.size * 4);
+          grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${alpha * 0.25})`);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.size * 4, 0, Math.PI * 2);
+          ctx.fillStyle = grad; ctx.fill();
+        }
+      }
+    }
+
+    class Estrela3D {
+      constructor() { this.raioAtual = 8; this.brilho = 0.6; }
+      atualizar() {
+        const fase = fases[faseAtual];
+        const progressoFase = faseAtual > 0 
+          ? (tempoSimulado - fases[faseAtual-1].limite) / (fase.limite - (fases[faseAtual-1]?.limite || 0))
+          : tempoSimulado / fase.limite;
+        if (fase.raioEstrela > 0) {
+          const raioAnterior = faseAtual > 0 ? fases[faseAtual-1].raioEstrela : 8;
+          this.raioAtual = raioAnterior + (fase.raioEstrela - raioAnterior) * Math.min(1, progressoFase * 1.5);
+        }
+        this.brilho = 0.5 + Math.min(1, tempoSimulado / 5000) * 0.5;
+      }
+      desenhar() {
+        const fase = fases[faseAtual];
+        if (!fase.corEstrela) return;
+        const centro = { x: canvas.width/2, y: canvas.height/2 };
+        const r = fase.corEstrela[0], g = fase.corEstrela[1], b = fase.corEstrela[2];
+        const grad = ctx.createRadialGradient(centro.x, centro.y, 0, centro.x, centro.y, this.raioAtual * 2.2);
+        if (faseAtual === 3) {
+          grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1)`);
+          grad.addColorStop(0.5, `rgba(${r}, ${Math.floor(g*0.8)}, ${Math.floor(b*0.6)}, 0.7)`);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+        } else if (faseAtual === 5) {
+          grad.addColorStop(0, `rgba(255, 255, 255, 1)`);
+          grad.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, 0.9)`);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+        } else {
+          grad.addColorStop(0, `rgba(255, 255, 255, 1)`);
+          grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, 0.95)`);
+          grad.addColorStop(0.85, `rgba(${r}, ${g}, ${b}, 0.4)`);
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+        }
+        ctx.beginPath(); ctx.arc(centro.x, centro.y, this.raioAtual * 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = grad; ctx.fill();
+        ctx.beginPath(); ctx.arc(centro.x, centro.y, this.raioAtual * 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, 0.9)`; ctx.fill();
+        const pulso = 1 + Math.sin(Date.now() / 300) * 0.03;
+        ctx.beginPath(); ctx.arc(centro.x, centro.y, this.raioAtual * pulso, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${this.brilho * 0.6})`;
+        ctx.lineWidth = 2; ctx.stroke();
+        if (faseAtual === 3) {
+          for (let i = 1; i <= 3; i++) {
+            const rc = this.raioAtual * (1.5 + i * 0.4) + Math.sin(Date.now() * 0.001 + i) * 6;
+            ctx.beginPath(); ctx.arc(centro.x, centro.y, rc, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 120, 80, ${0.08 - i * 0.02})`;
+            ctx.lineWidth = 3 - i; ctx.stroke();
+          }
+        }
+        if (faseAtual === 4) {
+          const tempoNeb = tempoSimulado - 11500;
+          for (let i = 0; i < 5; i++) {
+            const ra = 70 + i * 30 + tempoNeb * 0.08;
+            const alpha = 0.15 - i * 0.025;
+            ctx.beginPath(); ctx.arc(centro.x, centro.y, ra, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(180, 200, 255, ${alpha})`;
+            ctx.lineWidth = 2; ctx.stroke();
+          }
+        }
+        if (faseAtual === 5) {
+          const br = 0.3 + Math.sin(Date.now() * 0.0005) * 0.1;
+          ctx.beginPath(); ctx.arc(centro.x, centro.y, this.raioAtual * 4, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(220, 230, 255, ${br * 0.15})`; ctx.fill();
+        }
+      }
+    }
+
+    const totalParticulas = 800;
+    const particulas = [];
+    const estrela = new Estrela3D();
+    for (let i = 0; i < totalParticulas; i++) { particulas.push(new Particula3D()); }
+    
+    const elFase = document.getElementById('fase');
+    const elTempo = document.getElementById('tempo');
+    const elUnidade = document.getElementById('unidade');
+    const elBarra = document.getElementById('barra');
+    const elAcumuladas = document.getElementById('acumuladas');
+    const elTotal = document.getElementById('total');
+    const elLuminosidade = document.getElementById('luminosidadeAtual');
+    const sliderVel = document.getElementById('sliderVelocidade');
+    const elVelValor = document.getElementById('velocidadeValor');
+    elTotal.textContent = totalParticulas;
+    
+    function sliderParaFator(valor) {
+      if (valor < 30) return 0.01 + (valor / 30) * 0.99;
+      if (valor < 60) return 1 + ((valor - 30) / 30) * 9;
+      if (valor < 85) return 10 + ((valor - 60) / 25) * 90;
+      return 100 + ((valor - 85) / 15) * 900;
+    }
+    function atualizarDisplayVelocidade() {
+      const fator = sliderParaFator(sliderVel.value);
+      fatorAceleracao = fator;
+      let texto, unidade;
+      if (fator < 1) { texto = fator.toFixed(2); unidade = 'mil. anos/s'; }
+      else if (fator < 100) { texto = fator.toFixed(0); unidade = 'mil. anos/s'; }
+      else { texto = (fator/1000).toFixed(1) + ' Bi'; unidade = 'anos/s'; }
+      elVelValor.innerHTML = `${texto}× <small>(${unidade})</small>`;
+    }
+    sliderVel.addEventListener('input', atualizarDisplayVelocidade);
+    atualizarDisplayVelocidade();
+    
+    document.getElementById('btnPausar').addEventListener('click', function() {
+      pausado = !pausado;
+      this.textContent = pausado ? '▶️ Continuar' : '⏸️ Pausar';
+    });
+    document.getElementById('btnReiniciar').addEventListener('click', function() {
+      tempoSimulado = 0; faseAtual = 0;
+      particulas.forEach(p => p.reset());
+      dadosGrafico.length = 0; ultimoTempoAmostragem = 0;
+      document.getElementById('btnPausar').textContent = '⏸️ Pausar';
+      pausado = false;
+      anguloCameraX = 0.15; anguloCameraY = 0; FOV = 400;
+    });
+    
+    function sobrescritoExpoente(n) {
+      const sobrescritos = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻' };
+      return String(n).split('').map(c => sobrescritos[c] || c).join('');
+    }
+    
+    function desenharGrafico() {
+      const w = canvasGrafico.width, h = canvasGrafico.height;
+      const margem = { topo: 12, direita: 14, inferior: 30, esquerda: 50 };
+      const grafW = w - margem.esquerda - margem.direita;
+      const grafH = h - margem.topo - margem.inferior;
+      
+      ctxGrafico.fillStyle = '#0a0e1a';
+      ctxGrafico.fillRect(0, 0, w, h);
+      
+      ctxGrafico.strokeStyle = 'rgba(100, 150, 255, 0.4)';
+      ctxGrafico.lineWidth = 1;
+      ctxGrafico.beginPath();
+      ctxGrafico.moveTo(margem.esquerda, margem.topo);
+      ctxGrafico.lineTo(margem.esquerda, h - margem.inferior);
+      ctxGrafico.lineTo(w - margem.direita, h - margem.inferior);
+      ctxGrafico.stroke();
+      
+      ctxGrafico.fillStyle = '#8ad4ff';
+      ctxGrafico.font = '11px sans-serif';
+      ctxGrafico.textAlign = 'center';
+      ctxGrafico.fillText('Tempo (anos)', margem.esquerda + grafW/2, h - 5);
+      
+      ctxGrafico.save();
+      ctxGrafico.translate(14, margem.topo + grafH/2);
+      ctxGrafico.rotate(-Math.PI/2);
+      ctxGrafico.font = '12px sans-serif';
+      ctxGrafico.fillText('Luminosidade (L☉)', 0, 0);
+      ctxGrafico.restore();
+      
+      const logMin = -3;
+      const logMax = 4;
+      const escalaLog = logMax - logMin;
+      
+      ctxGrafico.strokeStyle = 'rgba(100, 150, 255, 0.12)';
+      ctxGrafico.lineWidth = 0.5;
+      for (let logVal = logMin; logVal <= logMax; logVal += 1) {
+        const y = h - margem.inferior - ((logVal - logMin) / escalaLog) * grafH;
+        ctxGrafico.beginPath(); ctxGrafico.moveTo(margem.esquerda, y);
+        ctxGrafico.lineTo(w - margem.direita, y); ctxGrafico.stroke();
+        
+        ctxGrafico.fillStyle = '#ccc';
+        ctxGrafico.font = '10px sans-serif';
+        ctxGrafico.textAlign = 'right';
+        ctxGrafico.fillText(`10${sobrescritoExpoente(logVal)}`, margem.esquerda - 6, y + 4);
+      }
+      
+      const passoX = 2000;
+      ctxGrafico.fillStyle = '#aaa';
+      ctxGrafico.font = '9px sans-serif';
+      ctxGrafico.textAlign = 'center';
+      for (let t = 0; t <= duracaoTotal; t += passoX) {
+        const x = margem.esquerda + (t / duracaoTotal) * grafW;
+        ctxGrafico.beginPath(); ctxGrafico.moveTo(x, h - margem.inferior);
+        ctxGrafico.lineTo(x, h - margem.inferior + 5); ctxGrafico.stroke();
+        ctxGrafico.fillText(t >= 1000 ? `${t/1000} Bi` : `${t} Mi`, x, h - margem.inferior + 16);
+      }
+      
+      if (tempoSimulado > 0) {
+        const xAtual = margem.esquerda + (tempoSimulado / duracaoTotal) * grafW;
+        ctxGrafico.strokeStyle = 'rgba(255, 255, 100, 0.6)';
+        ctxGrafico.lineWidth = 1.5;
+        ctxGrafico.beginPath(); ctxGrafico.moveTo(xAtual, margem.topo);
+        ctxGrafico.lineTo(xAtual, h - margem.inferior); ctxGrafico.stroke();
+      }
+      
+      if (dadosGrafico.length < 2) return;
+      
+      ctxGrafico.beginPath();
+      const primeiroX = margem.esquerda + (dadosGrafico[0].tempo / duracaoTotal) * grafW;
+      ctxGrafico.moveTo(primeiroX, h - margem.inferior);
+      dadosGrafico.forEach(d => {
+        const x = margem.esquerda + (d.tempo / duracaoTotal) * grafW;
+        const logL = Math.log10(Math.max(0.0001, d.luminosidade));
+        const y = h - margem.inferior - ((logL - logMin) / escalaLog) * grafH;
+        ctxGrafico.lineTo(x, Math.max(margem.topo, Math.min(h - margem.inferior, y)));
+      });
+      const ultimoX = margem.esquerda + (dadosGrafico[dadosGrafico.length-1].tempo / duracaoTotal) * grafW;
+      ctxGrafico.lineTo(ultimoX, h - margem.inferior);
+      ctxGrafico.closePath();
+      const gradPreench = ctxGrafico.createLinearGradient(0, margem.topo, 0, h - margem.inferior);
+      gradPreench.addColorStop(0, 'rgba(255, 200, 100, 0.2)');
+      gradPreench.addColorStop(1, 'rgba(255, 200, 100, 0.02)');
+      ctxGrafico.fillStyle = gradPreench; ctxGrafico.fill();
+      
+      ctxGrafico.beginPath();
+      dadosGrafico.forEach((d, i) => {
+        const x = margem.esquerda + (d.tempo / duracaoTotal) * grafW;
+        const logL = Math.log10(Math.max(0.0001, d.luminosidade));
+        const y = h - margem.inferior - ((logL - logMin) / escalaLog) * grafH;
+        const yF = Math.max(margem.topo, Math.min(h - margem.inferior, y));
+        if (i === 0) ctxGrafico.moveTo(x, yF);
+        else ctxGrafico.lineTo(x, yF);
+      });
+      ctxGrafico.strokeStyle = '#ffd700';
+      ctxGrafico.lineWidth = 2.5; ctxGrafico.stroke();
+      
+      if (dadosGrafico.length > 0) {
+        const u = dadosGrafico[dadosGrafico.length - 1];
+        const xA = margem.esquerda + (u.tempo / duracaoTotal) * grafW;
+        const logLA = Math.log10(Math.max(0.0001, u.luminosidade));
+        const yA = h - margem.inferior - ((logLA - logMin) / escalaLog) * grafH;
+        const yAF = Math.max(margem.topo, Math.min(h - margem.inferior, yA));
+        ctxGrafico.beginPath(); ctxGrafico.arc(xA, yAF, 5, 0, Math.PI * 2);
+        ctxGrafico.fillStyle = '#ffd700'; ctxGrafico.fill();
+        ctxGrafico.beginPath(); ctxGrafico.arc(xA, yAF, 7, 0, Math.PI * 2);
+        ctxGrafico.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+        ctxGrafico.lineWidth = 2; ctxGrafico.stroke();
+      }
+    }
+
+    function atualizarInterface() {
+      while (faseAtual < fases.length - 1 && tempoSimulado >= fases[faseAtual + 1].limite) { faseAtual++; }
+      elFase.textContent = fases[faseAtual].nome;
+      let tempoDisplay, unidade;
+      if (tempoSimulado < 1000) {
+        tempoDisplay = tempoSimulado.toFixed(2).replace('.', ','); unidade = 'milhões de anos';
+      } else {
+        tempoDisplay = (tempoSimulado / 1000).toFixed(3).replace('.', ','); unidade = 'bilhões de anos';
+      }
+      elTempo.textContent = tempoDisplay;
+      elUnidade.textContent = unidade;
+      const progresso = Math.min(100, (tempoSimulado / duracaoTotal) * 100);
+      elBarra.style.width = progresso + '%';
+      elAcumuladas.textContent = particulas.filter(p => p.acumulada).length;
+      const luminosidade = calcularLuminosidade();
+      let lumDisplay;
+      if (luminosidade >= 1) lumDisplay = luminosidade.toFixed(1);
+      else if (luminosidade >= 0.1) lumDisplay = luminosidade.toFixed(2);
+      else lumDisplay = luminosidade.toFixed(4);
+      elLuminosidade.textContent = lumDisplay.replace('.', ',');
+    }
+
+    function animar() {
+      const gradFundo = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradFundo.addColorStop(0, '#02040a'); gradFundo.addColorStop(0.5, '#050814'); gradFundo.addColorStop(1, '#0a0f20');
+      ctx.fillStyle = gradFundo; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < 80; i++) {
+        const x = (Math.sin(i * 0.3 + Date.now() * 0.0001) * 0.5 + 0.5) * canvas.width;
+        const y = (Math.cos(i * 0.5 + Date.now() * 0.00015) * 0.5 + 0.5) * canvas.height;
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + Math.random() * 0.6})`;
+        ctx.beginPath(); ctx.arc(x, y, Math.random() * 1.3 + 0.4, 0, Math.PI * 2); ctx.fill();
+      }
+      
+      if (!pausado) {
+        const deltaTempo = 0.08 * velocidadeBase * fatorAceleracao;
+        tempoSimulado += deltaTempo;
+        const particulasProjetadas = [];
+        particulas.forEach(p => {
+          if (p.atualizar()) {
+            ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2, estrela.raioAtual + 15, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 220, 0.05)`; ctx.fill();
+          }
+          const proj = p.projetar();
+          if (proj) particulasProjetadas.push({ p, proj });
+        });
+        particulasProjetadas.sort((a, b) => b.proj.z - a.proj.z);
+        particulasProjetadas.forEach(item => item.p.desenhar(item.proj));
+        estrela.atualizar();
+        if (faseAtual >= 2 && faseAtual <= 3) {
+          const progresso = faseAtual === 2 
+            ? Math.min(1, (tempoSimulado - 50) / 9950)
+            : Math.min(1, (tempoSimulado - 10000) / 1500);
+          for (let i = 0; i < 4; i++) {
+            const raioRad = estrela.raioAtual * 2.5 + i * 35 + Math.sin(Date.now() * 0.002 + i * 2) * 12;
+            const alpha = 0.04 * progresso * (1 - i * 0.18);
+            ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2, raioRad, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 230, 180, ${alpha})`; ctx.lineWidth = 2.5; ctx.stroke();
+          }
+        }
+        if (tempoSimulado - ultimoTempoAmostragem >= INTERVALO_AMOSTRAGEM) {
+          dadosGrafico.push({ tempo: tempoSimulado, luminosidade: calcularLuminosidade() });
+          ultimoTempoAmostragem = tempoSimulado;
+        }
+      }
+      
+      // ✅ CORREÇÃO 2: Estrela e partículas desenhadas SEMPRE (mesmo pausado)
+      estrela.desenhar();
+      
+      atualizarInterface();
+      desenharGrafico();
+      requestAnimationFrame(animar);
+    }
+
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animar();
+  </script>
+</body>
+</html>

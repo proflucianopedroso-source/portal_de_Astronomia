@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Sistema TRAPPIST-1</title>
+          <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500, #ff4500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #b0b0b0;
+        }
+
+        .simulation-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #e0e0e0;
+        }
+
+        .speed-control input[type="range"] {
+            width: 150px;
+        }
+
+        .toggle-names {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #e0e0e0;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 250px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-panel h3 {
+            color: #ffa500;
+            margin-bottom: 10px;
+        }
+
+        .planet-info {
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .planet-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .planet-card {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .planet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .planet-card h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .planet-card.habitable {
+            border: 2px solid #4ecdc4;
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .planet-card.habitable h3 {
+            color: #4ecdc4;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-label {
+            color: #b0b0b0;
+        }
+
+        .info-value {
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+
+        .comparison-section {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .comparison-section h2 {
+            color: #ffa500;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .habitable-zone {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(102, 126, 234, 0.2));
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px solid #4ecdc4;
+        }
+
+        .habitable-zone h2 {
+            color: #4ecdc4;
+            margin-bottom: 10px;
+        }
+
+        .star-info {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .star-info h2 {
+            color: #ff4500;
+            margin-bottom: 20px;
+        }
+
+        .star-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .star-item {
+            background: rgba(255, 69, 0, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #ff4500;
+        }
+
+        .star-item-label {
+            color: #b0b0b0;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .star-item-value {
+            color: #e0e0e0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            #canvas-container {
+                height: 400px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .info-panel {
+                position: static;
+                margin-top: 20px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 align="center">🌟 EVS - Sistema TRAPPIST-1</h1>
+		<p align="center">Prof. Luciano Soares Pedroso</p>
+            <p class="subtitle" align="center">Sete Mundos Terrestres Orbitando uma Anã Vermelha Ultrafria</p>
+        </header>
+
+        <div class="simulation-container">
+            <div id="canvas-container"></div>
+            
+            <div class="controls">
+                <button class="btn" id="pauseBtn">⏸ Pausar</button>
+                <button class="btn" id="resetBtn">🔄 Resetar</button>
+                
+                <div class="speed-control">
+                    <label>⚡ Velocidade: <span id="speedValue">1x</span></label>
+                    <input type="range" id="speedSlider" min="0.1" max="10" step="0.1" value="1">
+                </div>
+                
+                <div class="toggle-names">
+                    <label>🏷 Nomes: </label>
+                    <input type="checkbox" id="showNames" checked>
+                    <span id="namesStatus">ON</span>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>📊 Dados em Tempo Real</h3>
+                <div class="planet-info" id="planetInfo">
+                    <p><strong>Planeta Selecionado</strong></p>
+                    <p>Passe o mouse sobre um planeta</p>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff4500;"></div>
+                    <span>TRAPPIST-1</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #8b4513;"></div>
+                    <span>TRAPPIST-1b</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #daa520;"></div>
+                    <span>TRAPPIST-1c</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #cd853f;"></div>
+                    <span>TRAPPIST-1d</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4ecdc4;"></div>
+                    <span>TRAPPIST-1e (Hab.)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #45b7d1;"></div>
+                    <span>TRAPPIST-1f (Hab.)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #96ceb4;"></div>
+                    <span>TRAPPIST-1g (Hab.)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #a8d8ea;"></div>
+                    <span>TRAPPIST-1h</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="habitable-zone">
+            <h2>🌍 Zona Habitável</h2>
+            <p>TRAPPIST-1e, f e g estão na zona habitável onde água líquida pode existir!</p>
+        </div>
+
+        <h2 style="color: #ffa500; margin-bottom: 20px;">Dados dos Planetas</h2>
+        <div class="planet-cards">
+            <div class="planet-card">
+                <h3>TRAPPIST-1b</h3>
+                <div class="info-row">
+                    <span class="info-label">Período Orbital:</span>
+                    <span class="info-value">1,51 dias</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Distância da Estrela:</span>
+                    <span class="info-value">0,011 AU</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Massa (Terra=1):</span>
+                    <span class="info-value">0,76 M⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Raio (Terra=1):</span>
+                    <span class="info-value">1,09 R⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temp. Equilíbrio:</span>
+                    <span class="info-value">447 K (174°C)</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Comparação:</span>
+                    <span class="info-value">Mais quente que Mercúrio</span>
+                </div>
+            </div>
+
+            <div class="planet-card">
+                <h3>TRAPPIST-1c</h3>
+                <div class="info-row">
+                    <span class="info-label">Período Orbital:</span>
+                    <span class="info-value">2,42 dias</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Distância da Estrela:</span>
+                    <span class="info-value">0,015 AU</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Massa (Terra=1):</span>
+                    <span class="info-value">0,94 M⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Raio (Terra=1):</span>
+                    <span class="info-value">1,11 R⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temp. Equilíbrio:</span>
+                    <span class="info-value">382 K (109°C)</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Comparação:</span>
+                    <span class="info-value">Similar a Vênus</span>
+                </div>
+            </div>
+
+            <div class="planet-card">
+                <h3>TRAPPIST-1d</h3>
+                <div class="info-row">
+                    <span class="info-label">Período Orbital:</span>
+                    <span class="info-value">4,05 dias</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Distância da Estrela:</span>
+                    <span class="info-value">0,021 AU</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Massa (Terra=1):</span>
+                    <span class="info-value">1,01 M⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Raio (Terra=1):</span>
+                    <span class="info-value">1,12 R⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temp. Equilíbrio:</span>
+                    <span class="info-value">333 K (60°C)</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Comparação:</span>
+                    <span class="info-value">Entre Vênus e Terra</span>
+                </div>
+            </div>
+
+            <div class="planet-card habitable">
+                <h3>TRAPPIST-1e ⭐</h3>
+                <div class="info-row">
+                    <span class="info-label">Período Orbital:</span>
+                    <span class="info-value">6,10 dias</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Distância da Estrela:</span>
+                    <span class="info-value">0,028 AU</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Massa (Terra=1):</span>
+                    <span class="info-value">0,91 M⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Raio (Terra=1):</span>
+                    <span class="info-value">1,11 R⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temp. Equilíbrio:</span>
+                    <span class="info-value">293 K (20°C)</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Comparação:</span>
+                    <span class="info-value">MELHOR CANDIDATO À VIDA!</span>
+                </div>
+            </div>
+
+            <div class="planet-card habitable">
+                <h3>TRAPPIST-1f</h3>
+                <div class="info-row">
+                    <span class="info-label">Período Orbital:</span>
+                    <span class="info-value">9,21 dias</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Distância da Estrela:</span>
+                    <span class="info-value">0,037 AU</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Massa (Terra=1):</span>
+                    <span class="info-value">1,01 M⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Raio (Terra=1):</span>
+                    <span class="info-value">1,13 R⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temp. Equilíbrio:</span>
+                    <span class="info-value">260 K (-13°C)</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Comparação:</span>
+                    <span class="info-value">Zona habitável (fria)</span>
+                </div>
+            </div>
+
+            <div class="planet-card habitable">
+                <h3>TRAPPIST-1g</h3>
+                <div class="info-row">
+                    <span class="info-label">Período Orbital:</span>
+                    <span class="info-value">12,35 dias</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Distância da Estrela:</span>
+                    <span class="info-value">0,045 AU</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Massa (Terra=1):</span>
+                    <span class="info-value">1,12 M⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Raio (Terra=1):</span>
+                    <span class="info-value">1,17 R⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temp. Equilíbrio:</span>
+                    <span class="info-value">237 K (-36°C)</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Comparação:</span>
+                    <span class="info-value">Zona habitável (marginal)</span>
+                </div>
+            </div>
+
+            <div class="planet-card">
+                <h3>TRAPPIST-1h</h3>
+                <div class="info-row">
+                    <span class="info-label">Período Orbital:</span>
+                    <span class="info-value">18,77 dias</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Distância da Estrela:</span>
+                    <span class="info-value">0,059 AU</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Massa (Terra=1):</span>
+                    <span class="info-value">1,13 M⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Raio (Terra=1):</span>
+                    <span class="info-value">1,17 R⊕</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temp. Equilíbrio:</span>
+                    <span class="info-value">217 K (-56°C)</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Comparação:</span>
+                    <span class="info-value">Mais frio que Marte</span>
+                </div>
+            </div>
+        </div>
+
+                <div class="comparison-section">
+            <h2>📊 Gráfico Comparativo 3D</h2>
+            <div id="plotly3dPlot" style="width: 100%; height: 600px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 20px;"></div>
+            <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    // Sistema TRAPPIST-1
+                    var trappist_x = [1.51, 2.42, 4.05, 6.1, 9.21, 12.35, 18.77];
+                    var trappist_y = [0.76, 0.94, 1.01, 0.91, 1.01, 1.12, 1.13];
+                    var trappist_z = [447, 382, 333, 293, 260, 237, 217];
+                    var trappist_text = ["TRAPPIST-1b", "TRAPPIST-1c", "TRAPPIST-1d", "TRAPPIST-1e", "TRAPPIST-1f", "TRAPPIST-1g", "TRAPPIST-1h"];
+                    
+                    // Formatação amigável para os períodos menores
+                    var trappist_hover_text = trappist_x.map(function(val) { return val + " d"; });
+
+                    // Sistema Solar (Valores maiores formatados em notação científica base 10 conforme sugerido)
+                    var solar_x = [88.0, 225.0, 365.0, 687.0];
+                    var solar_y = [0.055, 0.815, 1.0, 0.107];
+                    var solar_z = [440, 737, 288, 210];
+                    var solar_text = ["Mercúrio", "Vênus", "Terra", "Marte"];
+                    
+                    // Customização da exibição de texto em base 10 com expoente para os valores grandes
+                    var solar_hover_text = [
+                        "8,80x10¹ d (88 d)",
+                        "2,25x10² d (225 d)",
+                        "3,65x10² d (365 d)",
+                        "6,87x10² d (687 d)"
+                    ];
+
+                    var trace1 = {
+                        x: trappist_x, y: trappist_y, z: trappist_z,
+                        mode: 'markers+text',
+                        text: trappist_text,
+                        textposition: 'top center',
+                        name: 'Sistema TRAPPIST-1',
+                        marker: {
+                            size: 8,
+                            color: '#4ecdc4',
+                            opacity: 0.9,
+                            line: { color: '#ffffff', width: 0.5 }
+                        },
+                        type: 'scatter3d',
+                        customdata: trappist_hover_text,
+                        hovertemplate: '<b>%{text}</b><br>Período: %{customdata}<br>Massa: %{y} M⊕<br>Temp: %{z} K<extra></extra>'
+                    };
+
+                    var trace2 = {
+                        x: solar_x, y: solar_y, z: solar_z,
+                        mode: 'markers+text',
+                        text: solar_text,
+                        textposition: 'top center',
+                        name: 'Sistema Solar Interno',
+                        marker: {
+                            size: 10,
+                            color: '#ff6b6b',
+                            opacity: 0.9,
+                            line: { color: '#ffffff', width: 0.5 }
+                        },
+                        type: 'scatter3d',
+                        customdata: solar_hover_text,
+                        hovertemplate: '<b>%{text}</b><br>Período: %{customdata}<br>Massa: %{y} M⊕<br>Temp: %{z} K<extra></extra>'
+                    };
+
+                    var data = [trace1, trace2];
+                    var layout = {
+                        margin: { l: 0, r: 0, b: 0, t: 30 },
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        scene: {
+                            xaxis: { 
+                                title: { text: 'Período Orbital (dias)', font: { color: '#b0b0b0', size: 11 } }, 
+                                type: 'log',
+                                tickvals: [1.5, 5, 15, 88, 365, 687],
+                                ticktext: ['1,5', '5', '15', '8,8x10¹', '3,65x10²', '6,87x10²'],
+                                tickfont: { color: '#b0b0b0', size: 9 }, 
+                                gridcolor: 'rgba(255,255,255,0.08)',
+                                zerolinecolor: 'rgba(255,255,255,0.1)'
+                            },
+                            yaxis: { 
+                                title: { text: 'Massa (M⊕)', font: { color: '#b0b0b0', size: 11 } }, 
+                                tickfont: { color: '#b0b0b0', size: 9 }, 
+                                gridcolor: 'rgba(255,255,255,0.08)',
+                                zerolinecolor: 'rgba(255,255,255,0.1)'
+                            },
+                            zaxis: { 
+                                title: { text: 'Temperatura (K)', font: { color: '#b0b0b0', size: 11 } }, 
+                                tickfont: { color: '#b0b0b0', size: 9 }, 
+                                gridcolor: 'rgba(255,255,255,0.08)',
+                                zerolinecolor: 'rgba(255,255,255,0.1)'
+                            },
+                            camera: { eye: { x: -1.25, y: -1.25, z: 1.0 } }
+                        },
+                        legend: { 
+                            font: { color: '#e0e0e0', size: 11 }, 
+                            orientation: 'h', 
+                            x: 0.5, 
+                            xanchor: 'center',
+                            y: 1.05 
+                        }
+                    };
+                    var config = { responsive: true, displayModeBar: false };
+                    Plotly.newPlot('plotly3dPlot', data, layout, config);
+                });
+            </script>
+        </div>
+
+        <div class="star-info">
+            <h2>🔍 Características da Estrela</h2>
+            <div class="star-grid">
+                <div class="star-item">
+                    <div class="star-item-label">Tipo Espectral:</div>
+                    <div class="star-item-value">M8V (Anã Vermelha)</div>
+                </div>
+                <div class="star-item">
+                    <div class="star-item-label">Massa:</div>
+                    <div class="star-item-value">0,09 M☉ (9% do Sol)</div>
+                </div>
+                <div class="star-item">
+                    <div class="star-item-label">Raio:</div>
+                    <div class="star-item-value">0,12 R☉ (12% do Sol)</div>
+                </div>
+                <div class="star-item">
+                    <div class="star-item-label">Temperatura:</div>
+                    <div class="star-item-value">2.566 K</div>
+                </div>
+                <div class="star-item">
+                    <div class="star-item-label">Distância da Terra:</div>
+                    <div class="star-item-value">40,66 anos-luz</div>
+                </div>
+                <div class="star-item">
+                    <div class="star-item-label">Idade:</div>
+                    <div class="star-item-value">7,6 bilhões de anos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados dos planetas
+        const planetData = [
+            { name: 'TRAPPIST-1b', distance: 0.011, period: 1.51, radius: 1.09, color: '#8b4513', temp: 447 },
+            { name: 'TRAPPIST-1c', distance: 0.015, period: 2.42, radius: 1.11, color: '#daa520', temp: 382 },
+            { name: 'TRAPPIST-1d', distance: 0.021, period: 4.05, radius: 1.12, color: '#cd853f', temp: 333 },
+            { name: 'TRAPPIST-1e', distance: 0.028, period: 6.10, radius: 1.11, color: '#4ecdc4', temp: 293, habitable: true },
+            { name: 'TRAPPIST-1f', distance: 0.037, period: 9.21, radius: 1.13, color: '#45b7d1', temp: 260, habitable: true },
+            { name: 'TRAPPIST-1g', distance: 0.045, period: 12.35, radius: 1.17, color: '#96ceb4', temp: 237, habitable: true },
+            { name: 'TRAPPIST-1h', distance: 0.059, period: 18.77, radius: 1.17, color: '#a8d8ea', temp: 217 }
+        ];
+
+        // Variáveis globais
+        let scene, camera, renderer, controls;
+        let planets = [];
+        let labels = [];
+        let paused = false;
+        let speed = 1;
+        let showNames = true;
+        let time = 0;
+
+        // Inicialização da cena 3D
+        function init() {
+            const container = document.getElementById('canvas-container');
+            
+            // Criar cena
+            scene = new THREE.Scene();
+            
+            // Criar câmera
+            camera = new THREE.PerspectiveCamera(
+                60,
+                container.offsetWidth / container.offsetHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 30, 50);
+            
+            // Criar renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            // Controles de órbita (rotação e translação via mouse)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enableZoom = true;
+            controls.enablePan = true;
+            controls.enableRotate = true;
+            controls.minDistance = 10;
+            controls.maxDistance = 200;
+            
+            // Iluminação
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const pointLight = new THREE.PointLight(0xff4500, 2, 200);
+            pointLight.position.set(0, 0, 0);
+            scene.add(pointLight);
+            
+            // Criar estrela TRAPPIST-1
+            const starGeometry = new THREE.SphereGeometry(3, 32, 32);
+            const starMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xff4500
+            });
+            const star = new THREE.Mesh(starGeometry, starMaterial);
+            scene.add(star);
+            
+            // Adicionar brilho à estrela
+            const starGlow = new THREE.PointLight(0xff4500, 1, 50);
+            star.add(starGlow);
+            
+            // Criar planetas
+            planetData.forEach((data, index) => {
+                const radius = data.radius * 0.8;
+                const distance = data.distance * 500;
+                
+                // Geometria do planeta
+                const geometry = new THREE.SphereGeometry(radius, 32, 32);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: data.color,
+                    shininess: 30
+                });
+                const planet = new THREE.Mesh(geometry, material);
+                
+                scene.add(planet);
+                
+                // Criar órbita visual
+                const orbitGeometry = new THREE.RingGeometry(distance - 0.05, distance + 0.05, 128);
+                const orbitMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x444444, 
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+                orbit.rotation.x = Math.PI / 2;
+                scene.add(orbit);
+                
+                // Criar label (sprite)
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = 256;
+                canvas.height = 64;
+                context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                context.fillRect(0, 0, 256, 64);
+                context.fillStyle = data.habitable ? '#4ecdc4' : '#ffffff';
+                context.font = 'Bold 20px Arial';
+                context.textAlign = 'center';
+                context.fillText(data.name, 128, 40);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+                const sprite = new THREE.Sprite(spriteMaterial);
+                sprite.scale.set(8, 2, 1);
+                scene.add(sprite);
+                
+                planets.push({
+                    mesh: planet,
+                    label: sprite,
+                    distance: distance,
+                    period: data.period,
+                    angle: Math.random() * Math.PI * 2,
+                    data: data
+                });
+            });
+            
+            // Event listeners
+            setupEventListeners();
+            
+            // Iniciar animação
+            animate();
+            
+            // Responsividade
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function setupEventListeners() {
+            document.getElementById('pauseBtn').addEventListener('click', () => {
+                paused = !paused;
+                document.getElementById('pauseBtn').textContent = paused ? '▶ Retomar' : '⏸ Pausar';
+            });
+            
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                time = 0;
+                planets.forEach(planet => {
+                    planet.angle = Math.random() * Math.PI * 2;
+                });
+            });
+            
+            document.getElementById('speedSlider').addEventListener('input', (e) => {
+                speed = parseFloat(e.target.value);
+                document.getElementById('speedValue').textContent = speed.toFixed(1) + 'x';
+            });
+            
+            document.getElementById('showNames').addEventListener('change', (e) => {
+                showNames = e.target.checked;
+                document.getElementById('namesStatus').textContent = showNames ? 'ON' : 'OFF';
+            });
+            
+            // Raycaster para detecção de hover
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            renderer.domElement.addEventListener('mousemove', (event) => {
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(planets.map(p => p.mesh));
+                
+                if (intersects.length > 0) {
+                    const planet = planets.find(p => p.mesh === intersects[0].object);
+                    if (planet) {
+                        updatePlanetInfo(planet.data);
+                    }
+                }
+            });
+        }
+
+        function updatePlanetInfo(data) {
+            const infoDiv = document.getElementById('planetInfo');
+            infoDiv.innerHTML = `
+                <p><strong>${data.name}</strong></p>
+                <p>Período: ${data.period} dias</p>
+                <p>Distância: ${data.distance} AU</p>
+                <p>Raio: ${data.radius} R⊕</p>
+                <p>Temp: ${data.temp} K</p>
+                ${data.habitable ? '<p style="color: #4ecdc4;">✓ Zona Habitável</p>' : ''}
+            `;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (!paused) {
+                time += 0.01 * speed;
+                
+                planets.forEach(planet => {
+                    planet.angle += (2 * Math.PI) / (planet.period * 60) * speed;
+                    
+                    const x = Math.cos(planet.angle) * planet.distance;
+                    const z = Math.sin(planet.angle) * planet.distance;
+                    
+                    planet.mesh.position.set(x, 0, z);
+                    planet.label.position.set(x, 3, z);
+                    planet.label.visible = showNames;
+                });
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.offsetWidth / container.offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+        }
+
+        // Iniciar aplicação
+        init();
+    </script>
+</body>
+</html>

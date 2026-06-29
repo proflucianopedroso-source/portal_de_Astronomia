@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Viagem Interestelar Relativística</title>
+      <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <!-- MathJax Configuração -->
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' },
+            startup: {
+                ready: () => {
+                    MathJax.startup.defaultReady();
+                    MathJax.startup.promise.then(() => { calculateTrip(); });
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #050511;
+            --bg-panel: rgba(20, 20, 35, 0.7);
+            --primary: #00d4ff;
+            --accent: #bc13fe;
+            --text: #e0e6ed;
+            --text-muted: #8892a0;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top right, #1a1a3e, #050511);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        header { text-align: center; margin-bottom: 30px; padding: 20px; }
+        h1 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            background: linear-gradient(90deg, var(--primary), #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+        .subtitle { color: var(--text-muted); }
+        .author { color: var(--primary); font-size: 0.9rem; margin-top: 5px; font-weight: 600; }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--bg-panel);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .input-group { margin-bottom: 20px; }
+        label { display: block; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 6px; }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+        select option { background: #1a1a3e; color: white; }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-top: 5px;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        .slider-value { text-align: right; font-size: 0.8rem; color: var(--primary); margin-top: 2px; }
+
+        /* Ajuste do Botão Único */
+        .btn-group { margin-top: 25px; }
+        button {
+            width: 100%; padding: 12px;
+            border-radius: 8px; border: none;
+            font-weight: 700; cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+        
+        .btn-reset { 
+            background: rgba(255,255,255,0.05); 
+            color: var(--text-muted); 
+            border: 1px solid var(--border); 
+        }
+        .btn-reset:hover { 
+            background: rgba(255,255,255,0.1);
+            color: white; 
+            border-color: white;
+        }
+
+        /* Resultados */
+        .results-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        
+        .top-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        .result-box {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px; padding: 15px;
+            border-left: 3px solid var(--primary);
+        }
+        .result-box h3 { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
+        .result-box .value { font-size: 1.4rem; font-weight: 700; color: #fff; font-family: 'Courier New', monospace; }
+        .result-box .detail { font-size: 0.75rem; color: var(--primary); margin-top: 4px; }
+
+        /* Comparação */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .comp-card {
+            background: rgba(255,255,255,0.03);
+            padding: 15px; border-radius: 10px; text-align: center;
+        }
+        .comp-card .val { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin: 5px 0; }
+        .comp-card .label { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Fórmulas e Cálculos Detalhados */
+        .details-box {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        
+        .calc-step {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .calc-step:last-child { border-bottom: none; margin-bottom: 0; }
+        
+        .step-title { color: var(--primary); font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; }
+        .step-math { color: white; font-size: 0.95rem; font-family: 'Courier New', monospace; }
+
+        .disclaimer {
+            margin-top: 20px; font-size: 0.8rem; color: #aaa;
+            padding: 15px; border-left: 3px solid #ffa500;
+            background: rgba(255, 165, 0, 0.05); border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1 align="center">EVS - Viagem Interestelar Relativística</h1>
+            <p class="subtitle" align="center">Viagens em velocidades próximas à luz com Exoplanetas e Estrelas Reais</p>
+            <p class="author" align="center">Prof. Luciano Soares Pedroso - 2026</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Coluna de Inputs -->
+            <div class="card">
+                <div class="section-title">Parâmetros da Viagem</div>
+                
+                <div class="input-group">
+                    <label for="destination">Destino</label>
+                    <select id="destination">
+                        <!-- Lista Completa e Ordenada por Distância -->
+                        <option value="4.24">Proxima Centauri b (4,24 al) - Exoplaneta</option>
+                        <option value="4.37">Alpha Centauri (4,37 al) - Sistema Estelar</option>
+                        <option value="11.0">Ross 128 b (11,0 al) - Exoplaneta</option>
+                        <option value="23.6">Gliese 667 Cc (23,6 al) - Exoplaneta</option>
+                        <option value="25.04">Vega (25,04 al) - Estrela</option>
+                        <option value="39.6">TRAPPIST-1d (39,6 al) - Exoplaneta</option>
+                        <option value="112">Kepler-442b (112 al) - Exoplaneta</option>
+                        <option value="309">Canopus (309 al) - Estrela</option>
+                        <option value="640">Betelgeuse (640 al) - Estrela</option>
+                        <option value="1400">Kepler-452b (1.400 al) - Exoplaneta</option>
+                        <option value="26000">Centro Galáctico (26.000 al)</option>
+                        <option value="2530000">Andrômeda (2.530.000 al)</option>
+                        <option value="custom">Personalizado...</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Distância (anos-luz)</label>
+                    <input type="text" id="distance" value="4,24">
+                    <div class="slider-container">
+                        <input type="range" id="distance-slider" min="0.1" max="100" step="0.1" value="4.24">
+                        <div class="slider-value" id="distance-val">4,24 al</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Tempo na Nave (anos)</label>
+                    <input type="text" id="ship-time" value="10">
+                    <div class="slider-container">
+                        <input type="range" id="ship-time-slider" min="1" max="50" step="0.5" value="10">
+                        <div class="slider-value" id="ship-time-val">10 anos</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Massa da Nave (toneladas)</label>
+                    <input type="text" id="ship-mass" value="1.000">
+                    <div class="slider-container">
+                        <input type="range" id="ship-mass-slider" min="10" max="10000" step="10" value="1000">
+                        <div class="slider-value" id="ship-mass-val">1.000 t</div>
+                    </div>
+                </div>
+
+                <!-- Botão Calcular removido, mantido apenas o Resetar -->
+                <div class="btn-group">
+                    <button class="btn-reset" onclick="resetFields()">Resetar Valores</button>
+                </div>
+            </div>
+
+            <!-- Coluna de Resultados -->
+            <div class="card results-grid">
+                
+                <!-- Resultados Principais -->
+                <div>
+                    <div class="section-title">Resultados da Viagem</div>
+                    <div class="top-results">
+                        <div class="result-box">
+                            <h3>Velocidade</h3>
+                            <div class="value" id="res-v">-</div>
+                            <div class="detail" id="res-gamma">γ = -</div>
+                        </div>
+                        <div class="result-box">
+                            <h3>Tempo na Terra</h3>
+                            <div class="value" id="res-earth-time">-</div>
+                            <div class="detail">Dilatação Temporal</div>
+                        </div>
+                        <div class="result-box">
+                            <h3>Distância Nave</h3>
+                            <div class="value" id="res-ship-dist">-</div>
+                            <div class="detail">Contração Espacial</div>
+                        </div>
+                        <div class="result-box">
+                            <h3>Energia Necessária</h3>
+                            <div class="value" id="res-energy">-</div>
+                            <div class="detail" id="res-hiroshima">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparativos -->
+                <div>
+                    <div class="section-title">Comparativos Didáticos</div>
+                    <div class="comparison-grid">
+                        <div class="comp-card">
+                            <div class="label">Velocidade</div>
+                            <div class="val" id="comp-v-kms">-</div>
+                            <div class="label" id="comp-voyager" style="color:var(--primary)">-</div>
+                        </div>
+                        <div class="comp-card">
+                            <div class="label">Diferença Temporal</div>
+                            <div class="val" id="comp-time-diff">-</div>
+                            <div class="label">"Ganho" de vida</div>
+                        </div>
+                        <div class="comp-card">
+                            <div class="label">Energia (TWh)</div>
+                            <div class="val" id="comp-twh">-</div>
+                            <div class="label" id="comp-brazil">-</div>
+                        </div>
+                        <div class="comp-card">
+                            <div class="label">Momento (p)</div>
+                            <div class="val" id="comp-momentum">-</div>
+                            <div class="label">kg·m/s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cálculos Detalhados -->
+                <div>
+                    <div class="section-title">Detalhamento dos Cálculos</div>
+                    <div class="details-box" id="detailed-steps">
+                        <!-- Passos serão inseridos via JS -->
+                    </div>
+                </div>
+
+                <div class="disclaimer">
+                    <strong>Nota:</strong> Os cálculos são atualizados automaticamente ao alterar os valores. Considera-se aceleração instantânea. A energia calculada é a Energia Cinética Relativística ($E_k = (\gamma - 1)mc^2$).
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constantes
+        const c = 299792458;
+        const hiroshima_j = 4.184e12 * 15; // 15 quilotons
+        const voyager_speed = 17;
+        const brazil_twh_year = 500;
+
+        // Formatação
+        function formatBR(num, decimals = 2) {
+            if (isNaN(num) || !isFinite(num)) return "-";
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        }
+        function formatSciBR(num) {
+            if (isNaN(num) || !isFinite(num)) return "0";
+            if (num === 0) return "0";
+            const exp = Math.floor(Math.log10(Math.abs(num)));
+            const mantissa = num / Math.pow(10, exp);
+            const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+            let expStr = exp.toString().split('').map(d => (d === '-' ? '⁻' : superscripts[d])).join('');
+            return `${formatBR(mantissa, 1)}×10${expStr}`;
+        }
+        function parseBR(str) {
+            if (!str) return NaN;
+            return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+        }
+
+        // Inputs - Configuração de Eventos
+        function setupInput(idInput, idSlider, idVal, unit, decimals) {
+            const input = document.getElementById(idInput);
+            const slider = document.getElementById(idSlider);
+            const valDisplay = document.getElementById(idVal);
+
+            // 1. Evento de Digitação (Input)
+            // Atualiza apenas o display de texto, não dispara cálculo pesado ainda
+            input.addEventListener('input', (e) => {
+                let val = e.target.value;
+                let num = parseBR(val);
+                
+                if (!isNaN(num)) {
+                    valDisplay.innerText = formatBR(num, decimals) + " " + unit;
+                    if (num >= slider.min && num <= slider.max) slider.value = num;
+                } else {
+                    valDisplay.innerText = "Inválido";
+                }
+            });
+
+            // 2. Evento de "Sair do campo" (Blur) ou Enter
+            // Momento em que o cálculo é efetivamente disparado
+            input.addEventListener('blur', calculateTrip);
+            input.addEventListener('keydown', (e) => { if(e.key === 'Enter') { e.preventDefault(); calculateTrip(); input.blur(); } });
+
+            // 3. Evento do Slider
+            // Slider sempre dispara cálculo imediato (reativo)
+            slider.addEventListener('input', (e) => {
+                // Evita sobrepor se o usuário estiver digitando
+                if (document.activeElement !== input) {
+                    let num = parseFloat(e.target.value);
+                    input.value = formatBR(num, decimals);
+                    valDisplay.innerText = formatBR(num, decimals) + " " + unit;
+                    calculateTrip();
+                }
+            });
+        }
+
+        setupInput('distance', 'distance-slider', 'distance-val', 'al', 2);
+        setupInput('ship-time', 'ship-time-slider', 'ship-time-val', 'anos', 1);
+        setupInput('ship-mass', 'ship-mass-slider', 'ship-mass-val', 't', 0);
+
+        // Destino
+        document.getElementById('destination').addEventListener('change', function() {
+            if (this.value !== 'custom') {
+                const val = parseFloat(this.value);
+                const input = document.getElementById('distance');
+                input.value = formatBR(val, 2);
+                input.dispatchEvent(new Event('input'));
+                calculateTrip(); // Força cálculo imediato
+            }
+        });
+
+        function resetFields() {
+            document.getElementById('distance').value = "4,24";
+            document.getElementById('ship-time').value = "10";
+            document.getElementById('ship-mass').value = "1.000";
+            document.getElementById('destination').selectedIndex = 0;
+            
+            document.getElementById('distance-slider').value = 4.24;
+            document.getElementById('ship-time-slider').value = 10;
+            document.getElementById('ship-mass-slider').value = 1000;
+            
+            document.getElementById('distance-val').innerText = "4,24 al";
+            document.getElementById('ship-time-val').innerText = "10 anos";
+            document.getElementById('ship-mass-val').innerText = "1.000 t";
+            
+            calculateTrip();
+        }
+
+        // Cálculo Principal
+        function calculateTrip() {
+            const d = parseBR(document.getElementById('distance').value);
+            const t0 = parseBR(document.getElementById('ship-time').value);
+            const m_ton = parseBR(document.getElementById('ship-mass').value);
+            const m_kg = m_ton * 1000;
+
+            if (isNaN(d) || isNaN(t0) || isNaN(m_kg) || d <= 0 || t0 <= 0 || m_kg <= 0) {
+                return;
+            }
+
+            // 1. Velocidade
+            const v_c = d / Math.sqrt(d*d + t0*t0);
+            const v_ms = v_c * c;
+            const v_kms = v_ms / 1000;
+
+            // 2. Gamma
+            const gamma = 1 / Math.sqrt(1 - v_c*v_c);
+
+            // 3. Tempos e Distâncias
+            const t_earth = gamma * t0;
+            const d_ship = d / gamma;
+
+            // 4. Energia e Momento
+            const e_rest = m_kg * c * c;
+            const e_kinetic = (gamma - 1) * e_rest;
+            const momentum = gamma * m_kg * v_ms;
+
+            // 5. Comparações
+            const hiroshima_count = e_kinetic / hiroshima_j;
+            const energy_twh = e_kinetic / 3.6e15;
+            const brazil_years = energy_twh / brazil_twh_year;
+            const voyager_mult = v_kms / voyager_speed;
+            const time_diff = t_earth - t0;
+
+            // --- Interface ---
+            
+            // Principais
+            document.getElementById('res-v').innerText = formatBR(v_c, 5) + 'c';
+            document.getElementById('res-gamma').innerText = `γ = ${formatBR(gamma, 4)}`;
+            document.getElementById('res-earth-time').innerText = formatBR(t_earth, 2) + ' anos';
+            document.getElementById('res-ship-dist').innerText = formatBR(d_ship, 3) + ' al';
+            document.getElementById('res-energy').innerText = formatSciBR(e_kinetic) + ' J';
+            document.getElementById('res-hiroshima').innerText = `≈ ${formatBR(hiroshima_count, 0)} bombas Hiroshima`;
+
+            // Comparações
+            document.getElementById('comp-v-kms').innerText = formatBR(v_kms, 0) + ' km/s';
+            document.getElementById('comp-voyager').innerText = formatBR(voyager_mult, 0) + 'x mais rápido que Voyager 1';
+            document.getElementById('comp-time-diff').innerText = formatBR(time_diff, 2) + ' anos';
+            document.getElementById('comp-twh').innerText = formatBR(energy_twh, 0) + ' TWh';
+            document.getElementById('comp-brazil').innerText = `${formatBR(brazil_years, 1)} anos de consumo BR`;
+            document.getElementById('comp-momentum').innerText = formatSciBR(momentum);
+
+            // Detalhamento
+            const stepsDiv = document.getElementById('detailed-steps');
+            stepsDiv.innerHTML = `
+                <div class="calc-step">
+                    <div class="step-title">1. Cálculo da Velocidade ($v$)</div>
+                    <div class="step-math">
+                        Função: $v = d / \\sqrt{d^2 + t_0^2}$<br>
+                        Substituindo: $v = ${formatBR(d,2)} / \\sqrt{${formatBR(d,2)}^2 + ${formatBR(t0,1)}^2}$<br>
+                        Resultado: <strong>${formatBR(v_c, 6)}c</strong> (${formatBR(v_kms, 0)} km/s)
+                    </div>
+                </div>
+                <div class="calc-step">
+                    <div class="step-title">2. Fator de Lorentz ($\\gamma$)</div>
+                    <div class="step-math">
+                        Função: $\\gamma = 1 / \\sqrt{1 - v^2/c^2}$<br>
+                        Substituindo: $\\gamma = 1 / \\sqrt{1 - ${formatBR(v_c, 4)}^2}$<br>
+                        Resultado: <strong>${formatBR(gamma, 5)}</strong>
+                    </div>
+                </div>
+                <div class="calc-step">
+                    <div class="step-title">3. Dilatação do Tempo ($\\Delta t$)</div>
+                    <div class="step-math">
+                        Terra: $\\Delta t = \\gamma \\cdot \\Delta t_0 = ${formatBR(gamma, 3)} \\times ${formatBR(t0,1)} = ${formatBR(t_earth, 2)}$ anos<br>
+                        Diferença: O viajante envelhece ${formatBR(time_diff, 2)} anos a menos que quem ficou na Terra.
+                    </div>
+                </div>
+                <div class="calc-step">
+                    <div class="step-title">4. Contração do Comprimento ($L$)</div>
+                    <div class="step-math">
+                        Nave: $L = L_0 / \\gamma = ${formatBR(d,2)} / ${formatBR(gamma, 3)} = ${formatBR(d_ship, 3)}$ anos-luz
+                    </div>
+                </div>
+                <div class="calc-step">
+                    <div class="step-title">5. Energia e Momento</div>
+                    <div class="step-math">
+                        Energia em Repouso ($mc^2$): ${formatSciBR(e_rest)} J<br>
+                        Energia Cinética ($E_k$): ${formatSciBR(e_kinetic)} J<br>
+                        Momento Relativístico ($p$): ${formatSciBR(momentum)} kg·m/s
+                    </div>
+                </div>
+            `;
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([stepsDiv]);
+            }
+        }
+    </script>
+</body>
+</html>

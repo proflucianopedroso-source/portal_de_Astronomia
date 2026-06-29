@@ -1,0 +1,80 @@
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:#020111;
+    color:white;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:-1;
+}
+
+.hero {
+    text-align: center;
+    padding: 60px 20px 30px;
+}
+
+
+
+.section h2 {
+    margin-bottom: 20px;
+    border-left: 4px solid #00bfff;
+    padding-left: 10px;
+}
+
+.subsection h3::before{
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    width: 4px;
+    background: #00bfff;
+    box-shadow: 0 0 12px rgba(0,191,255,0.8);
+}
+
+.subsection h3::after{
+    content: "";
+    flex: 1;
+    height: 1px;
+
+    background: linear-gradient(
+        to right,
+        rgba(0,191,255,.45),
+        transparent
+    );
+}
+
+header{
+    padding:15px 30px;
+
+    background:rgba(0,0,0,.6);
+
+    backdrop-filter:blur(10px);
+
+    position:sticky;
+    top:0;
+
+    z-index:100;
+}
+
+header h1{
+    margin:0;
+    margin-bottom:15px;
+}
+
+:root{
+    --header-offset: 110px;
+}
+
+.section{
+    scroll-margin-top: var(--header-offset);
+}

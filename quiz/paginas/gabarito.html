@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gabarito Comentado - Astronomia</title>
+<link rel="icon" href="/assets/img/favicon.png" type="image/png">
+<style>
+/* ===== ESTILOS REAPROVEITADOS DO QUIZ ORIGINAL ===== */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: white;
+    overflow-x: hidden;
+    background: #0a0f2a;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+.quiz {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.titulo-container {
+    margin: 30px 0;
+    animation: brilho 2s infinite;
+}
+
+h1 {
+    font-size: 48px;
+    margin: 0;
+    background: linear-gradient(45deg, #ffd700, #ffaa00, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(255,215,0,0.5);
+    letter-spacing: 2px;
+}
+
+.subtitulo {
+    font-size: 20px;
+    color: #ffd95e;
+    margin-top: 10px;
+    opacity: 0.9;
+}
+
+/* ===== NOVOS ESTILOS PARA O GABARITO ===== */
+.gabarito-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 20px auto 80px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    border: 2px solid #ffd95e;
+    border-radius: 30px;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+}
+
+.pergunta-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+    border-left: 5px solid #ffd95e;
+    transition: transform 0.2s;
+}
+
+.pergunta-card:hover {
+    transform: scale(1.02);
+    background: rgba(255, 217, 94, 0.15);
+}
+
+.pergunta-numero {
+    display: inline-block;
+    background: #ffd95e;
+    color: #0a0f2a;
+    font-weight: bold;
+    padding: 5px 15px;
+    border-radius: 30px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.pergunta-texto {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: white;
+    font-weight: 500;
+    padding-right: 10px;
+}
+
+.resposta-correta {
+    background: rgba(0, 255, 0, 0.1);
+    border-radius: 10px;
+    padding: 12px 15px;
+    margin: 10px 0;
+    border: 1px solid #00ff88;
+}
+
+.resposta-texto {
+    color: #00ff88;
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.resposta-texto span {
+    color: white;
+    font-weight: normal;
+}
+
+.explicacao {
+    color: #cccccc;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: 8px;
+    padding-left: 10px;
+    border-left: 3px solid #ffd95e;
+}
+
+.controles {
+    position: fixed;
+    bottom: 30px;
+    display: flex;
+    gap: 15px;
+    z-index: 10;
+}
+
+.btn-nav {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    background: #ffd95e;
+    font-weight: bold;
+    font-size: 18px;
+    transition: 0.3s;
+    border: 2px solid transparent;
+    text-decoration: none;
+    color: #0a0f2a;
+    display: inline-block;
+}
+
+.btn-nav:hover {
+    transform: scale(1.1);
+    background: white;
+    box-shadow: 0 0 20px gold;
+}
+
+.progresso {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 215, 0, 0.2);
+    padding: 10px 25px;
+    border-radius: 40px;
+    font-size: 18px;
+    border: 1px solid gold;
+    backdrop-filter: blur(5px);
+    z-index: 10;
+}
+
+.indice {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 215, 0, 0.2);
+    padding: 10px 25px;
+    border-radius: 40px;
+    font-size: 18px;
+    border: 1px solid gold;
+    backdrop-filter: blur(5px);
+    z-index: 10;
+}
+
+@keyframes brilho {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+    100% { filter: brightness(1); }
+}
+
+@media (max-width: 768px) {
+    h1 { font-size: 32px; }
+    .pergunta-texto { font-size: 16px; }
+    .resposta-texto { font-size: 15px; }
+    .explicacao { font-size: 13px; }
+    .progresso, .indice { font-size: 14px; padding: 8px 15px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="quiz">
+    <!-- TÍTULO -->
+    <div class="titulo-container">
+        <h1>📚 Gabarito Comentado 📚</h1>
+        <div class="subtitulo">Confira as respostas corretas das 77 perguntas<p>
+			<font color="#FFFFFF">Julio e Luciano</font></div>
+    </div>
+
+    <!-- INDICADORES -->
+    <div class="progresso" id="progresso">⭐ Respostas Verificadas</div>
+    <div class="indice" id="indice">Total: 77 perguntas</div>
+
+    <!-- GABARITO -->
+    <div class="gabarito-container" id="gabarito">
+        <!-- O conteúdo será gerado via JavaScript -->
+    </div>
+
+    <!-- BOTÕES DE NAVEGAÇÃO -->
+    <div class="controles">
+        <button class="btn-nav" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">⬆ Topo</button>
+    </div>
+</div>
+
+<script>
+// ===== FUNDO ESTRELADO (mesmo do quiz original) =====
+const canvas = document.getElementById("stars");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let estrelas = [];
+for(let i = 0; i < 200; i++){
+    estrelas.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2 + 1,
+        v: Math.random() * 0.5 + 0.1
+    });
+}
+
+function animar(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    estrelas.forEach(e => {
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r, 0, 2 * Math.PI);
+        ctx.fill();
+        e.y += e.v;
+        if(e.y > canvas.height){
+            e.y = 0;
+            e.x = Math.random() * canvas.width;
+        }
+    });
+    requestAnimationFrame(animar);
+}
+animar();
+
+// ===== DADOS DO GABARITO (77 perguntas com respostas verificadas) =====
+const questoes = [
+    // Bloco 1: Estações e clima (perguntas 1-5)
+    { enunciado: "O Sol sempre nasce no Leste.", correto: false, explicacao: "O Sol nasce aproximadamente no leste, mas o ponto exato varia ao longo do ano devido à inclinação do eixo terrestre. Nos equinócios, nasce exatamente no leste; nos solstícios, o ponto de nascente se desloca para nordeste ou sudeste dependendo do hemisfério." },
+    { enunciado: "Faz calor no verão porque a Terra está mais perto do Sol.", correto: false, explicacao: "As estações do ano são causadas pela inclinação do eixo da Terra (23,5°), não pela distância do Sol. Na verdade, a Terra está mais próxima do Sol em janeiro (periélio), que é inverno no hemisfério norte." },
+    { enunciado: "Ao meio-dia, a sombra de um poste é sempre nula (some).", correto: false, explicacao: "Isso só ocorre em locais entre os trópicos quando o Sol está exatamente a pino (zênite). Fora dessa faixa, o Sol nunca fica exatamente no ponto mais alto do céu, portanto as sombras nunca desaparecem completamente." },
+    { enunciado: "A Terra possui apenas dois movimentos: rotação e translação.", correto: false, explicacao: "Além de rotação e translação, a Terra realiza outros movimentos como precessão dos equinócios (ciclo de ~26.000 anos), nutação (oscilação do eixo) e movimento junto com o Sistema Solar pela galáxia." },
+    { enunciado: "O norte indicado pela bússola aponta para o Polo Norte geográfico.", correto: false, explicacao: "A bússola aponta para o norte magnético, que é diferente do norte geográfico (verdadeiro). Atualmente, o polo norte magnético está localizado no arquipélago canadense, a cerca de 500 km do polo geográfico, e sua posição muda continuamente." },
+
+    // Bloco 2: Lua e Eclipses (perguntas 6-10)
+    { enunciado: "As fases da Lua são causadas pela sombra da Terra.", correto: false, explicacao: "As fases da Lua são resultado da mudança na posição relativa entre Lua, Terra e Sol, que altera a porção iluminada visível. A sombra da Terra só atua durante eclipses lunares, que são eventos específicos." },
+    { enunciado: "A Lua não tem rotação, por isso vemos sempre a mesma face.", correto: false, explicacao: "A Lua tem rotação sim! Seu período de rotação é igual ao período de translação (27,3 dias), fenômeno chamado rotação sincronizada. É por isso que sempre vemos a mesma face." },
+    { enunciado: "Existe um 'lado escuro' da Lua que nunca recebe luz do Sol.", correto: false, explicacao: "Todas as partes da Lua recebem luz solar em algum momento. O 'lado oculto' (que não vemos da Terra) tem dias e noites como o lado visível. A face oculta foi fotografada pela primeira vez em 1959 pela sonda soviética Luna 3." },
+    { enunciado: "A Lua só pode ser vista durante a noite.", correto: false, explicacao: "A Lua é frequentemente visível durante o dia, especialmente nos quartos crescente e minguante. Isso ocorre porque ela está suficientemente brilhante e em posição adequada no céu diurno." },
+    { enunciado: "Eclipses solares são fenômenos extremamente raros (ocorrem uma vez por década).", correto: false, explicacao: "Eclipses solares ocorrem de 2 a 5 vezes por ano em algum lugar da Terra. Porém, um eclipse total no mesmo local é raro (média de 375 anos). A faixa de totalidade é muito estreita." },
+
+    // Bloco 3: Sistema Solar e Estrelas (perguntas 11-16)
+    { enunciado: "Buracos negros são 'aspiradores cósmicos' que sugam tudo ao redor, como um vácuo.", correto: false, explicacao: "Buracos negros têm gravidade intensa, mas não 'sugam' como aspiradores. Um objeto pode orbitá-los em segurança se estiver fora do horizonte de eventos. Se o Sol fosse substituído por um buraco negro de mesma massa, a Terra continuaria orbitando normalmente." },
+    { enunciado: "Mercúrio é o planeta mais quente do sistema solar por estar mais perto do Sol.", correto: false, explicacao: "Vênus é o planeta mais quente (média de 462°C) devido ao efeito estufa intenso de sua atmosfera espessa de CO₂. Mercúrio, apesar de mais próximo do Sol, tem temperaturas que variam de -173°C a 427°C por não ter atmosfera." },
+    { enunciado: "Estrelas têm pontas (formato estrelado) quando observadas do espaço.", correto: false, explicacao: "Estrelas são esferas de plasma. O formato estrelado com pontas que vemos em fotos é um efeito óptico causado pela difração da luz nas lentes dos telescópios (spikes de difração)." },
+    { enunciado: "As estrelas que formam uma constelação estão fisicamente próximas entre si.", correto: false, explicacao: "Constelações são agrupamentos aparentes na esfera celeste. As estrelas podem estar a distâncias muito diferentes da Terra e não têm relação física entre si. Por exemplo, as estrelas do Cruzeiro do Sul estão entre 88 e 350 anos-luz de distância." },
+    { enunciado: "Telescópios refletores utilizam espelhos para captar e focar a luz dos astros.", correto: true, explicacao: "Correto! Telescópios refletores usam espelhos curvos para coletar e focar a luz. O telescópio Hubble e o James Webb são exemplos. Foram inventados por Isaac Newton em 1668 para evitar a aberração cromática dos telescópios refratores." },
+    { enunciado: "O Sol é uma gigantesca bola de fogo.", correto: false, explicacao: "O Sol não queima como fogo (combustão). Sua energia vem de fusão nuclear no núcleo, onde hidrogênio se transforma em hélio sob pressão e temperatura extremas. É uma esfera de plasma, não de fogo." },
+
+    // Bloco 4: Noções de Espaço e Física (perguntas 17-22)
+    { enunciado: "Não há gravidade na Estação Espacial Internacional (os astronautas flutuam porque a gravidade é zero).", correto: false, explicacao: "Na altitude da ISS (~400 km), a gravidade é cerca de 90% da da superfície. Os astronautas flutuam porque estão em queda livre constante ao redor da Terra (microgravidade). A sensação de ausência de peso é a mesma de um elevador em queda." },
+    { enunciado: "O som se propaga no vácuo do espaço (como nas explosões de filmes).", correto: false, explicacao: "O som precisa de um meio material para se propagar (ar, água, sólidos). No vácuo do espaço, não há partículas para transmitir as vibrações sonoras. As explosões em filmes são efeitos artísticos, não realistas." },
+    { enunciado: "Meteoritos chegam à superfície da Terra pegando fogo, incandescentes.", correto: false, explicacao: "O brilho visto no céu (meteoro) ocorre pelo atrito com a atmosfera, aquecendo o objeto. Mas meteoritos que chegam ao solo geralmente não estão em chamas; podem estar mornos ou frios, pois a camada externa que aqueceu se desprende ou o interior permanece frio." },
+    { enunciado: "O Sol é amarelo (sua cor verdadeira, vista de perto, é amarela).", correto: false, explicacao: "O Sol é branco. A atmosfera terrestre espalha a luz azul (por isso o céu é azul), fazendo com que o Sol pareça mais amarelado/avermelhado quando visto da superfície. No espaço, ele aparece branco." },
+    { enunciado: "Cinturões de asteroides são densos e perigosos de atravessar, cheios de rochas próximas.", correto: false, explicacao: "O cinturão de asteroides entre Marte e Júpiter é extremamente esparso. A distância média entre asteroides é de centenas de milhares de quilômetros. Sondas espaciais como a Dawn atravessaram o cinturão sem nenhum problema." },
+    { enunciado: "Um relógio de sol horizontal feito para a Europa funciona perfeitamente em qualquer cidade do Brasil.", correto: false, explicacao: "Relógios de sol precisam ser ajustados para a latitude local, pois a inclinação do gnômon (haste) deve corresponder à latitude do lugar. Um relógio europeu não funcionaria corretamente no Brasil devido à diferença de latitude." },
+
+    // Bloco 5: Bônus regionais (pergunta 23)
+    { enunciado: "Em todo o Brasil, o Sol nasce no mar (oceano) porque o país tem costa leste.", correto: false, explicacao: "Isso só é verdade para cidades litorâneas com costa voltada para leste. No interior do país, o Sol nasce sobre o continente. Além disso, a costa brasileira tem variações: em Salvador, por exemplo, o Sol nasce no mar, mas em Recife a costa é voltada para leste também." },
+
+    // Bloco 6: Conhecimentos Gerais (perguntas 24-77) - baseado nas pesquisas
+    { enunciado: "A constelação de Órion pode ser vista em qualquer Hemisfério.", correto: true, explicacao: "Órion está localizada sobre o equador celeste, sendo visível de praticamente todas as regiões habitadas da Terra, embora em épocas diferentes do ano." },
+    { enunciado: "No polo Sul geográfico, o Sol nasce e se põe apenas uma vez por ano.", correto: true, explicacao: "Nos polos, o dia dura seis meses (com o Sol circulando o céu) e a noite outros seis meses. Portanto, o Sol nasce uma vez por ano no equinócio de primavera e se põe no equinócio de outono." },
+    { enunciado: "Telescópios refratores foram inventados primeiro e usam lentes para desviar a luz.", correto: true, explicacao: "Os primeiros telescópios astronômicos eram refratores, como o usado por Galileu em 1609. Eles utilizam lentes objetivas para refratar (desviar) a luz e formar imagem." },
+    { enunciado: "O eclipse solar total de 1919, observado por Eddington, confirmou a previsão de Einstein de que a luz se curva perto do Sol.", correto: true, explicacao: "A expedição de Arthur Eddington à ilha de Príncipe (África) durante o eclipse de 29 de maio de 1919 mediu o desvio da luz de estrelas próximas ao Sol, confirmando a Teoria da Relatividade Geral." },
+    { enunciado: "Com um gnômon -haste vertical- e medindo sombras ao longo do dia, é possível determinar a hora do meio-dia solar e a direção norte-sul.", correto: true, explicacao: "O gnômon é um dos instrumentos astronômicos mais antigos. A sombra mais curta do dia indica o meio-dia solar e a direção norte-sul (meridiana)." },
+    { enunciado: "O Cruzeiro do Sul é visível durante todo o ano em qualquer cidade do Brasil.", correto: false, explicacao: "O Cruzeiro do Sul é circumpolar apenas para latitudes abaixo de 35°S. No norte do Brasil (Amapá, Roraima), ele pode não ser visível em algumas épocas do ano." },
+    { enunciado: "A Lei da Gravitação Universal, proposta por Isaac Newton, afirma que todos os corpos com massa se atraem mutuamente.", correto: true, explicacao: "A lei de Newton estabelece que a força de atração entre dois corpos é proporcional ao produto de suas massas e inversamente proporcional ao quadrado da distância entre eles." },
+    { enunciado: "O Sol produz energia principalmente por meio de reações de Fusão Nuclear que ocorrem em seu núcleo.", correto: true, explicacao: "No núcleo solar, a temperatura de 15 milhões de graus permite a fusão de hidrogênio em hélio, liberando enorme quantidade de energia." },
+    { enunciado: "Os meteoroides podem ter origem em cometas ou asteroides.", correto: true, explicacao: "Meteoroides são fragmentos rochosos ou metálicos resultantes de colisões entre asteroides ou da desintegração de cometas." },
+    { enunciado: "Um Eclipse Solar ocorre quando a Lua se posiciona entre o Sol e a Terra.", correto: true, explicacao: "No eclipse solar, a Lua projeta sua sombra sobre a Terra, bloqueando total ou parcialmente a luz solar." },
+    { enunciado: "Galileu descobriu as quatro maiores luas de Júpiter, provando que nem tudo orbitava a Terra.", correto: true, explicacao: "Em 1610, Galileu observou Io, Europa, Ganimedes e Calisto, que orbitavam Júpiter, contrariando o modelo geocêntrico." },
+    { enunciado: "Usando um transferidor, um canudo e um peso, é possível construir um astrolábio simples para medir a altura das estrelas.", correto: true, explicacao: "Um astrolábio rudimentar pode ser feito com esses materiais para medir ângulos de elevação de astros." },
+    { enunciado: "Um Ano-luz é uma unidade utilizada em Astronomia para medir distâncias.", correto: true, explicacao: "Ano-luz é a distância que a luz percorre em um ano no vácuo: aproximadamente 9,46 trilhões de quilômetros." },
+    { enunciado: "Observatórios astronômicos são frequentemente construídos em locais altos e secos para evitar turbulência atmosférica.", correto: true, explicacao: "Locais como o Deserto do Atacama (Chile) e o topo do Mauna Kea (Havaí) oferecem ar mais seco, estável e céu limpo." },
+    { enunciado: "As estrelas observadas no céu noturno pertencem exclusivamente à Via Láctea.", correto: true, explicacao: "Todas as estrelas individuais visíveis a olho nu estão em nossa galáxia. Galáxias distantes (como Andrômeda) aparecem como manchas difusas." },
+    { enunciado: "A cauda de um cometa aponta sempre para trás em relação ao seu movimento no espaço.", correto: false, explicacao: "A cauda do cometa aponta para longe do Sol devido à pressão da radiação solar e ao vento solar, não na direção oposta ao movimento." },
+    { enunciado: "O período de rotação da Lua é igual ao seu período de translação em torno da Terra.", correto: true, explicacao: "Isso é a rotação sincronizada, que faz com que a Lua mostre sempre a mesma face para a Terra." },
+    { enunciado: "Plutão deixou de ser planeta.", correto: false, explicacao: "Plutão foi reclassificado como 'planeta anão' em 2006 pela União Astronômica Internacional, mas continua sendo um corpo celeste importante." },
+    { enunciado: "Se os planetas fossem frutas, e Júpiter fosse uma melancia, a Terra seria uma uva Itália.", correto: true, explicacao: "Júpiter tem diâmetro 11 vezes maior que a Terra. Uma melancia (~30cm) comparada a uma uva Itália (~2,5cm) mantém a proporção aproximada." },
+    { enunciado: "Ptolomeu, no século II, propôs um modelo geocêntrico do universo que perdurou por mais de 1000 anos.", correto: true, explicacao: "O modelo ptolomaico, com a Terra no centro e epiciclos, foi aceito até o século XVI." },
+    { enunciado: "Johannes Kepler descobriu que as órbitas dos planetas são elípticas, não circulares.", correto: true, explicacao: "Primeira lei de Kepler: planetas orbitam o Sol em trajetórias elípticas, com o Sol em um dos focos." },
+    { enunciado: "Atualmente, o Sistema Solar possui 5 planetas anões oficialmente reconhecidos pela IAU.", correto: true, explicacao: "Os cinco são: Plutão, Ceres, Haumea, Makemake e Éris." },
+    { enunciado: "Aristarco de Samos, ainda na Grécia Antiga, já havia proposto um modelo heliocêntrico, com o Sol no centro.", correto: true, explicacao: "Por volta de 270 a.C., Aristarco sugeriu que a Terra e planetas orbitavam o Sol, ideia que não foi aceita na época." },
+    { enunciado: "Um relógio de sol analógico pode ser construído com papel, caneta e um palito, mas só funciona corretamente se ajustado para a latitude local.", correto: true, explicacao: "A inclinação do gnômon deve corresponder à latitude do local para marcar as horas corretamente." },
+    { enunciado: "Os Meteoritos são aqueles risco no céu.", correto: false, explicacao: "Os 'riscos no céu' são meteoros (estrelas cadentes). Meteoritos são fragmentos que chegam ao solo." },
+    { enunciado: "Atualmente o planeta com mais luas no sistema solar é Saturno com 274 satélites.", correto: true, explicacao: "Em 2025, Saturno tem 274 luas confirmadas, superando Júpiter (95)." },
+    { enunciado: "O Sol tem aproximadamente 400 vezes o diâmetro da Lua e está 400 vezes mais distante.", correto: true, explicacao: "Essa coincidência faz com que Sol e Lua tenham tamanhos aparentes quase iguais no céu, permitindo eclipses totais perfeitos." },
+    { enunciado: "William Herschel descobriu o planeta Urano em 1781, o primeiro planeta descoberto com telescópio.", correto: true, explicacao: "Herschel, músico e astrônomo amador, descobriu Urano acidentalmente enquanto mapeava estrelas." },
+    { enunciado: "Interferometria é uma técnica que combina múltiplos telescópios para simular um espelho gigante.", correto: true, explicacao: "Interferometria combina sinais de telescópios distantes para obter resolução equivalente a um telescópio do tamanho da distância entre eles." },
+    { enunciado: "Alfenas está localizada no sul de Minas Gerais, ao sul da Linha do Equador e a leste de Greenwich.", correto: false, explicacao: "Alfenas está a oeste de Greenwich (meridiano de referência), portanto longitude oeste." },
+    { enunciado: "Albert Einstein explicou a órbita anômala de Mercúrio usando sua Teoria da Relatividade Geral.", correto: true, explicacao: "A precessão do periélio de Mercúrio foi explicada pela curvatura do espaço-tempo prevista por Einstein." },
+    { enunciado: "Edwin Hubble descobriu que o universo está em expansão ao observar o redshift das galáxias.", correto: true, explicacao: "Hubble observou que galáxias distantes se afastam com velocidade proporcional à distância (Lei de Hubble)." },
+    { enunciado: "A descoberta da radiação cósmica de fundo em 1965 fortaleceu a teoria do Big Bang.", correto: true, explicacao: "A radiação cósmica de fundo é o 'eco' do Big Bang, prevista teoricamente e descoberta por Penzias e Wilson." },
+    { enunciado: "A missão espacial Voyager foi a primeira a enviar imagens detalhadas dos planetas exteriores.", correto: true, explicacao: "As sondas Voyager 1 e 2 (lançadas em 1977) realizaram o Grand Tour do Sistema Solar externo, fotografando Júpiter, Saturno, Urano e Netuno." },
+    { enunciado: "O primeiro exoplaneta foi descoberto na década de 1980, mas apenas confirmado nos anos 1990.", correto: true, explicacao: "Possíveis detecções nos anos 80 foram confirmadas em 1992 (planetas orbitando pulsar) e 1995 (51 Pegasi b)." },
+    { enunciado: "Ceres, Plutão, Haumea, Makemake e Éris são planetas anões reconhecidos.", correto: true, explicacao: "Esses são os cinco planetas anões oficialmente reconhecidos pela União Astronômica Internacional." },
+    { enunciado: "O Sol é classificado como uma estrela anã amarela da sequência principal (tipo espectral G2V).", correto: true, explicacao: "O Sol está na sequência principal, convertendo hidrogênio em hélio, e é classificado como G2V." },
+    { enunciado: "Poluição luminosa é a principal inimiga dos observatórios astronômicos profissionais e amadores.", correto: true, explicacao: "O excesso de luz artificial atrapalha observações astronômicas, motivando leis de proteção do céu noturno." },
+    { enunciado: "Com barbante e contas coloridas, é possível construir um 'colar do Sistema Solar' com distâncias proporcionais entre os planetas.", correto: true, explicacao: "Modelos em escala são excelentes ferramentas didáticas para visualizar as distâncias planetárias." },
+    { enunciado: "Uma estrela de nêutrons é o que resta após a explosão de uma estrela supergigante em supernova.", correto: true, explicacao: "Estrelas de nêutrons são remanescentes ultra-densos de supernovas, formadas por nêutrons." },
+    { enunciado: "O Brasil é atravessado pelo Trópico de Capricórnio.", correto: true, explicacao: "O Trópico de Capricórnio passa pelos estados do Paraná, São Paulo, Mato Grosso do Sul e outros." },
+    { enunciado: "O Telescópio Espacial Hubble já observou galáxias a mais de 13 bilhões de anos-luz de distância.", correto: true, explicacao: "O Hubble Ultra Deep Field captou luz de galáxias formadas há 13 bilhões de anos." },
+    { enunciado: "Umbra é a região de sombra total e penumbra é a região de sombra parcial.", correto: true, explicacao: "Nos eclipses, a umbra é onde o eclipse é total, a penumbra onde é parcial." },
+    { enunciado: "Nada, nem mesmo a luz, pode escapar de um buraco negro após ultrapassar seu horizonte de eventos.", correto: true, explicacao: "O horizonte de eventos é o ponto sem retorno; dentro dele, a velocidade de escape supera a velocidade da luz." },
+    { enunciado: "Usando papel cartão preto e um estilete, é possível construir um espectroscópio caseiro para observar linhas espectrais.", correto: true, explicacao: "Espectroscópios simples podem ser feitos com CD/DVD ou redes de difração caseiras." },
+    { enunciado: "Com uma caixa de papelão e uma lupa, é possível projetar imagens do Sol em uma folha branca para observar manchas solares com segurança.", correto: true, explicacao: "Projetar a imagem do Sol é um método seguro de observação, evitando danos aos olhos." },
+    { enunciado: "Eclipse Lunar: a Terra fica entre o Sol e a Lua.", correto: true, explicacao: "No eclipse lunar, a Lua entra na sombra da Terra, que está entre o Sol e a Lua." },
+    { enunciado: "O Telescópio James Webb está posicionado no ponto Lagrange L2, a 1,5 milhão de km da Terra.", correto: true, explicacao: "O JWST orbita o ponto L2, onde permanece alinhado com a Terra e o Sol, protegido do calor e luz solar." },
+    { enunciado: "No inverno do Hemisfério Norte, o Polo Norte passa pela Noite Polar.", correto: true, explicacao: "No inverno do HN, o Polo Norte fica em noite contínua (noite polar) por meses." },
+    { enunciado: "O tempo passa mais devagar próximo a um buraco negro devido à dilatação temporal gravitacional.", correto: true, explicacao: "A relatividade geral prevê que a gravidade intensa curva o espaço-tempo, fazendo o tempo passar mais devagar." },
+    { enunciado: "A magnitude aparente de uma estrela depende tanto de seu brilho intrínseco quanto de sua distância da Terra.", correto: true, explicacao: "Magnitude aparente é o brilho observado, influenciado pela luminosidade real (magnitude absoluta) e pela distância." },
+    { enunciado: "Meteoro, meteorito e meteoroide são a mesma coisa: fragmentos rochosos que queimam na atmosfera.", correto: false, explicacao: "Meteoroide: fragmento no espaço. Meteoro: fenômeno luminoso na atmosfera. Meteorito: fragmento que chega ao solo." },
+    { enunciado: "Elementos como carbono, oxigênio e ferro são forjados no interior de estrelas massivas.", correto: true, explicacao: "A nucleossíntese estelar produz elementos pesados no interior de estrelas, espalhados por supernovas." },
+    { enunciado: "Depois deste quiz, você ficou com vontade de aprender mais sobre Astronomia e Astrofísica.", correto: true, explicacao: "Essa é uma afirmação positiva e verdadeira para quem chegou até aqui! A astronomia é fascinante e sempre há mais a descobrir." }
+];
+
+// ===== RENDERIZAR GABARITO =====
+function renderizarGabarito() {
+    const container = document.getElementById('gabarito');
+    let html = '';
+    
+    questoes.forEach((q, index) => {
+        const numero = index + 1;
+        const statusResposta = q.correto ? '✅ CORRETO' : '❌ INCORRETO';
+        const corStatus = q.correto ? '#00ff88' : '#ff6b6b';
+        
+        html += `
+            <div class="pergunta-card">
+                <div class="pergunta-numero">Pergunta ${numero}</div>
+                <div class="pergunta-texto">${q.enunciado}</div>
+                <div class="resposta-correta">
+                    <div class="resposta-texto">
+                        <span style="color: ${corStatus}">${statusResposta}</span>
+                    </div>
+                    <div class="explicacao">
+                        <strong>📝 Explicação:</strong> ${q.explicacao}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// ===== INICIALIZAR =====
+renderizarGabarito();
+
+// Atualizar contador
+document.getElementById('indice').innerHTML = `Total: ${questoes.length} perguntas`;
+
+</script>
+</body>
+</html>

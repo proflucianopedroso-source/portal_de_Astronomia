@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- HTML5 -->
+<meta charset="utf-8"/>	
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Diagrama HR Interativo</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0b0b2a, #1a1a40);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #6ab7ff;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaccff;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .diagram-container {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .info-panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .diagram {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: #1c1c4e;
+            border: 1px solid #444;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .axis {
+            position: absolute;
+            color: #ccc;
+            font-size: 12px;
+        }
+        
+        .x-axis {
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            border-top: 1px solid #666;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+        
+        .y-axis {
+            left: 0;
+            height: 100%;
+            width: 40px;
+            
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px 0;
+            text-align: center;
+        }
+        
+        .axis-label {
+            position: absolute;
+            color: #aaccff;
+            font-size: 14px;
+        }
+        
+        .x-label {
+            bottom: -40px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .y-label {
+            left: -80px;
+            top: 50%;
+            transform: rotate(-90deg);
+            width: 200px;
+            text-align: center;
+        }
+        
+        .grid-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .horizontal-grid {
+            width: 100%;
+            height: 1px;
+        }
+        
+        .vertical-grid {
+            width: 1px;
+            height: 100%;
+        }
+        
+        .region {
+            position: absolute;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            padding: 5px;
+            font-size: 12px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .star {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .star:hover {
+            transform: scale(1.5);
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+        
+        .star-info {
+            display: none;
+            background: rgba(30, 30, 70, 0.95);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid #6ab7ff;
+        }
+        
+        .star-info h3 {
+            color: #6ab7ff;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-btn {
+            background: rgba(106, 183, 255, 0.2);
+            border: 1px solid #6ab7ff;
+            color: #aaccff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(106, 183, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .comparison {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sun {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ffd700, #ff8c00);
+            border-radius: 50%;
+            box-shadow: 0 0 20px #ff8c00;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #8899cc;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 align="center">EVS - Diagrama HR Interativo</h1>
+		<p align="center"><font color="#FFFF00">Prof. Luciano Soares Pedroso</font></p>
+            <p class="subtitle" align="center">Diagrama de Hertzsprung-Russell.</p>
+        </header>
+        
+        <div class="content">
+            <div class="diagram-container">
+                <div class="filters">
+                    <p align="center">
+                    <button class="filter-btn active" data-filter="all" style="text-align: center">
+					<font color="#FFFF00"><b>Todas as Estrelas</button>
+                    </b></font>
+                    <button class="filter-btn" data-filter="principal">
+					<font color="#FFFF00"><b>Sequência Principal</button>
+                    </b></font>
+                    <button class="filter-btn" data-filter="gigante">
+					<font color="#FFFF00"><b>Gigantes</button>
+                    </b></font>
+                    <button class="filter-btn" data-filter="anã">
+					<font color="#FFFF00"><b>Anãs Brancas</button>
+                    </b></font></p>
+					<p align="center">
+                    <button class="filter-btn" data-filter="supergigante">
+					<font color="#FFFF00"><b>Supergigantes</button>
+                	</b></font>
+                </div>
+                
+                <div class="diagram" id="hr-diagram">
+                    <!-- Eixos e grid ser o inseridos via JavaScript -->
+                </div>
+                
+                <div class="comparison">
+                    <div class="sun"></div>
+                    <p>Diâmetro do Sol nesta representação</p>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <h2>Informações da Estrela</h2>
+                <p>Clique em uma estrela no diagrama HR para ver suas informações.</p>
+                
+                <div class="star-info" id="star-info">
+                    <h3 id="star-name">Nome da Estrela</h3>
+                    <p><strong>Tipo:</strong> <span id="star-type">-</span></p>
+                    <p><strong>Temperatura:</strong> <span id="star-temp">-</span></p>
+                    <p><strong>Luminosidade:</strong> <span id="star-lum">-</span></p>
+                    <p><strong>Classe Espectral:</strong> <span id="star-class">-</span></p>
+                    <p><strong>Raio:</strong> <span id="star-radius">-</span></p>
+                    <p><strong>Distância:</strong> <span id="star-distance">-</span></p>
+                    <p><strong>Descrição:</strong> <span id="star-desc">-</span></p>
+                </div>
+                
+                <div class="about-hr">
+                    <h3 align="justify">Anãs Brancas</h3>
+                    <p align="justify">As anãs brancas estão localizadas na região 
+					inferior esquerda, com alta temperatura mas baixa 
+					luminosidade pois são remanescentes de estelas quentes, pequenas e pouco luminosas, o que as coloca nessa região específica do diagrama HR.</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Diagrama HR Interativo -| Dados aproximados para representação educacional</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const diagram = document.getElementById('hr-diagram');
+            const starInfo = document.getElementById('star-info');
+            const starName = document.getElementById('star-name');
+            const starType = document.getElementById('star-type');
+            const starTemp = document.getElementById('star-temp');
+            const starLum = document.getElementById('star-lum');
+            const starClass = document.getElementById('star-class');
+            const starRadius = document.getElementById('star-radius');
+            const starDistance = document.getElementById('star-distance');
+            const starDesc = document.getElementById('star-desc');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            
+            // Dados das estrelas (posi  es corrigidas no diagrama HR)
+            const starsData = [
+                // Sequência Principal (20 estrelas)
+                {x: 180, y: 380, color: '#ffeb3b', type: 'principal', name: 'Sol', temp: '5.800 K', lum: '1 L☉', class: 'G2V', radius: '1 R☉', distance: '1 UA', desc: 'O Sol   uma estrela anã  amarela de sequência principal, composta principalmente de hidrogênio e hélio.'},
+                {x: 120, y: 300, color: '#bb86fc', type: 'principal', name: 'Sirius A', temp: '9.940 K', lum: '25 L☉', class: 'A1V', radius: '1,71 R☉', distance: '8,6 anos-luz', desc: 'Sirius   a estrela mais brilhante do céu noturno, localizada na constelação de Cão Maior.'},
+                {x: 80, y: 200, color: '#80deea', type: 'principal', name: 'Rigel', temp: '12.100 K', lum: '120.000 L☉', class: 'B8Ia', radius: '78,9 R☉', distance: '860 anos-luz', desc: 'Rigel   uma supergigante azul é a estrela mais brilhante da constelação de Orion.'},
+                {x: 220, y: 450, color: '#ff9800', type: 'principal', name: 'Alpha Centauri A', temp: '5.790 K', lum: '1,52 L☉', class: 'G2V', radius: '1,22 R☉', distance: '4,37 anos-luz', desc: 'Estrela mais próxima do Sistema Solar, faz parte de um sistema triplo de estrelas.'},
+                {x: 100, y: 250, color: '#bb86fc', type: 'principal', name: 'Vega', temp: '9.600 K', lum: '40 L☉', class: 'A0V', radius: '2,36 R☉', distance: '25 anos-luz', desc: 'Vega   a estrela mais brilhante da constela ção de Lira é uma das mais brilhantes do céu noturno.'},
+                {x: 140, y: 320, color: '#bb86fc', type: 'principal', name: 'Fomalhaut', temp: '8.590 K', lum: '16,6 L☉', class: 'A3V', radius: '1,84 R☉', distance: '25 anos-luz', desc: 'Fomalhaut   uma estrela jovem cercada por um disco de poeira, com um exoplaneta confirmado.'},
+                {x: 240, y: 420, color: '#ffeb3b', type: 'principal', name: 'Tau Ceti', temp: '5.344 K', lum: '0,52 L☉', class: 'G8V', radius: '0,79 R☉', distance: '11,9 anos-luz', desc: 'Estrela similar ao Sol com um sistema planetário que pode abrigar planetas na zona habitável.'},
+                {x: 260, y: 440, color: '#ff9800', type: 'principal', name: 'Epsilon Eridani', temp: '5.082 K', lum: '0,34 L☉', class: 'K2V', radius: '0,74 R☉', distance: '10,5 anos-luz', desc: 'Estrela com um sistema planetário e disco de debris, uma das mais próximas com planetas conhecidos.'},
+                {x: 280, y: 460, color: '#ff5252', type: 'principal', name: 'Proxima Centauri', temp: '3.042 K', lum: '0,0017 L☉', class: 'M5.5Ve', radius: '0,14 R☉', distance: '4,24 anos-luz', desc: 'Estrela mais próxima do Sol, uma anã  vermelha com pelo menos um planeta na zona habitável.'},
+                {x: 300, y: 470, color: '#ff5252', type: 'principal', name: 'TRAPPIST-1', temp: '2.566 K', lum: '0,0005 L☉', class: 'M8V', radius: '0,12 R☉', distance: '39 anos-luz', desc: 'Anã  vermelha ultrafria com sete planetas do tamanho da Terra, três na zona habitável.'},
+                
+                // Gigantes Vermelhas (8 estrelas)
+                {x: 250, y: 150, color: '#ff5252', type: 'gigante', name: 'Aldebaran', temp: '3.900 K', lum: '440 L☉', class: 'K5III', radius: '44 R☉', distance: '65 anos-luz', desc: 'Aldebaran   uma gigante vermelha localizada na constelação de Taurus, com diâmetro 44 vezes maior que o Sol.'},
+                {x: 280, y: 120, color: '#ff5252', type: 'gigante', name: 'Arcturus', temp: '4.290 K', lum: '170 L☉', class: 'K1.5III', radius: '25,7 R☉', distance: '37 anos-luz', desc: 'Arcturus   uma gigante vermelha é a estrela mais brilhante da constelação de Boieiro.'},
+                {x: 270, y: 180, color: '#ff5252', type: 'gigante', name: 'Pollux', temp: '4.666 K', lum: '43 L☉', class: 'K0III', radius: '8,8 R☉', distance: '34 anos-luz', desc: 'Gigante laranja, a estrela mais brilhante da constelação de Gê meos.'},
+                {x: 230, y: 130, color: '#ff5252', type: 'gigante', name: 'Mirach', temp: '3.842 K', lum: '190 L☉', class: 'M0III', radius: '100 R☉', distance: '200 anos-luz', desc: 'Gigante vermelha na constelação de Andrômeda, serve como guia para a Galáxia de Andrômeda.'},
+                
+                // Supergigantes (8 estrelas)
+                {x: 150, y: 50, color: '#ff5252', type: 'supergigante', name: 'Betelgeuse', temp: '3.500 K', lum: '126.000 L☉', class: 'M2Iab', radius: '887 R☉', distance: '640 anos-luz', desc: 'Betelgeuse   uma supergigante vermelha é uma das maiores estrelas conhecidas, podendo se tornar uma supernova a qualquer momento em escalas de tempo astronômicas.'},
+                {x: 100, y: 80, color: '#80deea', type: 'supergigante', name: 'Rigel', temp: '12.100 K', lum: '120.000 L☉', class: 'B8Ia', radius: '78,9 R☉', distance: '860 anos-luz', desc: 'Rigel   uma supergigante azul é a estrela mais brilhante da constelação de Orion.'},
+                {x: 120, y: 60, color: '#80deea', type: 'supergigante', name: 'Deneb', temp: '8.525 K', lum: '196.000 L☉', class: 'A2Ia', radius: '203 R☉', distance: '2.600 anos-luz', desc: 'Supergigante branca, uma das estrelas mais luminosas conhecidas, no  ápice do Triângulo de Verão.'},
+                {x: 180, y: 70, color: '#ff5252', type: 'supergigante', name: 'Antares', temp: '3.600 K', lum: '75.900 L☉', class: 'M1.5Iab', radius: '680 R☉', distance: '550 anos-luz', desc: 'Supergigante vermelha, a estrela mais brilhante da constelação de Escorpião.'},
+                
+                // Anãs Brancas (8 estrelas) - POSI  ES CORRIGIDAS
+                {x: 60, y: 420, color: '#e0f7fa', type: 'anã', name: 'Sirius B', temp: '25.200 K', lum: '0,026 L☉', class: 'DA2', radius: '0,0084 R☉', distance: '8,6 anos-luz', desc: 'Sirius B   uma anã  branca, remanescente de uma estrela que já  foi similar ao Sol, agora comprimida em um objeto do tamanho da Terra.'},
+                {x: 70, y: 440, color: '#b2ebf2', type: 'anã', name: 'Procyon B', temp: '7.740 K', lum: '0,00049 L☉', class: 'DQZ', radius: '0,012 R☉', distance: '11,4 anos-luz', desc: 'Procyon B   uma anã  branca que orbita a estrela Procyon A na constelação de C ão Menor.'},
+                {x: 50, y: 400, color: '#b2ebf2', type: 'anã', name: 'Van Maanen 2', temp: '6.220 K', lum: '0,00017 L☉', class: 'DZ8', radius: '0,011 R☉', distance: '14,1 anos-luz', desc: 'Anã  branca isolada mais próxima do Sistema Solar, descoberta por Adrian van Maanen em 1917.'},
+                {x: 80, y: 430, color: '#b2ebf2', type: 'anã', name: '40 Eridani B', temp: '16.500 K', lum: '0,013 L☉', class: 'DA', radius: '0,014 R☉', distance: '16,3 anos-luz', desc: 'Anã  branca no sistema triplo 40 Eridani, uma das primeiras anãs brancas descobertas.'},
+                {x: 40, y: 450, color: '#b2ebf2', type: 'anã', name: 'Stein 2051 B', temp: '7.100 K', lum: '0,003 L☉', class: 'DC5', radius: '0,011 R☉', distance: '18 anos-luz', desc: 'An  branca que fez parte de uma importante medição de deflexão gravitacional da luz, confirmando a Teoria da Relatividade.'},
+                {x: 90, y: 410, color: '#b2ebf2', type: 'anã', name: 'GD 165', temp: '12.000 K', lum: '0,008 L☉', class: 'DA', radius: '0,012 R☉', distance: '103 anos-luz', desc: 'Anã  branca que  é a estrela central de um sistema planetário remanescente.'},
+                {x: 30, y: 460, color: '#b2ebf2', type: 'anã', name: 'HZ 43', temp: '51.000 K', lum: '0,015 L☉', class: 'DA', radius: '0,013 R☉', distance: '68 anos-luz', desc: 'Anã  branca extremamente quente, uma das fontes de raios-X mais brilhantes no céu.'},
+                {x: 100, y: 390, color: '#b2ebf2', type: 'anã', name: 'GJ 440', temp: '13.500 K', lum: '0,0008 L☉', class: 'DXP', radius: '0,011 R☉', distance: '15 anos-luz', desc: 'Anã  branca próxima com alta velocidade espacial, sugerindo origem antiga.'}
+            ];
+            
+            // Desenhar eixos e grid
+            function drawAxes() {
+                // Eixo Y (luminosidade)
+                const yAxis = document.createElement('div');
+                yAxis.className = 'y-axis';
+                yAxis.innerHTML = `
+                   
+                `;
+                diagram.appendChild(yAxis);
+                
+                // Eixo X (temperatura)
+                const xAxis = document.createElement('div');
+                xAxis.className = 'x-axis';
+                xAxis.innerHTML = `
+                   
+                `;
+                diagram.appendChild(xAxis);
+                
+                // Adicionar linhas de grade HORIZONTAIS
+                for (let i = 1; i <= 7; i++) {
+                    const hLine = document.createElement('div');
+                    hLine.className = 'grid-line horizontal-grid';
+                    hLine.style.top = `${i * 60}px`;
+                    diagram.appendChild(hLine);
+                }
+
+                // Linhas verticais REMOVIDAS conforme solicitado
+                // for (let i = 1; i <= 7; i++) {
+                //     const vLine = document.createElement('div');
+                //     vLine.className = 'grid-line vertical-grid';
+                //     vLine.style.left = `${i * 10}px`;
+                //     diagram.appendChild(vLine);
+                // }
+                
+                // Adicionar regi es
+                const regions = [
+                    {name: 'Supergigantes', top: 30, left: 50, width: 200, height: 100},
+                    {name: 'Gigantes', top: 130, left: 150, width: 150, height: 100},
+                    {name: 'Sequência Principal', top: 230, left: 80, width: 280, height: 200},
+                    {name: 'Anãs Brancas', top: 380, left: 30, width: 80, height: 80}
+                ];
+                
+                regions.forEach(region => {
+                    const regionEl = document.createElement('div');
+                    regionEl.className = 'region';
+                    regionEl.textContent = region.name;
+                    regionEl.style.top = `${region.top}px`;
+                    regionEl.style.left = `${region.left}px`;
+                    regionEl.style.width = `${region.width}px`;
+                    regionEl.style.height = `${region.height}px`;
+                    diagram.appendChild(regionEl);
+                });
+            }
+            
+            // Adicionar estrelas ao diagrama
+            function addStars() {
+                starsData.forEach(starData => {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = `${starData.x}px`;
+                    star.style.top = `${starData.y}px`;
+                    star.style.backgroundColor = starData.color;
+                    star.setAttribute('data-type', starData.type);
+                    star.setAttribute('data-name', starData.name);
+                    star.setAttribute('data-temp', starData.temp);
+                    star.setAttribute('data-lum', starData.lum);
+                    star.setAttribute('data-class', starData.class);
+                    star.setAttribute('data-radius', starData.radius);
+                    star.setAttribute('data-distance', starData.distance);
+                    star.setAttribute('data-desc', starData.desc);
+                    
+                    diagram.appendChild(star);
+                });
+            }
+            
+            // Inicializar o diagrama
+            drawAxes();
+            addStars();
+            
+            // Mostrar informa  es da estrela ao clicar
+            diagram.addEventListener('click', function(e) {
+                if (e.target.classList.contains('star')) {
+                    starName.textContent = e.target.getAttribute('data-name');
+                    starType.textContent = e.target.getAttribute('data-type');
+                    starTemp.textContent = e.target.getAttribute('data-temp');
+                    starLum.textContent = e.target.getAttribute('data-lum');
+                    starClass.textContent = e.target.getAttribute('data-class');
+                    starRadius.textContent = e.target.getAttribute('data-radius');
+                    starDistance.textContent = e.target.getAttribute('data-distance');
+                    starDesc.textContent = e.target.getAttribute('data-desc');
+                    
+                    starInfo.style.display = 'block';
+                }
+            });
+            
+            // Filtros de estrelas
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remover classe active de todos os bot es
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Adicionar classe active ao bot o clicado
+                    this.classList.add('active');
+                    
+                    const filter = this.getAttribute('data-filter');
+                    const stars = document.querySelectorAll('.star');
+                    
+                    stars.forEach(star => {
+                        if (filter === 'all') {
+                            star.style.display = 'block';
+                        } else {
+                            if (star.getAttribute('data-type') === filter) {
+                                star.style.display = 'block';
+                            } else {
+                                star.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+            });
+            
+            // Simular clique no Sol por padr o
+            setTimeout(() => {
+                document.querySelector('.star[data-name="Sol"]').click();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

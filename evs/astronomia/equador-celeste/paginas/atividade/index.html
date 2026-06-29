@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Equador Celeste</title>
+<link rel="icon" href="EVS.png"></head>
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 1.8rem; }
+        p.subtitle { margin-top: 5px; opacity: 0.9; }
+
+        .student-info {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box; /* Garante que o padding não estoure a largura */
+        }
+
+        .question-card {
+            background: var(--card-bg);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .question-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .option-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-item:hover {
+            background-color: #f0f8ff;
+        }
+
+        .option-item input {
+            margin-right: 10px;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        /* Estilos de feedback após correção */
+        .correct-answer {
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+            color: #155724;
+        }
+
+        .wrong-answer {
+            background-color: #f8d7da !important;
+            border-color: #f5c6cb !important;
+            color: #721c24;
+        }
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            margin-top: 30px;
+        }
+
+        .btn-submit:hover {
+            background-color: #219150;
+        }
+
+        #result-area {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.5rem;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .student-info { flex-direction: column; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Quiz - Equador Celeste</h1>
+        <p class="subtitle">EVS - Equador Celeste</p>
+    </header>
+
+    <div class="student-info">
+        <div class="input-group">
+            <label for="studentName">Nome do Aluno:</label>
+            <input type="text" id="studentName" placeholder="Digite seu nome completo">
+        </div>
+        <div class="input-group">
+            <label for="activityDate">Data:</label>
+            <input type="date" id="activityDate">
+        </div>
+    </div>
+
+    <form id="quizForm">
+        <div id="questions-container">
+            </div>
+
+        <button type="button" class="btn-submit" onclick="submitQuiz()">Enviar Respostas</button>
+    </form>
+
+    <div id="result-area">
+        <p>Sua Nota Final: <span id="final-score">0</span> / 5,0</p>
+    </div>
+</div>
+
+<script>
+    // Banco de Perguntas baseadas na simulação
+    const questionsData = [
+        {
+            id: 1,
+            question: "Na simulação, o que representa o círculo colorido (geralmente verde ou azul) que divide a esfera celeste em dois hemisférios?",
+            options: [
+                "O Equador Celeste, que é a projeção do equador da Terra no espaço.",
+                "A Eclíptica, que é o caminho aparente do Sol.",
+                "O Meridiano de Greenwich projetado no céu.",
+                "A órbita da Lua ao redor da Terra."
+            ],
+            correct: 0 // Índice da resposta correta no array acima (antes de embaralhar)
+        },
+        {
+            id: 2,
+            question: "O círculo inclinado (Eclíptica) e o Equador Celeste se cruzam em dois pontos específicos. O que esses pontos representam astronomicamente?",
+            options: [
+                "Os Equinócios (início da Primavera e do Outono).",
+                "Os Solstícios (início do Verão e do Inverno).",
+                "O momento do Eclipse Solar.",
+                "O alinhamento dos planetas do sistema solar."
+            ],
+            correct: 0
+        },
+        {
+            id: 3,
+            question: "Ao observar a simulação, percebemos que a Eclíptica (caminho do Sol) está inclinada em relação ao Equador Celeste. Qual é a causa dessa inclinação de aproximadamente 23,5°?",
+            options: [
+                "A inclinação do eixo de rotação da Terra.",
+                "A distância variável entre a Terra e o Sol.",
+                "A velocidade de rotação da Terra.",
+                "A gravidade da Lua puxando a Terra."
+            ],
+            correct: 0
+        },
+        {
+            id: 4,
+            question: "Quando o Sol atinge o ponto de maior afastamento (máxima declinação) em relação ao Equador Celeste, seja para o Norte ou para o Sul, ocorre:",
+            options: [
+                "O Solstício.",
+                "O Equinócio.",
+                "O Zênite.",
+                "O Eclipse Lunar."
+            ],
+            correct: 0
+        },
+        {
+            id: 5,
+            question: "Na simulação, ao acelerar o tempo, o Sol percorre a linha da Eclíptica. Quanto tempo leva para o Sol completar uma volta inteira nessa linha (360°)?",
+            options: [
+                "Um ano (movimento de translação).",
+                "Um dia (movimento de rotação).",
+                "Um mês (ciclo lunar).",
+                "Uma estação (três meses)."
+            ],
+            correct: 0
+        }
+    ];
+
+    // Função para embaralhar arrays (Fisher-Yates Shuffle)
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // Inicialização da página
+    document.addEventListener('DOMContentLoaded', () => {
+        // Define a data de hoje automaticamente
+        document.getElementById('activityDate').valueAsDate = new Date();
+        renderQuestions();
+    });
+
+    function renderQuestions() {
+        const container = document.getElementById('questions-container');
+        
+        // 1. Embaralhar a ordem das perguntas
+        shuffleArray(questionsData);
+
+        questionsData.forEach((q, index) => {
+            // Criar objeto temporário para armazenar texto da opção e se é correta
+            let opts = q.options.map((optText, i) => ({
+                text: optText,
+                isCorrect: i === q.correct
+            }));
+
+            // 2. Embaralhar as alternativas
+            shuffleArray(opts);
+
+            // Criar o HTML do card
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <div class="question-title">Questão ${index + 1}: ${q.question}</div>
+                <ul class="options-list" id="q${index}">
+                    ${opts.map((opt, i) => `
+                        <li class="option-item" data-correct="${opt.isCorrect}">
+                            <label style="cursor: pointer; width: 100%; display: flex; align-items: center;">
+                                <input type="radio" name="question_${index}" value="${opt.isCorrect}">
+                                <span>${opt.text}</span>
+                            </label>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function submitQuiz() {
+        const name = document.getElementById('studentName').value;
+        if (name.trim() === "") {
+            alert("Por favor, preencha o nome do aluno antes de enviar.");
+            return;
+        }
+
+        if(!confirm("Tem certeza que deseja enviar as respostas? Não será possível alterar depois.")) {
+            return;
+        }
+
+        let score = 0;
+        const totalQuestions = questionsData.length;
+        const cards = document.querySelectorAll('.question-card');
+
+        cards.forEach((card, index) => {
+            const options = card.querySelectorAll('input[type="radio"]');
+            let answered = false;
+            let userCorrect = false;
+
+            options.forEach(opt => {
+                const li = opt.closest('li');
+                
+                // Trava os inputs
+                opt.disabled = true;
+
+                if (opt.checked) {
+                    answered = true;
+                    if (opt.value === "true") {
+                        userCorrect = true;
+                        score += 1.0;
+                        li.classList.add('correct-answer');
+                    } else {
+                        li.classList.add('wrong-answer');
+                    }
+                }
+            });
+
+            // Se errou ou não marcou, mostra qual era a correta
+            if (!userCorrect) {
+                options.forEach(opt => {
+                    if (opt.value === "true") {
+                        opt.closest('li').classList.add('correct-answer');
+                        // Adiciona um texto visual indicando a correta
+                        const span = opt.closest('li').querySelector('span');
+                        span.innerHTML += " <strong>(Correta)</strong>";
+                    }
+                });
+            }
+        });
+
+        // Exibe o resultado
+        const resultArea = document.getElementById('result-area');
+        const scoreSpan = document.getElementById('final-score');
+        
+        scoreSpan.innerText = score.toFixed(1).replace('.', ',');
+        resultArea.style.display = 'block';
+        
+        // Remove botão de envio
+        document.querySelector('.btn-submit').style.display = 'none';
+
+        // Scroll suave até o resultado
+        resultArea.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>

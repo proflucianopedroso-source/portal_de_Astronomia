@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS 3D das Fases da Lua</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <link rel="stylesheet" href="./js/style3.css">
+</head>
+<body>
+    <div id="container">
+        <!-- Coluna da Esquerda: Cena 3D -->
+        <div id="scene-container"></div>
+
+        <!-- Coluna da Direita: Painel de Controles -->
+        <div id="controls-panel">
+
+            <div class="title-container"> <!-- Container para título e ajuda -->
+                <h2 class="title">EVS 3D das Fases da Lua</h2>
+                <!-- Botão de Ajuda -->
+                <button id="help-button" class="help-button" title="Ajuda / Informações">?</button>
+            </div>
+
+            <p class="time-display" id="time-display">Tempo Simulado: Dia 0, 0h</p>
+
+            <!-- Botões Play/Pause/Escala -->
+            <div class="control-group play-pause-controls">
+                 <button id="play-button" style="display: none;">▶ Play</button>
+                 <button id="pause-button">❚❚ Pause</button>
+                 <!-- Texto inicial reflete que a vista ATUAL é Aprox. -->
+                 <button id="scale-toggle-button" class="scale-button">Escala Astronômica Comprimida</button>
+            </div>
+
+            <!-- Seção Principal de Controles -->
+            <h3>Controles</h3>
+            <div class="control-group">
+                <label for="moon-orbit-slider">Posição Orbital da Lua (0°-360°):</label>
+                <!-- Adicionado 'disabled' e 'title' -->
+                <input type="range" id="moon-orbit-slider" min="0" max="360" value="17" step="1"
+                       disabled
+                       title="Pausa a simulação para poderes alterar a posição da Lua">
+                <span id="moon-orbit-value">17°</span>
+            </div>
+            <div class="control-group">
+                <label for="observer-lat-slider">Latitude do Observador (-90° a +90°):</label>
+                <input type="range" id="observer-lat-slider" min="-90" max="90" value="40" step="1">
+                <span id="observer-lat-value">40°</span>
+            </div>
+            <div class="control-group">
+                <label for="observer-lon-slider">Longitude do Observador (0°-360°):</label>
+                <input type="range" id="observer-lon-slider" min="0" max="360" value="8" step="1">
+                <span id="observer-lon-value">8°</span>
+            </div>
+            <div class="control-group">
+                <label for="speed-slider">Velocidade da Simulação:</label>
+                <input type="range" id="speed-slider" min="0.1" max="5" value="1" step="0.1">
+                <span id="speed-value">1.0x</span>
+            </div>
+
+            <!-- Caixa da Vista do Observador -->
+            <div class="observer-view-box">
+                <h4>Vista do Céu Noturno (ponto de vista do observador)</h4>
+                <div id="observer-sky-view-container"></div>
+            </div>
+
+            <!-- Caixa de Informação com a Fase da Lua Atual -->
+            <div class="info-box">
+                 <p id="main-phase-display">Fase da Lua atual: ...</p>
+            </div>
+
+        </div> 
+		<p align="center"> <!-- Fim do #controls-panel -->
+    	Prof. Luciano Soares Pedroso</div> <!-- Fim do #container -->
+
+    <!-- Estrutura do Modal de Ajuda (inicialmente oculto) -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Ajuda - EVS de Fases da Lua</h3>
+            <p>Bem-vindo(a) ao Experimento Virtual Simulado das Fases da Lua!</p>
+            <ul>
+                <li style="text-align: justify"><strong>Visualização 3D:</strong> Use o mouse (arrastar, scroll, botão direito) para navegar na cena.</li>
+                <li style="text-align: justify"><strong>Play/Pause:</strong> Inicia ou para a passagem do tempo simulado.</li>
+                <li style="text-align: justify"><strong>Escala aproximada/astronômica comprimida:</strong> Alterna entre uma representação visualmente ampliada e uma representação com proporções astronômicas comprimidas (a escala real do Sistema Solar não cabe adequadamente em uma cena interativa).</li>
+                <li style="text-align: justify"><strong>Posição Orbital da Lua:</strong> Mostra a posição angular da Lua na órbita. Nesta simulação, 0° é definido como a configuração de Lua Nova. Quando a simulação está em PAUSA, pode arrastar este slider para definir manualmente a posição da Lua e ver o tempo correspondente (o slider fica azul).</li>
+                <li style="text-align: justify"><strong>Latitude/Longitude do Observador:</strong> Define a localização do observador (ponto vermelho) na superfície da Terra.</li>
+                <li style="text-align: justify"><strong>Velocidade da Simulação:</strong> Controla quão rápido o tempo passa.</li>
+                <li style="text-align: justify"><strong>Vista do Céu Noturno:</strong> Mostra como a Lua é vista a partir da localização do observador na Terra (se a Lua estiver acima do horizonte e não for ocultada pela própria Terra).</li>
+<li style="text-align: justify"><strong>Este EVS:</strong> Mostra em tempo real como a Lua aparece no céu para o observador na Terra, mudando conforme a sua posição e a rotação do planeta.</li>
+                <li style="text-align: justify"><strong>Fase da Lua Atual:</strong> Indica a fase principal da Lua (Nova, Crescente, Cheia, Minguante) calculada com base na geometria Sol-Terra-Lua. A órbita lunar é representada de forma simplificada para fins didáticos.</li>
+            </ul>
+            <button id="close-help-modal" class="modal-close-button">Fechar</button>
+        </div>
+    </div>
+
+
+    <!-- Scripts JavaScript -->
+    <!-- Certifique-se que estes ficheiros existem na mesma pasta ou ajuste o caminho -->
+    <script src="./js/three.min.js"></script>
+    <script src="./js/OrbitControls.js"></script>
+    <script src="./js/main3.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>EVS - Velocidade de rotação da Terra a partir da deriva estelar</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121a2a; --text:#e8edf7; --muted:#a9b4c7;
+      --acc:#4ea8de; --acc2:#64dfdf; --err:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(1200px 800px at 20% -10%,#15213a 0%,#0b1220 55%),linear-gradient(180deg,#0b1220,#0b1220);
+         color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    header{padding:24px 16px;text-align:center}
+    header h1{margin:0;font-size:1.4rem;letter-spacing:.2px}
+    header p{margin:.5rem 0 0;color:var(--muted);font-size:.95rem}
+    main{max-width:900px;margin:0 auto;padding:16px}
+    .grid{display:grid;gap:16px;grid-template-columns:1fr}
+    @media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
+    .card{background:linear-gradient(180deg,#141e33 0%,#111a2b 100%);border:1px solid #22304b;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .card h2{margin:.2rem 0 1rem;font-size:1.1rem}
+    label{display:block;margin:.6rem 0 .25rem;color:var(--muted);font-size:.9rem}
+    input,select{width:100%;padding:.7rem .8rem;border-radius:10px;border:1px solid #2a3a59;background:#0f1726;color:var(--text);font-size:1rem}
+    .row{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+    .btn{margin-top:12px;width:100%;padding:.85rem 1rem;border:0;border-radius:12px;
+         background:linear-gradient(90deg,var(--acc),var(--acc2));color:#07111f;font-weight:700;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .help{font-size:.85rem;color:var(--muted);margin-top:.4rem;line-height:1.35}
+    .out{display:flex;flex-direction:column;gap:10px}
+    .kpi{background:#0e1626;border:1px solid #22304b;border-radius:12px;padding:12px}
+    .kpi h3{margin:.1rem 0;color:#cfe6ff;font-size:.95rem}
+    .kpi .val{font-size:1.25rem}
+    .warn{color:var(--err);font-size:.9rem;display:none;margin-top:.5rem}
+    details{margin-top:10px}
+    code, pre{background:#0f1726;border:1px solid #22304b;border-radius:10px;padding:.4rem .6rem;color:#cde3ff}
+    .subtle{color:var(--muted);font-size:.9rem}
+    footer{max-width:900px;margin:16px auto 32px;color:var(--muted);font-size:.85rem;padding:0 16px}
+  </style>
+  <!-- MathJax para renderizar as equações -->
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header>
+    <h1 align="center"><font size="6">EVS - Velocidade de rotação da Terra via deriva estelar</font></h1>
+	<p>Prof. Luciano Soares Pedroso</p>
+    <p>Informe a deriva angular observada, sua latitude e o tempo de 
+	observação.</p>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>Entrada de dados</h2>
+      <label>Deriva angular observada</label>
+      <div class="row">
+        <input id="deg" type="number" step="0.0001" placeholder="Graus (°)">
+        <input id="arcmin" type="number" step="0.01" placeholder="Minutos (′)">
+      </div>
+      <div class="row">
+        <input id="arcsec" type="number" step="0.01" placeholder="Segundos (″)">
+        <select id="angleUnit">
+          <option value="dms">Usar ° ′ ″</option>
+          <option value="degOnly">Usar somente graus</option>
+        </select>
+      </div>
+
+      <label>Tempo de observação</label>
+      <div class="row">
+        <input id="hours" type="number" step="0.0001" placeholder="Horas">
+        <input id="minutes" type="number" step="0.0001" placeholder="Minutos">
+      </div>
+      <div class="row">
+        <input id="seconds" type="number" step="0.0001" placeholder="Segundos">
+        <select id="timeUnit">
+          <option value="hms">Usar h m s</option>
+          <option value="hoursOnly">Usar somente horas</option>
+        </select>
+      </div>
+
+      <label>Raio da Terra (opcional)</label>
+      <div class="row">
+        <input id="radius" type="number" step="1" placeholder="6371000" aria-label="Raio em metros">
+        <select id="radiusUnit">
+          <option value="m">m</option>
+          <option value="km">km</option>
+        </select>
+      </div>
+      <div class="help">Padrão: 6 371 000 m (raio nominal médio) se em branco.</div>
+
+      <!-- NOVO: Latitude do observador -->
+      <label>Latitude do observador (°)</label>
+      <div class="row">
+        <input id="latitude" type="number" step="0.0001" placeholder="Ex.: -21">
+        <div></div>
+      </div>
+
+      <button class="btn" id="calc">Calcular</button>
+      <div id="warn" class="warn">Verifique os valores: ângulo e tempo devem ser positivos e não nulos.</div>
+    </section>
+
+    <section class="card">
+      <h2>Resultados</h2>
+      <div class="out">
+        <div class="kpi">
+          <h3>Velocidade angular</h3>
+          <div class="val"><span id="omegaRad">—</span> rad/s • <span id="omegaDeg">—</span> °/h</div>
+          <div class="subtle">Referência sideral: 15,041 °/h</div>
+          <div class="subtle">Erro relativo: <span id="errOmega">—</span> %</div>
+        </div>
+        <div class="kpi">
+          <h3>Velocidade linear</h3>
+          <div class="val"><span id="vms">—</span> m/s • <span id="vkmh">—</span> km/h</div>
+          <div class="subtle">Referência equador: ~1670 km/h</div>
+          <div class="subtle">Erro relativo: <span id="errV">—</span> %</div>
+        </div>
+        <!-- NOVO: resultados ajustados pela latitude -->
+        <div class="kpi">
+          <h3>Velocidade linear (ajustada pela latitude)</h3>
+          <div class="val"><span id="vmsLat">—</span> m/s • <span id="vkmhLat">—</span> km/h</div>
+          <div class="subtle">Usa \( v(\phi)=R\,\omega\,\cos\phi \)</div>
+        </div>
+      </div>
+
+      <details>
+        <summary>Equações e variáveis</summary>
+        <div class="help">
+          <p>1) Conversão do ângulo:</p>
+          \[
+          \theta_{\text{deg}} = {}^\circ + \frac{'}{60} + \frac{''}{3600}, 
+          \qquad
+          \theta_{\text{rad}} = \theta_{\text{deg}} \cdot \frac{\pi}{180}
+          \]
+          <p>2) Tempo em segundos:</p>
+          \[
+          \Delta t = 3600h + 60m + s
+          \]
+          <p>3) Velocidade angular:</p>
+          \[
+          \omega = \frac{\Delta\theta_{\text{rad}}}{\Delta t},
+          \qquad
+          \omega_{\deg/\text{h}} = \frac{\Delta\theta_{\deg}}{\Delta t_{\text{h}}}
+          \]
+          <p>4) Velocidade linear na superfície (modelo esférico):</p>
+          \[
+          v = R \cdot \omega
+          \]
+          <!-- NOVO: Equações com latitude -->
+          <p>5) Ajuste por latitude:</p>
+          \[
+          v(\phi) = R \cdot \omega \cdot \cos\phi
+          \]
+          <p>onde \(\phi\) é a latitude (positiva no Hemisfério Norte, negativa no Sul) e \(R\cos\phi\) é o raio efetivo do círculo de rotação nessa latitude.</p>
+          <p><b>Variáveis:</b> \(\Delta\theta\) é a deriva angular observada; \(\Delta t\) é o intervalo de observação; \(R\) é o raio adotado da Terra; \(\omega\) é a velocidade angular; \(v\) é a velocidade linear no equador; \(v(\phi)\) é a velocidade linear ajustada pela latitude; \(\phi\) é a latitude.</p>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <p align="center">
+
+  <footer>
+    Referências: relação entre \(v=r\cdot\omega\) e 
+	\(\omega=\Delta\theta/\Delta t\); raio médio nominal da Terra ≈ 
+	6 371 km; variação da velocidade linear com \( \cos\phi \). [OpenStax 
+	/ Lumen Learning]
+  </footer>
+
+  <script>
+    function toNumber(x){ return Number.isFinite(+x) ? +x : 0; }
+
+    function formatNum(x, digits){
+      if(!Number.isFinite(x)) return '—';
+      const abs = Math.abs(x);
+      if(abs === 0) return '0';
+      if(abs >= 1e5 || abs < 1e-3) return x.toExponential(digits ?? 4);
+      return x.toLocaleString(undefined,{maximumFractionDigits:digits ?? 6});
+    }
+
+    document.getElementById('calc').addEventListener('click', ()=>{
+      const angleUnit = document.getElementById('angleUnit').value;
+      const timeUnit  = document.getElementById('timeUnit').value;
+
+      // Ângulo
+      let degVal = toNumber(document.getElementById('deg').value);
+      let aminVal = toNumber(document.getElementById('arcmin').value);
+      let asecVal = toNumber(document.getElementById('arcsec').value);
+      let thetaDeg = 0;
+      if(angleUnit === 'dms'){
+        thetaDeg = degVal + (aminVal/60) + (asecVal/3600);
+      } else {
+        thetaDeg = degVal;
+      }
+
+      // Tempo
+      let hVal = toNumber(document.getElementById('hours').value);
+      let mVal = toNumber(document.getElementById('minutes').value);
+      let sVal = toNumber(document.getElementById('seconds').value);
+      let tSec = 0, tHours = 0;
+      if(timeUnit === 'hms'){
+        tSec = hVal*3600 + mVal*60 + sVal;
+        tHours = hVal + (mVal/60) + (sVal/3600);
+      } else {
+        tHours = hVal;
+        tSec = hVal*3600;
+      }
+
+      // Raio
+      let Rinput = document.getElementById('radius').value.trim();
+      let R = Rinput === '' ? 6371000 : toNumber(Rinput);
+      const rUnit = document.getElementById('radiusUnit').value;
+      if(rUnit === 'km') R *= 1000;
+
+      // Latitude
+      let lat = toNumber(document.getElementById('latitude').value);
+      // converte graus -> radianos
+      const phi = lat * Math.PI/180;
+
+      // Validação
+      const warn = document.getElementById('warn');
+      if(!(thetaDeg>0) || !(tSec>0) || !(R>0)){
+        warn.style.display = 'block';
+        document.getElementById('omegaRad').textContent = '—';
+        document.getElementById('omegaDeg').textContent = '—';
+        document.getElementById('vms').textContent = '—';
+        document.getElementById('vkmh').textContent = '—';
+        document.getElementById('vmsLat').textContent = '—';
+        document.getElementById('vkmhLat').textContent = '—';
+        document.getElementById('errOmega').textContent = '—';
+        document.getElementById('errV').textContent = '—';
+        return;
+      } else {
+        warn.style.display = 'none';
+      }
+
+      // Cálculos
+      const thetaRad = thetaDeg * Math.PI/180;
+      const omega = thetaRad / tSec; // rad/s
+      const omegaDegPerHour = thetaDeg / (tHours); // °/h
+      const v = R * omega; // m/s (equador)
+      const vkmh = v * 3.6; // km/h (equador)
+
+      // Ajuste por latitude: v_lat = R * omega * cos(phi)
+      const cosphi = Math.cos(phi);
+      const vLat = v * cosphi;
+      const vkmhLat = vkmh * cosphi;
+
+      // Referências
+      const refOmegaDeg = 15.041; // °/h
+      const refVkmh = 1670; // km/h (equador)
+
+      const errOmega = Math.abs((omegaDegPerHour - refOmegaDeg)/refOmegaDeg*100);
+      const errV = Math.abs((vkmh - refVkmh)/refVkmh*100);
+
+      // Saída
+      document.getElementById('omegaRad').textContent = formatNum(omega, 8);
+      document.getElementById('omegaDeg').textContent = formatNum(omegaDegPerHour, 6);
+      document.getElementById('vms').textContent = formatNum(v, 4);
+      document.getElementById('vkmh').textContent = formatNum(vkmh, 4);
+      document.getElementById('vmsLat').textContent = formatNum(vLat, 4);
+      document.getElementById('vkmhLat').textContent = formatNum(vkmhLat, 4);
+      document.getElementById('errOmega').textContent = formatNum(errOmega, 4);
+      document.getElementById('errV').textContent = formatNum(errV, 4);
+    });
+  </script>
+	</p>
+</body>
+</html>

@@ -1,0 +1,430 @@
+/* ==========================================================================
+   1. CONFIGURAÇÕES GERAIS E VARIÁVEIS (Tema Espacial / Moderno - LSP
+   ========================================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap');
+
+:root {
+    --bg-color: #0b0f19;
+    --panel-bg: rgba(22, 28, 45, 0.65);
+    --panel-border: rgba(255, 255, 255, 0.08);
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --accent-blue: #3b82f6;
+    --accent-blue-hover: #2563eb;
+    --accent-glow: rgba(59, 130, 246, 0.3);
+    --accent-green: #10b981;
+    --accent-green-hover: #059669;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    overflow-x: hidden;
+    height: 100vh;
+}
+
+/* ==========================================================================
+   2. LAYOUT RESPONSIVO (Grid)
+   ========================================================================= */
+#container {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    width: 100vw;
+    height: 100vh;
+}
+
+@media (max-width: 1024px) {
+    #container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 50vh 50vh;
+    }
+    body {
+        overflow-y: auto;
+        height: auto;
+    }
+}
+
+/* Container da Cena 3D */
+#scene-container {
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+}
+
+/* Painel de Controles Lateral (Glassmorphism) */
+#controls-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-left: 1px solid var(--panel-border);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 1024px) {
+    #controls-panel {
+        border-left: none;
+        border-top: 1px solid var(--panel-border);
+        height: 100%;
+    }
+}
+
+/* Personalização da Barra de Rolagem do Painel */
+#controls-panel::-webkit-scrollbar {
+    width: 6px;
+}
+#controls-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+#controls-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+#controls-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   3. ELEMENTOS DE TEXTO E TOPO
+   ========================================================================= */
+.title-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 16px;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+h3 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+.time-display {
+    font-size: 0.9rem;
+    font-family: monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: #60a5fa;
+    text-align: center;
+}
+
+/* ==========================================================================
+   4. BOTÕES E CONTROLES (Play, Pause, Escala, Ajuda)
+   ========================================================================= */
+button {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.play-pause-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+#play-button {
+    background-color: var(--accent-green);
+    color: #fff;
+}
+#play-button:hover {
+    background-color: var(--accent-green-hover);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+#pause-button {
+    background-color: #ef4444;
+    color: #fff;
+}
+#pause-button:hover {
+    background-color: #dc2626;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+.scale-button {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    grid-column: span 1;
+}
+.scale-button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Botão de interrogação (?) */
+.help-button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+.help-button:hover {
+    background: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* ==========================================================================
+   5. CUSTOMIZAÇÃO AVANÇADA DOS SLIDERS (Input Range)
+   ========================================================================= */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.control-group label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+}
+
+.control-group span {
+    align-self: flex-end;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    outline: none;
+    transition: background 0.2s;
+}
+
+/* Bolinha do Slider - Chrome/Safari/Edge */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s, background-color 0.2s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+    background: #60a5fa;
+}
+
+/* Bolinha do Slider - Firefox */
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s, background-color 0.2s;
+}
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.25);
+    background: #60a5fa;
+}
+
+/* Estado Desabilitado (Bloqueio visual quando simulação roda) */
+input[type="range"]:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+input[type="range"]:disabled::-webkit-slider-thumb {
+    background: #64748b;
+    border-color: #475569;
+    cursor: not-allowed;
+    transform: none;
+}
+input[type="range"]:disabled::-moz-range-thumb {
+    background: #64748b;
+    border-color: #475569;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==========================================================================
+   6. CAIXAS DE INFORMAÇÃO E VISTA DO CÉU
+   ========================================================================= */
+.observer-view-box, .info-box {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.observer-view-box h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+#observer-sky-view-container {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#main-phase-display {
+    font-weight: 600;
+    text-align: center;
+    color: #fca5a5;
+}
+
+/* ==========================================================================
+   7. MODAL DE AJUDA (Correção Absoluta de Especificidade)
+   ========================================================================= */
+/* Ocultamos usando a CLASSE (baixa especificidade) para que o JS consiga 
+   mudar via classe (.show, .active) ou via estilo inline facilmente */
+.modal-overlay {
+    display: none; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 999999 !important; /* Força ficar acima de qualquer elemento/canvas 3D */
+}
+
+/* Se o JavaScript ativar o modal adicionando classes comuns, forçamos a exibição: */
+.modal-overlay.show,
+.modal-overlay.active,
+.modal-overlay.open,
+.modal-overlay.visible {
+    display: block !important;
+}
+
+.modal-content {
+    background: #111827;
+    border: 1px solid var(--panel-border);
+    padding: 32px;
+    border-radius: 16px;
+    max-width: 550px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    /* Centralização absoluta infalível */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.modal-content h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.modal-content ul {
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Customização da barra de rolagem interna do modal */
+.modal-content ul::-webkit-scrollbar {
+    width: 4px;
+}
+.modal-content ul::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+.modal-content li {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.modal-content strong {
+    color: var(--text-main);
+}
+
+.modal-close-button {
+    background: var(--accent-blue);
+    color: white;
+    margin-top: 10px;
+    align-self: flex-end;
+}
+
+.modal-close-button:hover {
+    background: var(--accent-blue-hover);
+}

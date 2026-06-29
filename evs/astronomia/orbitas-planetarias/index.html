@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Órbita Planetária</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #painel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #444;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            min-width: 260px;
+            pointer-events: auto;
+        }
+        
+        h2 {
+            margin: 0 0 15px 0;
+            color: #ffd700;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        select {
+            background: #1a1a2a;
+            color: white;
+            border: 1px solid #444;
+            cursor: pointer;
+        }
+        
+        select:hover {
+            background: #2a2a3a;
+        }
+        
+        select option {
+            background: #1a1a2a;
+        }
+        
+        button {
+            background: #2ecc71;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        #info {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            text-align: center;
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        #dados-planeta {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            border-left: 3px solid #ffd700;
+            line-height: 1.8;
+        }
+        
+        .rotulo {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .valor {
+            color: #ffd700;
+            font-weight: bold;
+            float: right;
+        }
+        
+        #instrucoes {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #ccc;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            border: 1px solid #444;
+            pointer-events: none;
+        }
+        
+        .destaque {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        canvas {
+            display: block;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="painel">
+        <h2>🌌 ÓRBITA PLANETÁRIA</h2>
+		<p align="center">Prof. Luciano Soares Pedroso</p>
+        <p align="center">Representação Didática - fora de escala de Volume e Distância</p>
+
+        <label style="color: #aaa; margin-bottom: 5px; display: block;">🪐 Selecione o planeta:</label>
+        <select id="planeta">
+            <option value="mercurio">☿ Mercúrio</option>
+            <option value="venus">♀ Vênus</option>
+            <option value="terra" selected>🌍 Terra</option>
+            <option value="marte">♂ Marte</option>
+            <option value="jupiter">♃ Júpiter</option>
+            <option value="saturno">🪐 Saturno</option>
+            <option value="urano">⛢ Urano</option>
+            <option value="netuno">♆ Netuno</option>
+        </select>
+        
+        <button onclick="iniciarSimulacao()">▶ INICIAR ÓRBITA</button>
+        
+        <div id="dados-planeta">
+            <div class="destaque" id="nome-planeta">Terra</div>
+            <div>
+                <span class="rotulo">📏 Distância média do Sol:</span>
+                <span class="valor" id="distancia">1,00 UA</span>
+            </div>
+            <div>
+                <span class="rotulo">⏱️ Período orbital:</span>
+                <span class="valor" id="periodo">365,25 dias</span>
+            </div>
+            <div>
+                <span class="rotulo">📐 Excentricidade:</span>
+                <span class="valor" id="excentricidade">0,017</span>
+            </div>
+        </div>
+        
+        <div id="info">Pronto para simular</div>
+    </div>
+    
+    <div id="instrucoes">
+        🖱️ Zoom: scroll | 🖱️ Rotação: clique + arraste
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // =============================================
+        // DADOS DOS PLANETAS
+        // =============================================
+        const planetas = {
+            mercurio: { 
+                nome: 'Mercúrio', 
+                cor: 0xaaaaaa, 
+                tamanho: 0.4, 
+                distancia: 5, 
+                periodo: 88, 
+                e: 0.206,
+                distanciaReal: 0.39,
+                periodoReal: 88,
+                excentricidadeReal: 0.206
+            },
+            venus: { 
+                nome: 'Vênus', 
+                cor: 0xe6b856, 
+                tamanho: 0.6, 
+                distancia: 7, 
+                periodo: 225, 
+                e: 0.007,
+                distanciaReal: 0.72,
+                periodoReal: 224.7,
+                excentricidadeReal: 0.007
+            },
+            terra: { 
+                nome: 'Terra', 
+                cor: 0x2e86c1, 
+                tamanho: 0.7, 
+                distancia: 9, 
+                periodo: 365, 
+                e: 0.017,
+                distanciaReal: 1.00,
+                periodoReal: 365.25,
+                excentricidadeReal: 0.017
+            },
+            marte: { 
+                nome: 'Marte', 
+                cor: 0xc0392b, 
+                tamanho: 0.5, 
+                distancia: 12, 
+                periodo: 687, 
+                e: 0.093,
+                distanciaReal: 1.52,
+                periodoReal: 687,
+                excentricidadeReal: 0.093
+            },
+            jupiter: { 
+                nome: 'Júpiter', 
+                cor: 0xd4ac6e, 
+                tamanho: 1.3, 
+                distancia: 18, 
+                periodo: 4333, 
+                e: 0.049,
+                distanciaReal: 5.20,
+                periodoReal: 4333,
+                excentricidadeReal: 0.049
+            },
+            saturno: { 
+                nome: 'Saturno', 
+                cor: 0xe6c78c, 
+                tamanho: 1.1, 
+                distancia: 24, 
+                periodo: 10759, 
+                e: 0.056,
+                distanciaReal: 9.58,
+                periodoReal: 10759,
+                excentricidadeReal: 0.056
+            },
+            urano: { 
+                nome: 'Urano', 
+                cor: 0x7fb3d5, 
+                tamanho: 0.9, 
+                distancia: 30, 
+                periodo: 30687, 
+                e: 0.046,
+                distanciaReal: 19.20,
+                periodoReal: 30687,
+                excentricidadeReal: 0.046
+            },
+            netuno: { 
+                nome: 'Netuno', 
+                cor: 0x3c78d8, 
+                tamanho: 0.9, 
+                distancia: 36, 
+                periodo: 60190, 
+                e: 0.010,
+                distanciaReal: 30.05,
+                periodoReal: 60190,
+                excentricidadeReal: 0.010
+            }
+        };
+
+        // =============================================
+        // CENA, CÂMERA E RENDERIZADOR
+        // =============================================
+        const cena = new THREE.Scene();
+        cena.background = new THREE.Color(0x050510);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(30, 20, 50);
+        camera.lookAt(0, 0, 0);
+        
+        const renderizador = new THREE.WebGLRenderer({ 
+            antialias: true,
+            powerPreference: "high-performance",
+            alpha: false
+        });
+        renderizador.setSize(window.innerWidth, window.innerHeight);
+        renderizador.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderizador.shadowMap.enabled = false;
+        document.body.appendChild(renderizador.domElement);
+        
+        // =============================================
+        // CONTROLES
+        // =============================================
+        const controles = new OrbitControls(camera, renderizador.domElement);
+        controles.enableDamping = true;
+        controles.dampingFactor = 0.05;
+        controles.enableZoom = true;
+        controles.zoomSpeed = 1.2;
+        controles.maxDistance = 200;
+        controles.minDistance = 5;
+        controles.target.set(0, 0, 0);
+        controles.enablePan = true;
+        controles.screenSpacePanning = true;
+        
+        // =============================================
+        // ILUMINAÇÃO
+        // =============================================
+        const luzAmbiente = new THREE.AmbientLight(0x404060);
+        cena.add(luzAmbiente);
+        
+        // =============================================
+        // ESTRELAS
+        // =============================================
+        const geometriaEstrelas = new THREE.BufferGeometry();
+        const posicoesEstrelas = new Float32Array(2000 * 3);
+        for (let i = 0; i < 2000 * 3; i += 3) {
+            posicoesEstrelas[i] = (Math.random() - 0.5) * 600;
+            posicoesEstrelas[i+1] = (Math.random() - 0.5) * 600;
+            posicoesEstrelas[i+2] = (Math.random() - 0.5) * 600;
+        }
+        geometriaEstrelas.setAttribute('position', new THREE.BufferAttribute(posicoesEstrelas, 3));
+        const materialEstrelas = new THREE.PointsMaterial({ 
+            color: 0xffffff, 
+            size: 0.2,
+            sizeAttenuation: false
+        });
+        const estrelas = new THREE.Points(geometriaEstrelas, materialEstrelas);
+        cena.add(estrelas);
+        
+        // =============================================
+        // SOL BRANCO TUBARÃO COM HALOS AZULADOS
+        // =============================================
+        
+        // Sol principal (branco puro)
+        const geometriaSol = new THREE.SphereGeometry(1.5, 64, 64);
+        const materialSol = new THREE.MeshBasicMaterial({
+            color: 0xffffff,        // Branco puro máximo
+            emissive: 0xffffff,     // Emissão branca
+            emissiveIntensity: 1.5   // Intensidade alta
+        });
+        const sol = new THREE.Mesh(geometriaSol, materialSol);
+        cena.add(sol);
+        
+        // Halo interno 1 (azulado claro - mais próximo)
+        const geometriaHalo1 = new THREE.SphereGeometry(1.6, 32, 32);
+        const materialHalo1 = new THREE.MeshBasicMaterial({
+            color: 0xaaccff,        // Azul claro
+            transparent: true,
+            opacity: 0.25,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
+        });
+        const halo1 = new THREE.Mesh(geometriaHalo1, materialHalo1);
+        cena.add(halo1);
+        
+        // Halo médio (azul mais suave)
+        const geometriaHalo2 = new THREE.SphereGeometry(1.7, 32, 32);
+        const materialHalo2 = new THREE.MeshBasicMaterial({
+            color: 0x88aaff,        // Azul médio claro
+            transparent: true,
+            opacity: 0.2,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
+        });
+        const halo2 = new THREE.Mesh(geometriaHalo2, materialHalo2);
+        cena.add(halo2);
+        
+        // Halo externo (azul bem suave)
+        const geometriaHalo3 = new THREE.SphereGeometry(1.9, 32, 32);
+        const materialHalo3 = new THREE.MeshBasicMaterial({
+            color: 0x6688cc,        // Azul mais escuro mas transparente
+            transparent: true,
+            opacity: 0.15,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
+        });
+        const halo3 = new THREE.Mesh(geometriaHalo3, materialHalo3);
+        cena.add(halo3);
+        
+        // Halo muito externo (quase imperceptível)
+        const geometriaHalo4 = new THREE.SphereGeometry(2.1, 32, 32);
+        const materialHalo4 = new THREE.MeshBasicMaterial({
+            color: 0x4466aa,        // Azul mais escuro
+            transparent: true,
+            opacity: 0.1,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
+        });
+        const halo4 = new THREE.Mesh(geometriaHalo4, materialHalo4);
+        cena.add(halo4);
+        
+        // Luz do Sol (para iluminar os planetas)
+        const luzSol = new THREE.PointLight(0xffffff, 2.5);
+        luzSol.position.set(0, 0, 0);
+        cena.add(luzSol);
+        
+        // Guardar referências
+        window.sol = sol;
+        
+        // =============================================
+        // VARIÁVEIS GLOBAIS
+        // =============================================
+        let planetaAtual = null;
+        let orbitaAtual = null;
+        let anelSaturno = null;
+        let angulo = 0;
+        let simulando = false;
+        let planetaSelecionado = 'terra';
+        
+        // =============================================
+        // FUNÇÕES
+        // =============================================
+        function atualizarDadosPlaneta(id) {
+            const dados = planetas[id];
+            document.getElementById('nome-planeta').textContent = dados.nome;
+            document.getElementById('distancia').textContent = dados.distanciaReal.toFixed(2).replace('.', ',') + ' UA';
+            document.getElementById('periodo').textContent = dados.periodoReal.toFixed(1).replace('.', ',') + ' dias';
+            document.getElementById('excentricidade').textContent = dados.excentricidadeReal.toFixed(3).replace('.', ',');
+        }
+        
+        function criarTextura(cor) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#' + cor.toString(16).padStart(6, '0');
+            ctx.fillRect(0, 0, 64, 64);
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * 64, Math.random() * 64, Math.random() * 10 + 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            return texture;
+        }
+        
+        function criarOrbita(distancia, excentricidade, cor = 0x4488ff) {
+            const pontos = [];
+            const a = distancia;
+            const b = a * Math.sqrt(1 - excentricidade * excentricidade);
+            const foco = a * excentricidade;
+            
+            for (let i = 0; i <= 64; i++) {
+                const angulo = (i / 64) * Math.PI * 2;
+                const x = a * Math.cos(angulo) + foco;
+                const z = b * Math.sin(angulo);
+                pontos.push(new THREE.Vector3(x, 0, z));
+            }
+            
+            const geometria = new THREE.BufferGeometry().setFromPoints(pontos);
+            const material = new THREE.LineBasicMaterial({ color: cor });
+            return new THREE.Line(geometria, material);
+        }
+        
+        window.iniciarSimulacao = function() {
+            const select = document.getElementById('planeta');
+            planetaSelecionado = select.value;
+            const dados = planetas[planetaSelecionado];
+            
+            atualizarDadosPlaneta(planetaSelecionado);
+            
+            if (planetaAtual) cena.remove(planetaAtual);
+            if (orbitaAtual) cena.remove(orbitaAtual);
+            if (anelSaturno) {
+                cena.remove(anelSaturno);
+                anelSaturno = null;
+            }
+            
+            orbitaAtual = criarOrbita(dados.distancia, dados.e, 0x88aaff);
+            cena.add(orbitaAtual);
+            
+            const textura = criarTextura(dados.cor);
+            const material = new THREE.MeshStandardMaterial({ 
+                map: textura,
+                roughness: 0.5
+            });
+            const geometria = new THREE.SphereGeometry(dados.tamanho, 24, 24);
+            planetaAtual = new THREE.Mesh(geometria, material);
+            
+            const foco = dados.distancia * dados.e;
+            planetaAtual.position.x = dados.distancia + foco;
+            planetaAtual.position.z = 0;
+            
+            cena.add(planetaAtual);
+            
+            if (planetaSelecionado === 'saturno') {
+                const geometriaAnel = new THREE.TorusGeometry(dados.tamanho * 1.8, 0.15, 8, 32);
+                const materialAnel = new THREE.MeshStandardMaterial({
+                    color: 0xc2b280,
+                    transparent: true,
+                    opacity: 0.6,
+                    side: THREE.DoubleSide
+                });
+                anelSaturno = new THREE.Mesh(geometriaAnel, materialAnel);
+                anelSaturno.rotation.x = Math.PI / 2;
+                anelSaturno.rotation.z = 0.2;
+                planetaAtual.add(anelSaturno);
+            }
+            
+            angulo = 0;
+            simulando = true;
+            document.getElementById('info').innerHTML = `🔄 Simulando ${dados.nome}...`;
+        };
+        
+        // Órbitas de referência
+        for (let chave in planetas) {
+            const dados = planetas[chave];
+            const orbita = criarOrbita(dados.distancia, dados.e, 0x335588);
+            orbita.material.opacity = 0.15;
+            orbita.material.transparent = true;
+            cena.add(orbita);
+        }
+        
+        // =============================================
+        // ANIMAÇÃO
+        // =============================================
+        function animar() {
+            requestAnimationFrame(animar);
+            
+            if (simulando && planetaAtual) {
+                const dados = planetas[planetaSelecionado];
+                
+                const a = dados.distancia;
+                const e = dados.e;
+                const b = a * Math.sqrt(1 - e * e);
+                const foco = a * e;
+                
+                const x = a * Math.cos(angulo) + foco;
+                const z = b * Math.sin(angulo);
+                
+                planetaAtual.position.x = x;
+                planetaAtual.position.z = z;
+                planetaAtual.rotation.y += 0.005;
+                
+                angulo += 0.02 / Math.max(0.5, Math.sqrt(x*x + z*z));
+                
+                if (angulo >= Math.PI * 2) {
+                    simulando = false;
+                    angulo = 0;
+                    document.getElementById('info').innerHTML = `✅ Órbita completa!`;
+                } else {
+                    const progresso = Math.floor((angulo / (Math.PI * 2)) * 100);
+                    document.getElementById('info').innerHTML = `🔄 ${progresso}%`;
+                }
+            }
+            
+            // Rotação suave dos halos
+            if (window.halo1) window.halo1.rotation.y += 0.0005;
+            if (window.halo2) window.halo2.rotation.y -= 0.0003;
+            if (window.halo3) window.halo3.rotation.y += 0.0002;
+            
+            controles.update();
+            renderizador.render(cena, camera);
+        }
+        
+        animar();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderizador.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Iniciar com a Terra
+        setTimeout(() => {
+            atualizarDadosPlaneta('terra');
+            iniciarSimulacao();
+        }, 100);
+    </script>
+</body>
+</html>

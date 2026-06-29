@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> 🔭 EVS - Massa Planetária | Método Kepler-Newton | Astrofísica</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', 'Georgia', serif;
+            background: radial-gradient(circle at 10% 30%, #03071e, #000000);
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            background: rgba(10, 20, 30, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 2.5rem;
+            padding: 2rem;
+            max-width: 950px;
+            width: 100%;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,215,0,0.15);
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            text-align: center;
+            background: linear-gradient(135deg, #ffd966, #ffb347);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitulo {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #bbb;
+            margin-bottom: 1.8rem;
+            border-bottom: 1px dashed #ffb34755;
+            padding-bottom: 0.7rem;
+        }
+
+        .card-descricao {
+            background: #07161f;
+            padding: 1.2rem;
+            border-radius: 1.2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #fdbb2d;
+        }
+
+        .card-descricao p {
+            margin: 0.6rem 0;
+            line-height: 1.5;
+        }
+
+        /* Estilo para frações */
+        .frac {
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 1.1rem;
+        }
+        .frac span {
+            display: block;
+        }
+        .frac .numerador {
+            border-bottom: 2px solid #ffd966;
+            padding: 0 4px;
+        }
+        .frac .denominador {
+            padding: 0 4px;
+        }
+
+        .formula-frac {
+            background: #031016;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ffd966;
+            margin: 0.8rem 0;
+        }
+
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .input-group {
+            background: #0a1a22;
+            padding: 0.8rem 1rem;
+            border-radius: 1rem;
+            border: 1px solid #2a4b5c;
+            transition: all 0.3s ease;
+        }
+
+        .input-group:hover {
+            border-color: #fdbb2d;
+            transform: translateY(-2px);
+        }
+
+        .input-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #ffd966;
+        }
+
+        .input-group label sub {
+            text-transform: none;
+            font-size: 0.8rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            background: #010d14;
+            border: 1px solid #2c6e7e;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #fdbb2d;
+            outline: none;
+            box-shadow: 0 0 8px #fdbb2d66;
+            background: #02141c;
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(95deg, #ffb347, #ff7e05);
+            border: none;
+            padding: 16px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #03071e;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem 0 1rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            background: linear-gradient(95deg, #ffc107, #ff9500);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #resultado {
+            background: #071218e6;
+            border-radius: 1.8rem;
+            padding: 1.2rem 1.5rem;
+            margin-top: 1.2rem;
+            border: 1px solid #fdbb2d55;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step {
+            background: #0c1f28;
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 1rem;
+            border-left: 3px solid #fdbb2d;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateX(5px);
+            background: #112a36;
+        }
+
+        .formula {
+            background: #000000aa;
+            font-family: 'Courier New', monospace;
+            padding: 0.8rem;
+            border-radius: 1rem;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #ffdd99;
+            margin: 0.8rem 0;
+        }
+
+        .final-answer {
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-align: center;
+            background: linear-gradient(120deg, #ffb347, #ffdd99);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-top: 2px dashed #ffb347;
+            animation: pulse 1.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.02);
+            }
+        }
+
+        .nota {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 1rem;
+            color: #9aaebf;
+        }
+
+        .unidade {
+            font-size: 0.65rem;
+            color: #ccaa66;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .potencia {
+            font-size: 0.8rem;
+            vertical-align: super;
+        }
+
+        ::placeholder {
+            color: #4a6a7a;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>EVS - Massa Planetária <span style="font-size:1.2rem;">(Kepler-Newton)</span></h1>
+    <div class="subtitulo">3ª Lei de Kepler generalizada · Dinâmica dos satélites<p style="text-align: right">
+		Prof. Luciano Soares Pedroso</div>
+
+    <div class="card-descricao">
+        <p>📘 <strong>Fundamento Astrofísico:</strong> A 3ª Lei de Kepler corrigida por Newton estabelece que:</p>
+        <div class="formula-frac">
+            <div class="frac">
+                <span class="numerador">P²</span>
+                <span class="denominador">a³</span>
+            </div>
+            = 
+            <div class="frac">
+                <span class="numerador">4π²</span>
+                <span class="denominador">G·M</span>
+            </div>
+        </div>
+        <p>Para comparar dois sistemas (satélite ↔ planeta) e (planeta ↔ Sol):</p>
+        <div class="formula-frac">
+            <div class="frac">
+                <span class="numerador">M<sub>planeta</sub></span>
+                <span class="denominador">M<sub>☉</sub></span>
+            </div>
+            = 
+            <div class="frac">
+                <span class="numerador">a<sub>sat</sub>³</span>
+                <span class="denominador">a<sub>planeta</sub>³</span>
+            </div>
+            × 
+            <div class="frac">
+                <span class="numerador">P<sub>planeta</sub>²</span>
+                <span class="denominador">P<sub>sat</sub>²</span>
+            </div>
+        </div>
+        <p>✔ <strong style="font-size:1.1rem;">a</strong> (semieixo maior) em <strong>UA</strong> (Unidades Astronômicas) &nbsp;&nbsp; ✔ <strong>P</strong> (período orbital) em <strong>anos terrestres</strong></p>
+        <p>💡 <strong>Dica didática:</strong> Altere os valores e clique no botão para ver o cálculo passo a passo!</p>
+    </div>
+
+    <div class="grid-inputs">
+        <!-- PRIMEIRO CAMPO: a_satélite (minúsculo) -->
+        <div class="input-group">
+            <label>📡 <strong style="font-size:1.1rem;">a</strong><sub>satélite</sub> (UA)</label>
+            <input type="text" id="aSat" placeholder="Ex: 0,00257 (Lua)" value="0,00257">
+            <span class="unidade">semieixo maior da órbita do satélite (satélite → planeta)</span>
+        </div>
+        
+        <!-- SEGUNDO CAMPO: P_satélite -->
+        <div class="input-group">
+            <label>⏱️ <strong>P</strong><sub>satélite</sub> (anos)</label>
+            <input type="text" id="pSat" placeholder="Ex: 0,0748 (Lua)" value="0,0748">
+            <span class="unidade">período orbital do satélite ao redor do planeta</span>
+        </div>
+        
+        <!-- TERCEIRO CAMPO: a_planeta (minúsculo) -->
+        <div class="input-group">
+            <label>🌍 <strong style="font-size:1.1rem;">a</strong><sub>planeta</sub> (UA)</label>
+            <input type="text" id="aPlaneta" placeholder="Ex: 1 (Terra)" value="1">
+            <span class="unidade">semieixo maior da órbita do planeta (planeta → Sol)</span>
+        </div>
+        
+        <!-- QUARTO CAMPO: P_planeta -->
+        <div class="input-group">
+            <label>🔄 <strong>P</strong><sub>planeta</sub> (anos)</label>
+            <input type="text" id="pPlaneta" placeholder="Ex: 1 (Terra)" value="1">
+            <span class="unidade">período orbital do planeta ao redor do Sol</span>
+        </div>
+    </div>
+
+    <button onclick="calcularMassa()">
+        CALCULAR MASSA PLANETÁRIA
+    </button>
+
+    <div id="resultado">
+        <h3 style="color:#ffd966;">📐 Resolução passo a passo</h3>
+        <div id="passos"></div>
+        <div class="nota">
+            ⚡ Resultado em <strong>massas solares (M☉)</strong>.<br>
+            Para converter para massas terrestres: multiplique por <strong>332.946</strong><br>
+            Para massas de Júpiter: multiplique por <strong>1.047,56</strong><br>
+            📌 <strong>Nota:</strong> EVS destinado ao Ensino de Astronomia.</div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // FUNÇÕES PARA PADRÃO BRASILEIRO (VÍRGULA COMO SEPARADOR DECIMAL)
+    // ============================================================
+    
+    // Converte string com vírgula decimal para número (ponto flutuante)
+    function parseBrasil(str) {
+        if (typeof str !== 'string') return str;
+        // Remove pontos de milhar e substitui vírgula por ponto
+        let limpo = str.replace(/\./g, '').replace(',', '.');
+        return parseFloat(limpo);
+    }
+    
+    // Notação científica no padrão brasileiro
+    function notacaoCientificaBrasil(numero) {
+        if (numero === 0) return "0";
+        
+        let expoente = Math.floor(Math.log10(Math.abs(numero)));
+        let mantissa = numero / Math.pow(10, expoente);
+        // Arredonda mantissa para 4 casas decimais
+        mantissa = Math.round(mantissa * 10000) / 10000;
+        
+        // Formata mantissa com vírgula decimal
+        let mantissaStr = mantissa.toString().replace('.', ',');
+        
+        return `${mantissaStr} × 10<span class="potencia">${expoente}</span>`;
+    }
+    
+    // Formata número com notação científica ou decimal conforme necessário
+    function formatarNumeroBrasil(num, decimais = 8) {
+        if (num === 0) return "0";
+        
+        // Decide se usa notação científica
+        if (Math.abs(num) < 0.0001 && Math.abs(num) > 0) {
+            return notacaoCientificaBrasil(num);
+        }
+        if (Math.abs(num) >= 1000000) {
+            return notacaoCientificaBrasil(num);
+        }
+        
+        // Formato decimal normal com vírgula
+        let partes = num.toFixed(decimais).split('.');
+        // Remove zeros à direita desnecessários
+        let decimal = partes[1].replace(/0+$/, '');
+        if (decimal === '') {
+            return partes[0];
+        }
+        return partes[0] + ',' + decimal;
+    }
+
+    // ============================================================
+    // FUNÇÃO PRINCIPAL DE CÁLCULO
+    // ============================================================
+    
+    function calcularMassa() {
+        // Captura valores no padrão brasileiro (vírgula decimal)
+        let a_sat = parseBrasil(document.getElementById('aSat').value);
+        let p_sat = parseBrasil(document.getElementById('pSat').value);
+        let a_planet = parseBrasil(document.getElementById('aPlaneta').value);
+        let p_planet = parseBrasil(document.getElementById('pPlaneta').value);
+        
+        // Validação
+        if (isNaN(a_sat) || isNaN(p_sat) || isNaN(a_planet) || isNaN(p_planet)) {
+            alert("❌ Por favor, preencha todos os campos com números válidos no formato brasileiro (use vírgula como separador decimal). Exemplo: 0,00257");
+            return;
+        }
+        if (a_sat <= 0 || p_sat <= 0 || a_planet <= 0 || p_planet <= 0) {
+            alert("⚠️ Todos os valores devem ser positivos.");
+            return;
+        }
+        
+        // Cálculos passo a passo
+        let razaoDist = a_sat / a_planet;
+        let cuboDist = Math.pow(razaoDist, 3);
+        let razaoPer = p_planet / p_sat;
+        let quadPer = Math.pow(razaoPer, 2);
+        let massaRelativa = cuboDist * quadPer;
+        
+        // Conversões
+        let massaTerrestre = massaRelativa * 332946;
+        let massaJupiter = massaRelativa * 1047.56;
+        
+        // Construção do HTML com frações e notação científica brasileira
+        let html = `
+            <div class="step">
+                <strong>🌠 1. Equação fundamental (Kepler–Newton)</strong><br>
+                Partimos da 3ª Lei de Kepler generalizada por Newton:
+                <div class="formula">
+                    <div class="frac">
+                        <span class="numerador">P²</span>
+                        <span class="denominador">a³</span>
+                    </div>
+                    = 
+                    <div class="frac">
+                        <span class="numerador">4π²</span>
+                        <span class="denominador">G·M</span>
+                    </div>
+                </div>
+                Comparando o sistema (satélite → planeta) com o sistema (planeta → Sol):
+                <div class="formula">
+                    <div class="frac">
+                        <span class="numerador">M<sub>planeta</sub></span>
+                        <span class="denominador">M<sub>☉</sub></span>
+                    </div>
+                    = 
+                    <div class="frac">
+                        <span class="numerador">a<sub>sat</sub>³</span>
+                        <span class="denominador">a<sub>planeta</sub>³</span>
+                    </div>
+                    × 
+                    <div class="frac">
+                        <span class="numerador">P<sub>planeta</sub>²</span>
+                        <span class="denominador">P<sub>sat</sub>²</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <strong>📏 2. Razão das distâncias ao cubo</strong><br>
+                a<sub>sat</sub> = ${formatarNumeroBrasil(a_sat, 8)} UA &nbsp;&nbsp;|&nbsp;&nbsp; 
+                a<sub>planeta</sub> = ${formatarNumeroBrasil(a_planet, 8)} UA<br><br>
+                
+                <div class="formula">
+                    <div class="frac">
+                        <span class="numerador">a<sub>sat</sub></span>
+                        <span class="denominador">a<sub>planeta</sub></span>
+                    </div>
+                    = 
+                    <div class="frac">
+                        <span class="numerador">${formatarNumeroBrasil(a_sat, 6)}</span>
+                        <span class="denominador">${formatarNumeroBrasil(a_planet, 6)}</span>
+                    </div>
+                    = ${formatarNumeroBrasil(razaoDist, 8)}
+                </div>
+                
+                Elevando ao cubo:
+                <div class="formula">
+                    <div class="frac">
+                        <span class="numerador">a<sub>sat</sub>³</span>
+                        <span class="denominador">a<sub>planeta</sub>³</span>
+                    </div>
+                    = (${formatarNumeroBrasil(razaoDist, 6)})³ = ${notacaoCientificaBrasil(cuboDist)}
+                </div>
+                
+                🔭 <em>Interpretação: A distância relativa do satélite influencia cubicamente a massa determinada.</em>
+            </div>
+            
+            <div class="step">
+                <strong>⏳ 3. Razão dos períodos ao quadrado</strong><br>
+                P<sub>planeta</sub> = ${formatarNumeroBrasil(p_planet, 8)} anos &nbsp;&nbsp;|&nbsp;&nbsp;
+                P<sub>sat</sub> = ${formatarNumeroBrasil(p_sat, 8)} anos<br><br>
+                
+                <div class="formula">
+                    <div class="frac">
+                        <span class="numerador">P<sub>planeta</sub></span>
+                        <span class="denominador">P<sub>sat</sub></span>
+                    </div>
+                    = 
+                    <div class="frac">
+                        <span class="numerador">${formatarNumeroBrasil(p_planet, 6)}</span>
+                        <span class="denominador">${formatarNumeroBrasil(p_sat, 6)}</span>
+                    </div>
+                    = ${formatarNumeroBrasil(razaoPer, 8)}
+                </div>
+                
+                Elevando ao quadrado:
+                <div class="formula">
+                    <div class="frac">
+                        <span class="numerador">P<sub>planeta</sub>²</span>
+                        <span class="denominador">P<sub>sat</sub>²</span>
+                    </div>
+                    = (${formatarNumeroBrasil(razaoPer, 6)})² = ${notacaoCientificaBrasil(quadPer)}
+                </div>
+                
+                📆 <em>Interpretação: Se o planeta demora mais para orbitar o Sol que o satélite para orbitar o planeta, a massa calculada aumenta.</em>
+            </div>
+            
+            <div class="step">
+                <strong>⚖️ 4. Produto final → Massa do Planeta</strong><br>
+                <div class="formula">
+                    <div class="frac">
+                        <span class="numerador">M<sub>planeta</sub></span>
+                        <span class="denominador">M<sub>☉</sub></span>
+                    </div>
+                    = ${notacaoCientificaBrasil(cuboDist)} × ${notacaoCientificaBrasil(quadPer)}
+                </div>
+                <div class="formula" style="background:#0a2a1f; font-size:1.2rem;">
+                    🌟 <div class="frac">
+                        <span class="numerador">M<sub>planeta</sub></span>
+                        <span class="denominador">M<sub>☉</sub></span>
+                    </div> = ${notacaoCientificaBrasil(massaRelativa)}
+                </div>
+            </div>
+            
+            <div class="step">
+                <strong>🌍 Conversões para outras unidades astronômicas:</strong><br><br>
+                • <strong>Massa terrestre (M<sub>⊕</sub>)</strong><br>
+                ${notacaoCientificaBrasil(massaRelativa)} M<sub>☉</sub> × 332.946 = ${notacaoCientificaBrasil(massaTerrestre)} M<sub>⊕</sub><br><br>
+                
+                • <strong>Massa de Júpiter (M<sub>♃</sub>)</strong><br>
+                ${notacaoCientificaBrasil(massaRelativa)} M<sub>☉</sub> × 1.047,56 = ${notacaoCientificaBrasil(massaJupiter)} M<sub>♃</sub>
+            </div>
+        `;
+        
+        // Adiciona análise astrofísica
+        if (Math.abs(massaRelativa - 3.0e-6) < 1e-7) {
+            html += `
+                <div class="step" style="border-left-color: #4caf50;">
+                    ✅ <strong>Validação Astrofísica:
+                    </strong> O resultado (${notacaoCientificaBrasil(massaRelativa)} M☉) corresponde exatamente à massa da Terra (≈ 3,0 × 10⁻⁶ M☉).<br>
+                    Isso confirma que os dados inseridos correspondem ao sistema <strong>Terra-Lua</strong>!
+                </div>
+            `;
+        } else if (massaRelativa < 1e-5) {
+            html += `
+                <div class="step" style="border-left-color: #4caf50;">
+                    🔍 <strong>Análise:</strong> Massa de ${notacaoCientificaBrasil(massaRelativa)} M☉ indica um planeta telúrico (rochoso),<br>
+                    semelhante à Terra, Vênus ou Marte.
+                </div>
+            `;
+        } else if (massaRelativa >= 0.0003 && massaRelativa <= 0.001) {
+            html += `
+                <div class="step" style="border-left-color: #ff9800;">
+                    🪐 <strong>Análise:</strong> Massa na faixa de ${notacaoCientificaBrasil(massaRelativa)} M☉ corresponde a planetas gigantes gasosos,<br>
+                    como Júpiter (≈ 9,54 × 10⁻⁴ M☉) ou Saturno (≈ 2,85 × 10⁻⁴ M☉).
+                </div>
+            `;
+        }
+        
+        html += `
+            <div class="final-answer">
+                🎯 MASSA FINAL DO PLANETA: ${notacaoCientificaBrasil(massaRelativa)} M<sub>☉</sub>
+            </div>
+        `;
+        
+        document.getElementById('passos').innerHTML = html;
+        document.getElementById('resultado').style.display = 'block';
+        document.getElementById('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    // Adiciona evento Enter nos campos
+    window.onload = () => {
+        let inputs = document.querySelectorAll('input');
+        inputs.forEach(inp => {
+            inp.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') calcularMassa();
+            });
+        });
+        
+        // Garante que o resultado comece oculto
+        document.getElementById('resultado').style.display = 'none';
+    };
+</script>
+</body>
+</html>

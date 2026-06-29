@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVS - Detector e Gerador de Frequência de Áudio — Diapasão Digital</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png" />
+
+    <!-- MathJax 3 -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'no-mathjax',
+                processHtmlClass: 'mathjax-process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Chart.js para o gráfico -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --primary: #3a7bd5;
+            --primary-dark: #2c5aa0;
+            --accent: #27ae60;
+            --danger: #e74c3c;
+            --text: #2c3e50;
+            --text-light: #5a6c7d;
+            --border: #e0e6ed;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            --radius: 18px;
+            --transition: 0.25s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(145deg, #e9eef4 0%, #f0f4f8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            padding-bottom: 0.5rem;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-light);
+            margin-bottom: 0.1rem;
+        }
+
+        .header .author {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #7f8c8d;
+            letter-spacing: 0.3px;
+        }
+
+        /* CARDS GRID */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.8rem;
+        }
+
+        @media (max-width: 750px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.8rem 1.8rem 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            border: 1px solid var(--border);
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.7rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .card-title .icon {
+            font-size: 1.5rem;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .control-row label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .freq-display {
+            background: #f0f7f4;
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            text-align: center;
+            border: 1px solid #d4e6dc;
+            margin-top: 0.3rem;
+        }
+
+        .freq-display .label-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #5a7d6e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .freq-display .frequency-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1e7a4b;
+            line-height: 1.2;
+            transition: all 0.3s ease;
+        }
+
+        input[type="number"] {
+            width: 120px;
+            padding: 0.6rem 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: var(--transition);
+            outline: none;
+            background: #fafbfc;
+            color: var(--text);
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(58, 123, 213, 0.15);
+            background: #fff;
+        }
+
+        button {
+            padding: 0.65rem 1.3rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-start {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-start:hover:not(:disabled) {
+            background: #219a52;
+            box-shadow: 0 6px 18px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-stop {
+            background: var(--danger);
+            color: #fff;
+        }
+        .btn-stop:hover:not(:disabled) {
+            background: #c0392b;
+            box-shadow: 0 6px 18px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-play {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-play:hover:not(:disabled) {
+            background: #2c5aa0;
+            box-shadow: 0 6px 18px rgba(58, 123, 213, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+            filter: grayscale(20%);
+        }
+
+        /* Estilos do gráfico e histórico */
+        .chart-container {
+            position: relative;
+            height: 180px;
+            width: 100%;
+            margin-top: 0.3rem;
+            background: #f9fafc;
+            border-radius: 12px;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .history-container {
+            max-height: 140px;
+            overflow-y: auto;
+            background: #f8f9fb;
+            border-radius: 12px;
+            padding: 0.5rem 0.8rem;
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .history-container table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .history-container th {
+            position: sticky;
+            top: 0;
+            background: #eef1f5;
+            padding: 0.4rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .history-container td {
+            padding: 0.3rem 0.4rem;
+            border-bottom: 1px solid #e9ecf0;
+        }
+
+        .history-container tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge-hz {
+            background: #e8f0fe;
+            color: #1e3c72;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        /* EXPLANATION SECTION */
+        .explanation-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2rem 2rem 1.8rem;
+            border: 1px solid var(--border);
+        }
+
+        .explanation-card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            color: #1e3c72;
+            border-left: 5px solid var(--primary);
+            padding-left: 1rem;
+        }
+
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 750px) {
+            .explanation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .explanation-block h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 0.8rem;
+        }
+
+        .explanation-block p {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .equation-box {
+            background: #f8fafd;
+            border-radius: 14px;
+            padding: 1.2rem 1.5rem;
+            margin: 0.8rem 0;
+            overflow-x: auto;
+            border: 1px dashed #ccd8e8;
+            font-size: 0.95rem;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #aaa;
+            letter-spacing: 0.5px;
+        }
+
+        mjx-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Cabeçalho -->
+        <div class="header">
+            <h1>🔊 EVS - Detector e Gerador de Frequência</h1>
+            <div class="subtitle">Diapasão Digital</div>
+            <div class="author">Prof. Luciano Soares Pedroso &mdash; 2026</div>
+        </div>
+
+        <!-- Cards de funcionalidades -->
+        <div class="cards-grid">
+            <!-- Card: Detector (agora com gráfico e histórico) -->
+            <div class="card" id="detectorCard">
+                <div class="card-title">
+                    <span class="icon">🎤</span> 1. Detectar Frequência do Som Ambiente
+                </div>
+                <div class="control-row">
+                    <button id="btnStart" class="btn-start">▶ Iniciar Detecção</button>
+                    <button id="btnStop" class="btn-stop" disabled>⏹ Parar Detecção</button>
+                </div>
+                <div class="freq-display">
+                    <div class="label-text">Frequência Instantânea</div>
+                    <div class="frequency-value"><span id="detectedFrequency">--</span> <span style="font-size:1rem;">Hz</span></div>
+                </div>
+                <!-- Gráfico em tempo real -->
+                <div class="chart-container">
+                    <canvas id="freqChart"></canvas>
+                </div>
+                <!-- Histórico -->
+                <div class="history-container" id="historyContainer">
+                    <table>
+                        <thead>
+                            <tr><th>Tempo</th><th>Frequência (Hz)</th></tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr><td colspan="2" style="text-align:center;color:#999;">Nenhum dado ainda</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p style="font-size:0.8rem;color:#7f8c8d;margin-top:0.2rem;">O microfone será ativado. Pontos são adicionados a cada ~400ms.</p>
+            </div>
+
+            <!-- Card: Gerador -->
+            <div class="card" id="generatorCard">
+                <div class="card-title">
+                    <span class="icon">🎵</span> 2. Gerar Tom (Onda Senoidal)
+                </div>
+                <div class="control-row">
+                    <label for="inputFreq">Frequência (Hz):</label>
+                    <input type="number" step="1" min="20" max="20000" id="inputFreq" value="440">
+                </div>
+                <div class="control-row">
+                    <button id="btnPlay" class="btn-play">🔊 Tocar Frequência</button>
+                    <button id="btnStopTone" class="btn-stop" disabled>⏹ Parar Tom</button>
+                </div>
+                <p style="font-size:0.85rem;color:#7f8c8d;margin-top:0.2rem;">Insira um valor entre 20 Hz e 20.000 Hz (faixa audível humana).</p>
+            </div>
+        </div>
+
+        <!-- Seção explicativa com equações -->
+        <div class="explanation-card mathjax-process">
+            <h2>📐 Como funciona?</h2>
+            <div class="explanation-grid">
+                <!-- Geração de tons -->
+                <div class="explanation-block">
+                    <h3>🔹 Geração do Tom (Síntese de Áudio)</h3>
+                    <p>
+                        O gerador utiliza um <strong>oscilador senoidal</strong> da Web Audio API. A forma de onda gerada é uma senoide pura,
+                        descrita matematicamente por:
+                    </p>
+                    <div class="equation-box">
+                        $$ s(t) = A \cdot sen(2\pi f t + \phi) $$
+                    </div>
+                    <p>
+                        Onde:
+                        <ul style="margin-left:1.2rem; font-size:0.9rem; color:var(--text-light);">
+                            <li>$A$ é a amplitude (volume), fixada em $0{,}2$;</li>
+                            <li>$f$ é a frequência em Hertz (Hz) — o valor inserido;</li>
+                            <li>$t$ é o tempo em segundos;</li>
+                            <li>$\phi$ é a fase inicial (aqui $\phi = 0$).</li>
+                        </ul>
+                    </p>
+                    <p>
+                        A frequência $f$ determina a altura do som: 440 Hz corresponde ao <strong>Lá padrão</strong> (diapasão).
+                        O ouvido humano percebe frequências aproximadamente entre <strong>20 Hz e 20.000 Hz</strong>.
+                    </p>
+                    <div class="equation-box">
+                        $$ f = \frac{1}{T} \quad \text{onde } T \text{ é o período (em segundos)} $$
+                    </div>
+                </div>
+
+                <!-- Detecção de frequência -->
+                <div class="explanation-block">
+                    <h3>🔸 Detecção da Frequência (Pitch Detection)</h3>
+                    <p>
+                        O detector captura o som do microfone e estima a frequência fundamental usando
+                        <strong>autocorrelação</strong>. O algoritmo analisa o sinal digitalizado $x[n]$ e calcula:
+                    </p>
+                    <div class="equation-box">
+                        $$ R(\tau) = \sum_{n=0}^{N-1-\tau} x[n] \cdot x[n+\tau] $$
+                    </div>
+                    <p>
+                        onde $\tau$ é o <em>lag</em> (atraso em amostras). O valor de $\tau$ que maximiza $R(\tau)$ indica o período
+                        fundamental. A frequência é então obtida por:
+                    </p>
+                    <div class="equation-box">
+                        $$ f_{\text{detectada}} = \frac{f_s}{\tau_{\text{max}}} $$
+                    </div>
+                    <p>
+                        $f_s$ é a taxa de amostragem (tipicamente 44.100 Hz). Se o sinal for muito fraco
+                        (RMS $< 0{,}01$), o sistema considera que não há som e exibe <code>--</code>.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-note">
+            Diapasão Digital &copy; LSP - 2026 — Experimento Virtual Simulado
+        </div>
+    </div>
+
+    <!-- ================== MOTOR DO EXPERIMENTO (INALTERADO) ================== -->
+    <script>
+        // ----------- DETECTOR DE FREQUÊNCIA (motor original mantido) -----------
+        let audioContext, analyser, microphone, dataArray, animationId;
+        let running = false;
+
+        function autoCorrelate(buffer, sampleRate) {
+            let SIZE = buffer.length;
+            let rms = 0;
+            for (let i = 0; i < SIZE; i++) {
+                rms += buffer[i] * buffer[i];
+            }
+            rms = Math.sqrt(rms / SIZE);
+            if(rms < 0.01) return -1; // Sem som detectado
+
+            let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+            for (let i = 0; i < SIZE / 2; i++) {
+                if (Math.abs(buffer[i]) < thres) { r1 = i; break; }
+            }
+            for (let i = 1; i < SIZE / 2; i++) {
+                if (Math.abs(buffer[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+            }
+
+            buffer = buffer.slice(r1, r2);
+            SIZE = buffer.length;
+
+            let c = new Array(SIZE).fill(0);
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE - i; j++) {
+                    c[i] = c[i] + buffer[j] * buffer[j + i];
+                }
+            }
+            let d = 0; while (c[d] > c[d+1]) d++;
+            let maxval = -1, maxpos = -1;
+            for (let i = d; i < SIZE; i++) {
+                if (c[i] > maxval) {
+                    maxval = c[i];
+                    maxpos = i;
+                }
+            }
+            let T0 = maxpos;
+            return sampleRate / T0;
+        }
+
+        async function startDetect() {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          microphone = audioContext.createMediaStreamSource(stream);
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 2048;
+          microphone.connect(analyser);
+          dataArray = new Float32Array(analyser.fftSize);
+          running = true;
+          // Reset do histórico e gráfico ao iniciar nova detecção
+          resetHistoryAndChart();
+          detectFrequency();
+        }
+
+        // ----------- NOVAS FUNCIONALIDADES: HISTÓRICO E GRÁFICO -----------
+        let frequencyHistory = [];          // Array de {time: string, freq: number}
+        let chart;                         // Instância do Chart.js
+        const MAX_HISTORY_POINTS = 20;     // Máximo de pontos visíveis no gráfico/histórico
+        const MIN_RECORD_INTERVAL = 400;   // ms entre registros consecutivos
+        let lastRecordTime = 0;
+
+        function resetHistoryAndChart() {
+            frequencyHistory = [];
+            lastRecordTime = 0;
+            updateHistoryTable();
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+            initChart();
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('freqChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],   // timestamps relativos (ex: "00:00", "00:01"...)
+                    datasets: [{
+                        label: 'Frequência (Hz)',
+                        data: [],
+                        borderColor: '#3a7bd5',
+                        backgroundColor: 'rgba(58,123,213,0.1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#27ae60',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw.toFixed(1)} Hz`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: { display: false },
+                            ticks: { maxTicksLimit: 10, font: { size: 10 } }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            min: 20,
+                            // removido max fixo – o eixo se adapta automaticamente
+                            title: { display: true, text: 'Hz', font: { size: 10 } },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function addDataPoint(frequency) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour12: false });
+            frequencyHistory.push({ time: timeStr, freq: frequency });
+            // Manter apenas os últimos MAX_HISTORY_POINTS
+            if (frequencyHistory.length > MAX_HISTORY_POINTS) {
+                frequencyHistory.shift();
+            }
+            updateHistoryTable();
+            updateChart(timeStr, frequency);
+        }
+
+        function updateHistoryTable() {
+            const tbody = document.getElementById('historyBody');
+            if (frequencyHistory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#999;">Nenhum dado ainda</td></tr>';
+                return;
+            }
+            let html = '';
+            // Exibir os últimos (mais recentes primeiro)
+            frequencyHistory.slice().reverse().forEach(entry => {
+                html += `<tr>
+                    <td>${entry.time}</td>
+                    <td><span class="badge-hz">${entry.freq.toFixed(1)} Hz</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function updateChart(label, frequency) {
+            if (!chart) return;
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(frequency);
+            // Limitar pontos no gráfico também
+            if (chart.data.labels.length > MAX_HISTORY_POINTS) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.update();
+        }
+
+        // Função original detectFrequency MODIFICADA APENAS para adicionar registro condicional
+        function detectFrequency() {
+            analyser.getFloatTimeDomainData(dataArray);
+            const frequency = autoCorrelate(dataArray, audioContext.sampleRate);
+            const displaySpan = document.getElementById('detectedFrequency');
+            if (frequency > 20 && frequency < 20000) {
+                displaySpan.textContent = frequency.toFixed(1);
+                // Registro no histórico/gráfico com intervalo mínimo
+                const now = Date.now();
+                if (now - lastRecordTime >= MIN_RECORD_INTERVAL) {
+                    addDataPoint(frequency);
+                    lastRecordTime = now;
+                }
+            } else {
+                displaySpan.textContent = '--';
+            }
+            if (running) {
+                animationId = requestAnimationFrame(detectFrequency);
+            }
+        }
+
+        function stopDetect() {
+            running = false;
+            if(animationId) cancelAnimationFrame(animationId);
+            if(audioContext) audioContext.close();
+            document.getElementById('detectedFrequency').textContent = '--';
+            // Não limpamos histórico/gráfico ao parar, apenas congelamos
+        }
+
+        // ----------- GERADOR DE TOM (motor original) -----------
+        let oscillator, gainNode, toneCtx;
+        let playing = false;
+
+        function playTone() {
+          if (playing) return;
+          let freq = parseFloat(document.getElementById('inputFreq').value);
+          if (isNaN(freq) || freq < 20 || freq > 20000) {
+            alert("Digite uma frequência entre 20Hz e 20.000Hz");
+            return;
+          }
+          toneCtx = new (window.AudioContext || window.webkitAudioContext)();
+          oscillator = toneCtx.createOscillator();
+          gainNode = toneCtx.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.value = freq;
+          gainNode.gain.value = 0.2;
+          oscillator.connect(gainNode).connect(toneCtx.destination);
+          oscillator.start();
+          playing = true;
+          document.getElementById('btnStopTone').disabled = false;
+        }
+
+        function stopTone() {
+          if (!playing) return;
+          oscillator.stop();
+          toneCtx.close();
+          playing = false;
+          document.getElementById('btnStopTone').disabled = true;
+        }
+
+        // ----------- EVENTOS DOS BOTÕES -----------
+        document.getElementById('btnStart').onclick = async function() {
+          await startDetect();
+          this.disabled = true;
+          document.getElementById('btnStop').disabled = false;
+        };
+        document.getElementById('btnStop').onclick = function() {
+          stopDetect();
+          this.disabled = true;
+          document.getElementById('btnStart').disabled = false;
+        };
+        document.getElementById('btnPlay').onclick = function() {
+          playTone();
+        };
+        document.getElementById('btnStopTone').onclick = function() {
+          stopTone();
+        };
+
+        // Inicializa o gráfico vazio ao carregar a página
+        window.addEventListener('load', () => {
+            initChart();
+        });
+    </script>
+</body>
+</html>

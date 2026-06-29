@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observatórios Astronômicos do Brasil</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        * {margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
+        body{display:flex;flex-direction:column;height:100vh;background:#f5f5f5;color:#333;}
+        header{background:linear-gradient(135deg,#1a237e 0%,#283593 100%);color:#fff;padding:1.5rem;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,.1);} 
+        h1{font-size:2.2rem;margin-bottom:.5rem;}
+        .subtitle{font-size:1.1rem;opacity:.9;max-width:800px;margin:0 auto;}
+        .container{display:flex;flex:1;overflow:hidden;}
+        #map{flex:1;height:100%;z-index:1;}
+        .sidebar{width:350px;background:#fff;padding:1.5rem;overflow-y:auto;box-shadow:-2px 0 10px rgba(0,0,0,.1);z-index:2;}
+        .observatory-list{list-style:none;}
+        .observatory-item{padding:1rem;margin-bottom:1rem;border-radius:8px;background:#f9f9f9;cursor:pointer;transition:.3s;border-left:4px solid #283593;}
+        .observatory-item:hover{background:#e8eaf6;transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,.1);} 
+        .observatory-item.active{background:#e8eaf6;border-left:4px solid #ff9800;}
+        .observatory-name{font-weight:bold;font-size:1.1rem;margin-bottom:.5rem;color:#1a237e;}
+        .observatory-location{color:#666;font-size:.9rem;margin-bottom:.5rem;}
+        .observatory-description{font-size:.9rem;line-height:1.4;}
+        .search-box{margin-bottom:1.5rem;}
+        .search-box input{width:100%;padding:.8rem 1rem;border:1px solid #ddd;border-radius:4px;font-size:1rem;}
+        footer{background:#1a237e;color:#fff;text-align:center;padding:1rem;font-size:.9rem;}
+        .legend{background:#fff;padding:10px;border-radius:5px;box-shadow:0 0 15px rgba(0,0,0,.2);}
+        .legend-item{display:flex;align-items:center;margin-bottom:5px;}
+        .legend-color{width:20px;height:20px;margin-right:8px;border-radius:50%;}
+        @media(max-width:768px){.container{flex-direction:column}.sidebar{width:100%;height:40%}#map{height:60%}}
+    </style>
+</head>
+<body>
+<header>
+<h1>Observatórios Astronômicos do Brasil</h1>
+<p>Compilado por: Prof. Luciano Soares Pedroso - LaLEC - 2025</p>
+<p class="subtitle">Explore os principais centros de pesquisa e observação astronômica em território brasileiro</p>
+</header>
+
+<div class="container">
+<div id="map"></div>
+<div class="sidebar">
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="Buscar observatório...">
+</div>
+<ul class="observatory-list" id="observatoryList"></ul>
+</div>
+</div>
+
+<footer>
+<p>Desenvolvido com Leaflet.js | Dados coletados de fontes públicas</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const observatories=[
+{
+ id:1,
+ name:"Observatório do Valongo",
+ location:"Rio de Janeiro, RJ",
+ lat:-22.8975,
+ lng:-43.1878,
+ instagram:"@valongoufrj",
+ description:"Observatório da UFRJ fundado em 1881. Pesquisa, ensino e divulgação em Astronomia. Telefone: (21) 2263‑0685 | Site: ov.ufrj.br",
+ type:"universitario"
+},
+{
+ id:2,
+ name:"Observatório Nacional",
+ location:"Rio de Janeiro, RJ",
+ lat:-22.8978,
+ lng:-43.2258,
+ instagram:"@observatorionacional",
+ description:"Instituição científica federal fundada em 1827. Pesquisa em Astronomia, Geofísica e metrologia do tempo. Telefones: (21) 3504‑9180 / 9181.",
+ type:"nacional"
+},
+{
+ id:3,
+ name:"Observatório Astronômico da Serra da Piedade",
+ location:"Caeté, MG",
+ lat:-19.8167,
+ lng:-43.6833,
+ description:"Observatório da UFMG em local elevado tradicional para pesquisa e divulgação astronômica.",
+ type:"universitario"
+},
+{
+ id:4,
+ name:"Observatório Astronômico da UNIFAL",
+ location:"Alfenas, MG",
+ lat:-21.42069172956833,
+ lng:-45.98546363971309,
+ description:"Observatório da UNIFAL com pesquisa, ensino e extensão. Coord.: Prof. Dr. Artur Justiniano Roberto Junior. Tel: (35) 3701‑1962 | Site: www.unifal-mg.edu.br/observatorio | Agendamento: <a href='agenda.html' target='_blank'>Clique aqui para agendar</a>",
+ type:"universitario"
+},
+{
+ id:5,
+ name:"Observatório Abrahão de Moraes",
+ location:"Valinhos, SP",
+ lat:-23.0069,
+ lng:-46.9972,
+ description:"Observatório da USP dedicado principalmente à pesquisa em astrometria e mecânica celeste. Tel: (19) 3856‑5400",
+ type:"universitario"
+},
+{
+ id:6,
+ name:"Observatório Dietrich Schiel",
+ location:"São Carlos, SP",
+ lat:-22.0142,
+ lng:-47.8919,
+ description:"Observatório de divulgação científica da USP/CDCC com observações públicas. Tel: (16) 3373‑9191",
+ type:"universitario"
+},
+{
+ id:7,
+ name:"Observatório Astronômico da UFRGS",
+ location:"Porto Alegre, RS",
+ lat:-30.0733,
+ lng:-51.1189,
+ instagram:"@ocv_ufrgs",
+ description:"Observatório universitário com pesquisa, ensino e divulgação científica. Tel: (51) 3308‑3352 | Email: astro@ufrgs.br",
+ type:"universitario"
+},
+{
+ id:8,
+ name:"Observatório Astronômico da UFPR",
+ location:"Curitiba, PR",
+ lat:-25.4489,
+ lng:-49.2322,
+ description:"Observatório universitário voltado à divulgação científica e formação acadêmica em Astronomia.",
+ type:"universitario"
+},
+{
+ id:9,
+ name:"Observatório Astronômico da UESC",
+ location:"Ilhéus, BA",
+ lat:-14.7958,
+ lng:-39.1753,
+ description:"Observatório da UESC dedicado à divulgação científica regional. Tel: (73) 3680‑5621 | Site: www.oauesc.org",
+ type:"universitario"
+},
+{
+ id:10,
+ name:"Observatório Astronômico da UEPG",
+ location:"Ponta Grossa, PR",
+ lat:-25.0914,
+ lng:-50.1608,
+ description:"Observatório universitário com ações educativas e divulgação científica.",
+ type:"universitario"
+},
+{
+ id:11,
+ name:"Observatório do Pico dos Dias",
+ location:"Brazópolis, MG",
+ lat:-22.5344,
+ lng:-45.5825,
+ description:"Principal observatório óptico do Brasil operado pelo Laboratório Nacional de Astrofísica (LNA).",
+ type:"nacional"
+},
+{
+ id:12,
+ name:"Observatório Astronômico da Serra da Borborema",
+ location:"Brejo da Madre de Deus, PE",
+ lat:-8.1333,
+ lng:-36.4167,
+ description:"Observatório regional voltado à divulgação científica no agreste pernambucano.",
+ type:"regional"
+}
+];
+
+const map=L.map('map').setView([-15,-55],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+
+const iconColors={universitario:'#1e88e5',nacional:'#d32f2f',regional:'#43a047'};
+const markers=[];
+
+observatories.forEach(obs=>{
+const marker=L.marker([obs.lat,obs.lng],{icon:L.divIcon({className:`custom-icon ${obs.type}`,html:`<div style="background:${iconColors[obs.type]};width:20px;height:20px;border-radius:50%;border:3px solid white;"></div>`,iconSize:[20,20],iconAnchor:[10,10]})}).addTo(map);
+
+marker.bindPopup(`
+<div style="min-width:250px;">
+<h3 style="margin:0 0 10px;color:#1a237e;">${obs.name}</h3>
+<p><strong>Localização:</strong> ${obs.location}</p>
+<p>${obs.description}</p>
+${obs.instagram?`<p><strong>Instagram:</strong> ${obs.instagram}</p>`:''}
+</div>`);
+
+marker.observatory=obs;
+markers.push(marker);
+marker.on('click',()=>highlightObservatory(obs.id));
+});
+
+const observatoryList=document.getElementById('observatoryList');
+observatories.forEach(obs=>{
+const li=document.createElement('li');
+li.className='observatory-item';
+li.dataset.id=obs.id;
+li.innerHTML=`<div class="observatory-name">${obs.name}</div><div class="observatory-location">${obs.location}</div><div class="observatory-description">${obs.description}</div>`;
+li.addEventListener('click',()=>{highlightObservatory(obs.id);map.setView([obs.lat,obs.lng],10);markers.find(m=>m.observatory.id===obs.id).openPopup();});
+observatoryList.appendChild(li);
+});
+
+function highlightObservatory(id){document.querySelectorAll('.observatory-item').forEach(item=>item.classList.remove('active'));document.querySelector(`.observatory-item[data-id="${id}"]`).classList.add('active');}
+
+const searchInput=document.getElementById('searchInput');
+searchInput.addEventListener('input',function(){const term=this.value.toLowerCase();document.querySelectorAll('.observatory-item').forEach(item=>{const name=item.querySelector('.observatory-name').textContent.toLowerCase();const loc=item.querySelector('.observatory-location').textContent.toLowerCase();item.style.display=(name.includes(term)||loc.includes(term))?'block':'none';});});
+
+const legend=L.control({position:'bottomright'});
+legend.onAdd=function(){const div=L.DomUtil.create('div','legend');div.innerHTML=`<h4>Tipos de Observatórios</h4><div class="legend-item"><div class="legend-color" style="background:${iconColors.universitario}"></div>Universitário</div><div class="legend-item"><div class="legend-color" style="background:${iconColors.nacional}"></div>Nacional</div><div class="legend-item"><div class="legend-color" style="background:${iconColors.regional}"></div>Regional</div>`;return div;};
+legend.addTo(map);
+</script>
+</body>
+</html>

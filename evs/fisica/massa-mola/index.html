@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- HTML5 -->
+<meta charset="utf-8"/>	
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EVS - Massa–Mola Amortecido — Linear vs. Não Linear (Duffing fraco)</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <script>
+    (function(){
+      var s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      s.async=true; document.head.appendChild(s);
+    })();
+  </script>
+  <style>
+    :root{
+      --bg:#0f172a; --card:#111827; --muted:#94a3b8; --text:#e5e7eb; --accent:#22d3ee; --ok:#10b981; --warn:#f59e0b; --err:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; background:linear-gradient(120deg,#0b1023,#0f172a 40%,#0b132b); color:var(--text)}
+    header{padding:24px 16px 8px; text-align:center}
+    header h1{margin:0 0 6px; font-size:clamp(1.3rem,2.8vw,2rem)}
+    header p{margin:0; color:var(--muted)}
+    .container{max-width:1100px; margin:0 auto; padding:16px}
+    .grid{display:grid; gap:16px; grid-template-columns:1fr}
+    @media(min-width:980px){.grid{grid-template-columns:380px 1fr}}
+    .card{background:rgba(17,24,39,.6); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .card h2{margin:0 0 12px; font-size:1.05rem; color:#e2e8f0}
+    .field{display:flex; flex-direction:column; gap:6px; margin:12px 0}
+    .inline{display:flex; gap:10px; align-items:center}
+    label{color:#cbd5e1}
+    input[type="text"], input[type="range"]{width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(2,6,23,.35); color:#e5e7eb}
+    input[type="range"]{padding:0}
+    .hint{font-size:.82rem; color:var(--muted)}
+    .btn{display:inline-flex; gap:8px; align-items:center; padding:10px 14px; border:none; border-radius:12px; background:linear-gradient(135deg,#06b6d4,#22d3ee); color:#001018; font-weight:700; cursor:pointer; box-shadow:0 6px 20px rgba(34,211,238,.35)}
+    .out{display:grid; gap:12px; grid-template-columns:1fr}
+    @media(min-width:660px){.out{grid-template-columns:repeat(2,1fr)}}
+    .tile{background:rgba(2,6,23,.35); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:14px}
+    .tile h3{margin:0 0 6px; font-size:1rem; color:#c7d2fe}
+    .big{font-size:clamp(1.05rem,3vw,1.5rem); font-variant-numeric:tabular-nums}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+    kbd{background:#0b132b; border:1px solid rgba(255,255,255,.15); border-radius:6px; padding:2px 6px; font-size:.8rem}
+    details summary{cursor:pointer; color:#cbd5e1}
+    footer{padding:26px 16px; text-align:center; color:var(--muted)}
+    .eq{background:rgba(15,23,42,.55); border:1px dashed rgba(255,255,255,.18); border-radius:12px; padding:12px; margin:10px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EVS - Massa–Mola Amortecido: pequenas vs. maiores oscilações</h1>
+	<p>&nbsp;</p>
+	<p align="center">Prof. Luciano Soares Pedroso</p>
+	<p align="center">2026</p>
+	<p align="center">&nbsp;</p>
+    <p>Compare o período linear (modelo clássico) com um modelo não linear fraco (Duffing com termo cúbico).</p>
+  </header>
+
+  <div class="container grid">
+    <section class="card">
+      <h2>Entradas</h2>
+
+      <div class="field">
+        <label for="m">Massa \(m\) (kg)</label>
+        <input id="m" type="text" inputmode="decimal" value="0,500" placeholder="ex.: 0,200" />
+        <div class="hint">Use vírgula como separador decimal.</div>
+      </div>
+
+      <div class="field">
+        <label for="k">Constante da mola \(k\) (N/m)</label>
+        <input id="k" type="text" inputmode="decimal" value="40,0" placeholder="ex.: 10,0" />
+      </div>
+
+      <div class="field">
+        <label for="c">Amortecimento viscoso \(c\) (N·s/m)</label>
+        <input id="c" type="text" inputmode="decimal" value="0,80" placeholder="ex.: 0,10" />
+        <div class="hint">Válido para regime subamortecido (\(\zeta<1\)).</div>
+      </div>
+
+      <div class="field">
+        <label for="A">Amplitude \(A\) (m) — para o caso não linear</label>
+        <div class="inline">
+          <input id="A" type="text" inputmode="decimal" value="0,05" style="max-width:140px" />
+          <input id="Arange" type="range" min="0" max="0.30" value="0.05" step="0.001" />
+        </div>
+        <div class="hint">Amplitude de referência da oscilação livre.</div>
+      </div>
+
+      <div class="field">
+        <label for="alpha">Não linearidade cúbica \(\alpha\) (N/m³)</label>
+        <input id="alpha" type="text" inputmode="decimal" value="2000" placeholder="ex.: 500" />
+        <div class="hint">\(\alpha>0\) (endurecimento) ou \(<0\) (amolecimento). Valor pequeno para regime fraco.</div>
+      </div>
+
+      <button class="btn" id="btnCalc">Calcular</button>
+    </section>
+
+    <section class="card">
+      <h2>Resultados</h2>
+      <div class="out">
+        <div class="tile">
+          <h3>Regime</h3>
+          <div class="big" id="regime">—</div>
+          <div class="hint">\(\zeta = \tfrac{c}{2\sqrt{mk}}\)</div>
+        </div>
+        <div class="tile">
+          <h3>Período (linear)</h3>
+          <div class="big" id="Tlin">—</div>
+          <div class="hint">\(T_\text{lin} = \tfrac{2\pi}{\omega_d}\), \(\omega_d=\sqrt{\tfrac{k}{m}-(\tfrac{c}{2m})^2}\)</div>
+        </div>
+        <div class="tile">
+          <h3>Período (não linear, fraco)</h3>
+          <div class="big" id="Tnl">—</div>
+          <div class="hint">Correção dependente de \(A\) e \(\alpha\).</div>
+        </div>
+        <div class="tile">
+          <h3>Diferença relativa</h3>
+          <div class="big" id="diff">—</div>
+          <div class="hint">(não linear &#8722; linear) / não linear.</div>
+        </div>
+      </div>
+
+      <details style="margin-top:12px">
+        <summary>Ver equações e observações</summary>
+        <div class="eq">
+          <p><strong>Modelo linear (pequenas oscilações)</strong>:</p>
+          <p>\[ m\,\ddot{x} + c\,\dot{x} + kx = 0, \quad \omega_n = \sqrt{\tfrac{k}{m}}, \quad \zeta = \tfrac{c}{2\sqrt{mk}}. \]</p>
+          <p>Para \(\zeta<1\) (subamortecido): \[ \omega_d = \omega_n\sqrt{1-\zeta^2}, \qquad T_\text{lin} = \frac{2\pi}{\omega_d}. \]</p>
+        </div>
+        <div class="eq">
+          <p><strong>Modelo não linear fraco (Duffing)</strong>:</p>
+          <p>\[ m\,\ddot{x} + c\,\dot{x} + kx + \alpha x^3 = 0. \]</p>
+          <p>Para <em>amplitudes moderadas</em> e não linearidade fraca, a frequência sem amortecimento sofre um desvio aproximado (Lindstedt–Poincaré):</p>
+          <p>\[ \omega_{\text{NL}} \approx \omega_n\!\left(1 + \frac{3\,\alpha A^2}{8k}\right). \]</p>
+          <p>Com amortecimento fraco (\(\zeta<1\)), aproximamos \(\omega_{d,\text{NL}} = \sqrt{\omega_{\text{NL}}^2 - (\tfrac{c}{2m})^2}\) e então \(T_{\text{NL}} \approx 2\pi/\omega_{d,\text{NL}}\).</p>
+        </div>
+        <div class="eq">
+          <p><strong>Observações didáticas</strong>:</p>
+          <ul>
+            <li>A expressão não linear é válida quando \(|\tfrac{3\alpha A^2}{8k}| \ll 1\) (correção pequena).</li>
+            <li>Para \(\zeta\ge 1\) não há oscilação: o período não é definido.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <p align="center">
+
+  <footer>
+    Dica: entradas aceitam vírgula como separador decimal. Experimento Virtual 
+	Simulado acoplado ao Aplicativo Phyphox.
+  </footer>
+
+  <script>
+    // utilidades pt-BR
+    function parseBR(s){ if(typeof s!=="string") s=String(s??''); s=s.trim().replace(/\s+/g,'').replace(',', '.'); const v=Number(s); return isFinite(v)?v:NaN; }
+    function fmtBR(x, d=6){ return isFinite(x)? x.toLocaleString('pt-BR',{maximumFractionDigits:d}):'—'; }
+
+    function compute(){
+      const m = parseBR(document.getElementById('m').value);
+      const k = parseBR(document.getElementById('k').value);
+      const c = parseBR(document.getElementById('c').value);
+      const A = parseBR(document.getElementById('A').value);
+      const alpha = parseBR(document.getElementById('alpha').value);
+
+      const outReg = document.getElementById('regime');
+      const outTlin = document.getElementById('Tlin');
+      const outTnl = document.getElementById('Tnl');
+      const outDiff = document.getElementById('diff');
+
+      // validações
+      if(!(m>0) || !(k>0) || !(c>=0) || !(A>=0) || !isFinite(alpha)){
+        outReg.textContent='—'; outTlin.textContent='—'; outTnl.textContent='—'; outDiff.textContent='—';
+        return;
+      }
+
+      const omega_n = Math.sqrt(k/m);
+      const zeta = c/(2*Math.sqrt(m*k));
+      const beta = c/(2*m);
+
+      let regimeTxt = '';
+      if(zeta<1) regimeTxt = 'Subamortecido (\u03B6 = '+fmtBR(zeta,4)+')';
+      else if(Math.abs(zeta-1)<1e-12) regimeTxt = 'Criticamente amortecido (\u03B6 = 1)';
+      else regimeTxt = 'Superamortecido (\u03B6 = '+fmtBR(zeta,4)+')';
+      outReg.textContent = regimeTxt;
+
+      if(zeta>=1){
+        outTlin.textContent = '—';
+        outTnl.textContent = '—';
+        outDiff.textContent = '—';
+        return; // sem oscilação
+      }
+
+      const omega_d = Math.sqrt(omega_n*omega_n - beta*beta);
+      const Tlin = 2*Math.PI/omega_d;
+
+      // Correção não linear fraca (assume amortecimento fraco e termo cúbico pequeno)
+      const corr = 1 + (3*alpha*A*A)/(8*k); // fator no termo de frequência natural
+      const omega_NL = omega_n * corr; // frequência natural corrigida (sem amortecimento)
+      const omega_d_NL = Math.sqrt(Math.max(omega_NL*omega_NL - beta*beta, 0));
+      const Tnl = (omega_d_NL>0)? (2*Math.PI/omega_d_NL) : Infinity;
+
+      outTlin.textContent = fmtBR(Tlin, 6);
+      outTnl.textContent  = isFinite(Tnl)? fmtBR(Tnl, 6) : '—';
+
+      const diff = isFinite(Tnl)? (Tnl - Tlin)/Tnl : NaN;
+      outDiff.textContent = isFinite(diff)? ((diff>=0?'+':'')+fmtBR(100*diff,4)+' %') : '—';
+
+      // Classe de cor para dif
+      const tileDiff = document.getElementById('diff').parentElement;
+      tileDiff.classList.remove('ok','warn','err');
+      if(Math.abs((3*alpha*A*A)/(8*k)) < 0.02) tileDiff.classList.add('ok');
+      else if(Math.abs((3*alpha*A*A)/(8*k)) < 0.10) tileDiff.classList.add('warn');
+      else tileDiff.classList.add('err');
+    }
+
+    // sincronizar o slider de A
+    const Ain = document.getElementById('A');
+    const Asl = document.getElementById('Arange');
+    function syncAfromText(){ const v=parseBR(Ain.value); if(isFinite(v)) Asl.value=String(Math.max(0, Math.min(0.30, v))); compute(); }
+    function syncAfromRange(){ Ain.value = Asl.value.replace('.',','); compute(); }
+    Ain.addEventListener('input', syncAfromText);
+    Asl.addEventListener('input', syncAfromRange);
+
+    document.getElementById('btnCalc').addEventListener('click', compute);
+    window.addEventListener('DOMContentLoaded', compute);
+  </script>
+	</p>
+</body>
+</html>

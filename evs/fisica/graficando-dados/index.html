@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analisador de Dados Phyphox Excel Flexível</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.1.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <style>
+    .transition-all { transition: all 0.3s ease-in-out; }
+    #excel-upload { display: none; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+    <header class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-green-700">Analisador de Dados Phyphox</h1>
+      <p class="text-3xl md:text-4xl font-bold text-green-700" align="center">
+        <font size="2" color="#000080">Prof. Luciano Soares Pedroso - LaLEC - 2025</font>
+      </p>
+      <p class="text-md text-gray-600 mt-2">Carregue seu arquivo Excel (.xls, .xlsx) para visualizar o gráfico.</p>
+    </header>
+
+    <div class="mb-6 text-center">
+      <button onclick="document.getElementById('excel-upload').click();" class="px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700 transition-all">Selecionar arquivo Excel</button>
+      <input type="file" id="excel-upload" accept=".xls,.xlsx" />
+      <div id="file-name" class="mt-4 text-sm text-gray-500"></div>
+    </div>
+
+    <div id="axis-select" class="mb-6 flex flex-col justify-center gap-4" style="display:none;">
+      <div class="flex flex-row justify-center gap-4">
+        <label class="flex flex-col items-center">
+          X:
+          <select id="x-axis" class="mt-2 p-2 rounded border border-gray-300"></select>
+        </label>
+        <label class="flex flex-col items-center">
+          Y:
+          <select id="y-axis" class="mt-2 p-2 rounded border border-gray-300"></select>
+        </label>
+        <button id="plot-btn" class="ml-6 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-all">Gerar gráfico</button>
+      </div>
+      <div class="flex flex-row justify-center gap-4 mt-4">
+        <label class="flex flex-col items-center">
+          Nome do eixo X:
+          <input type="text" id="x-axis-name" class="mt-2 p-2 rounded border border-gray-300 w-48" placeholder="Nome do eixo X" />
+        </label>
+        <label class="flex flex-col items-center">
+          Nome do eixo Y:
+          <input type="text" id="y-axis-name" class="mt-2 p-2 rounded border border-gray-300 w-48" placeholder="Nome do eixo Y" />
+        </label>
+      </div>
+    </div>
+
+    <div class="bg-white rounded shadow p-6 relative">
+      <canvas id="chartCanvas"></canvas>
+      <!-- Botões de zoom removidos conforme solicitado -->
+    </div>
+  </div>
+
+  <script>
+    let sheetData = [];
+    let chartInstance = null;
+
+    // registra plugin de zoom (mantido para uso futuro, sem controles visíveis)
+    try {
+      if (window.Chart && window['chartjs-plugin-zoom']) {
+        Chart.register(window['chartjs-plugin-zoom']);
+      }
+    } catch (err) {
+      console.warn('Registro do plugin de zoom falhou:', err);
+    }
+
+    document.getElementById('excel-upload').addEventListener('change', function(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+      document.getElementById('file-name').textContent = 'Arquivo: ' + file.name;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        if (jsonData.length === 0) return alert("Arquivo sem dados.");
+        sheetData = jsonData;
+        setupDropdowns(jsonData);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function setupDropdowns(data) {
+      const headers = Object.keys(data[0]);
+      if (headers.length < 2) return alert("Arquivo deve ter ao menos 2 colunas.");
+      const xAxis = document.getElementById('x-axis');
+      const yAxis = document.getElementById('y-axis');
+      xAxis.innerHTML = '';
+      yAxis.innerHTML = '';
+      headers.forEach(hdr => {
+        const optionX = document.createElement('option');
+        optionX.value = hdr;
+        optionX.textContent = hdr;
+        xAxis.appendChild(optionX);
+
+        const optionY = document.createElement('option');
+        optionY.value = hdr;
+        optionY.textContent = hdr;
+        yAxis.appendChild(optionY);
+      });
+      document.getElementById('axis-select').style.display = '';
+      if (headers.includes("Time (s)")) {
+        xAxis.value = "Time (s)";
+        document.getElementById('x-axis-name').value = "Time (s)";
+      }
+      if (headers.includes("Pressure (hPa)")) {
+        yAxis.value = "Pressure (hPa)";
+        document.getElementById('y-axis-name').value = "Pressure (hPa)";
+      } else if (headers.includes("Illuminance (lx)")) {
+        yAxis.value = "Illuminance (lx)";
+        document.getElementById('y-axis-name').value = "Illuminance (lx)";
+      } else {
+        yAxis.selectedIndex = 1;
+        document.getElementById('y-axis-name').value = headers[1];
+      }
+    }
+
+    document.getElementById('plot-btn').addEventListener('click', function() {
+      const xVar = document.getElementById('x-axis').value;
+      const yVar = document.getElementById('y-axis').value;
+      if (!xVar || !yVar) return alert("Selecione ambos os eixos.");
+      drawChart(xVar, yVar);
+    });
+
+    // Helper: tenta interpretar valor numérico, retorna null se não for
+    function toNumberOrNull(v) {
+      if (v === null || typeof v === 'undefined') return null;
+      if (typeof v === 'number') return v;
+      const n = Number(String(v).replace(',', '.'));
+      return isNaN(n) ? null : n;
+    }
+
+    // Formatação usando padrão pt-BR com máximo de 3 casas decimais
+    function fmtNumberBR(value) {
+      if (value === null || typeof value === 'undefined' || value === '') return '';
+      // usa Number e toLocaleString para respeitar separador decimal vírgula
+      const n = Number(value);
+      if (isNaN(n)) return String(value);
+      // remove zeros desnecessários mantendo no máximo 3 casas
+      return n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+    }
+
+    function drawChart(xVar, yVar) {
+      // Prepara arrays numéricos quando possível
+      const rawLabels = sheetData.map(row => row[xVar]);
+      const rawY = sheetData.map(row => row[yVar]);
+
+      // Detecta se eixo X é numérico (todos valores convertíveis para número)
+      const numericLabels = rawLabels.map(toNumberOrNull);
+      const xIsNumeric = numericLabels.every(v => v !== null);
+
+      // Para o Chart, usaremos:
+      // - se X for numérico: labels = numeric values (Chart tratará como 'linear' se configurado),
+      //   e dataset.data será array de {x: , y: } objetos numéricos.
+      // - se X for categórico: labels = strings formatados (com vírgula), dataset.data será array de números Y.
+      let dataForChart;
+      let labelsForChart;
+
+      if (xIsNumeric) {
+        const numericY = rawY.map(toNumberOrNull);
+        dataForChart = numericLabels.map((xVal, i) => {
+          const yVal = numericY[i];
+          return { x: Number(Number(xVal.toFixed(3))), y: (yVal === null ? null : Number(Number(yVal.toFixed(3)))) };
+        });
+        labelsForChart = undefined; // usando dados com x/y
+      } else {
+        // categorico: formata labels como strings com até 3 casas e vírgula
+        labelsForChart = rawLabels.map(v => {
+          const n = toNumberOrNull(v);
+          return n === null ? String(v) : fmtNumberBR(Number(n.toFixed(3)));
+        });
+        dataForChart = rawY.map(v => {
+          const n = toNumberOrNull(v);
+          return n === null ? null : Number(Number(n.toFixed(3)));
+        });
+      }
+
+      const xAxisName = document.getElementById('x-axis-name').value || xVar;
+      const yAxisName = document.getElementById('y-axis-name').value || yVar;
+      const chartLabel = `${yAxisName} vs ${xAxisName}`;
+
+      const ctx = document.getElementById('chartCanvas').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labelsForChart,
+          datasets: [{
+            label: chartLabel,
+            data: dataForChart,
+            parsing: xIsNumeric ? false : true,
+            fill: false,
+            borderColor: 'rgba(34,197,94,1)',
+            tension: 0.2,
+            pointRadius: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  // context.raw pode ser objeto {x,y} ou número
+                  const raw = context.raw;
+                  let xVal, yVal;
+                  if (raw && typeof raw === 'object' && 'x' in raw && 'y' in raw) {
+                    xVal = fmtNumberBR(raw.x);
+                    yVal = fmtNumberBR(raw.y);
+                  } else {
+                    // categórico: context.label é rótulo do eixo X já formatado; context.parsed.y é número
+                    xVal = context.label;
+                    yVal = fmtNumberBR(context.parsed.y);
+                  }
+                  return `${xAxisName}: ${xVal}, ${yAxisName}: ${yVal}`;
+                }
+              }
+            },
+            zoom: {
+              pan: { enabled: true, mode: 'xy' },
+              zoom: { wheel: { enabled: false }, pinch: { enabled: true }, mode: 'xy' }
+            }
+          },
+          scales: {
+            x: xIsNumeric ? {
+              type: 'linear',
+              title: { display: true, text: xAxisName },
+              ticks: {
+                callback: function(value) {
+                  return fmtNumberBR(value);
+                },
+                maxTicksLimit: 12
+              }
+            } : {
+              title: { display: true, text: xAxisName },
+              ticks: {
+                callback: function(value, index, ticks) {
+                  // labels já formatadas; apenas retorna a label
+                  return this.getLabelForValue(value);
+                },
+                maxTicksLimit: 12
+              }
+            },
+            y: {
+              title: { display: true, text: yAxisName },
+              ticks: {
+                callback: function(value) {
+                  return fmtNumberBR(value);
+                },
+                maxTicksLimit: 10
+              }
+            }
+          },
+          interaction: {
+            mode: 'nearest',
+            intersect: false
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

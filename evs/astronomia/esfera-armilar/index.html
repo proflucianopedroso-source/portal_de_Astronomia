@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>EVS - Esfera Armilar • Terra • Eclíptica • Meridianos</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+<style>
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
+    #info {
+        position: absolute; top: 20px; right: 20px;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        padding: 12px 20px; border-radius: 12px; color: #ffdd99;
+        font-size: 13px; pointer-events: none; z-index: 10;
+        border-left: 4px solid #ffaa44;
+        font-family: monospace;
+    }
+    #panel {
+        position: absolute; bottom: 20px; left: 20px; right: 20px;
+        max-width: 460px; background: rgba(10,10,20,0.96);
+        backdrop-filter: blur(12px); padding: 18px; border-radius: 24px;
+        color: #eee; font-size: 13px; border: 1px solid rgba(255,255,255,0.2);
+        z-index: 20; font-family: 'Segoe UI', sans-serif;
+        pointer-events: auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    h3 { margin: 0 0 12px 0; text-align: center; color: #ffcc88; letter-spacing: 1px; }
+    button {
+        background: #2c3e66; border: none; color: white;
+        padding: 7px 14px; margin: 4px 5px; border-radius: 40px;
+        cursor: pointer; font-weight: bold; transition: 0.2s;
+    }
+    button:hover { background: #4a6a9a; transform: scale(1.02); }
+    hr { margin: 12px 0; border-color: #446; }
+    .status {
+        background: #00000066; border-radius: 14px; padding: 10px;
+        text-align: center; font-size: 12px; margin-top: 12px;
+        line-height: 1.5;
+        font-family: monospace;
+    }
+    .sun-slider-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin: 15px 0 10px;
+    }
+    #timeSlider {
+        flex: 1;
+        cursor: pointer;
+        height: 6px;
+        border-radius: 5px;
+        background: #334455;
+        accent-color: #ffaa55;
+    }
+    #dayValue {
+        background: #1e2a3a;
+        padding: 5px 14px;
+        border-radius: 30px;
+        font-family: monospace;
+        font-weight: bold;
+        font-size: 14px;
+        min-width: 65px;
+        text-align: center;
+        border: 1px solid #ffaa55;
+    }
+    .season-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        padding: 0 5px;
+        margin-top: 8px;
+        color: #ffcc88;
+        font-weight: bold;
+    }
+    .btn-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin: 8px 0;
+    }
+    .btn-group button {
+        flex: 1;
+        min-width: 80px;
+    }
+    .legenda {
+        font-size: 10px;
+        text-align: center;
+        margin-top: 12px;
+        color: #aaa;
+    }
+</style>
+</head>
+<body>
+<div id="info">
+    🌍 EVS - ESFERA ARMILAR • TERRA • ECLÍPTICA • MERIDIANOS
+	<p align="center">Prof. Luciano Soares Pedroso</p>
+	<p align="center"><font size="1">Fora de escala!</font></div>
+<div id="panel">
+    <h3>🌀 ESFERA ARMILAR - SISTEMA TERRA-SOL</h3>
+    
+    <div class="btn-group">
+        <button id="btnEquator">🌐 Equador Celeste</button>
+        <button id="btnEcliptic">☀️ Eclíptica</button>
+        <button id="btnMeridian">📐 Meridiano Celeste</button>
+        <button id="btnGrid">🗺️ Paralelos</button>
+    </div>
+    
+    <hr>
+    
+    <b>☀️ POSIÇÃO DO SOL NA ECLÍPTICA (ÂNGULO E ESTAÇÃO)</b>
+    <div class="sun-slider-container">
+        <input type="range" id="timeSlider" min="0" max="360" step="1" value="0">
+        <span id="dayValue">0°</span>
+    </div>
+    <div class="season-labels">
+        <span>🌱 0° — MARÇO</span>
+        <span>☀️ 90° — JUNHO</span>
+        <span>🍂 180° — SETEMBRO</span>
+        <span>❄️ 270° — DEZEMBRO</span>
+    </div>
+    
+    <div class="status" id="statusMsg">
+        🌞 Sol na posição 0° (Equinócio de Março)
+    </div>
+    
+    <div class="legenda">
+        🟡 Eclíptica | 🔵 Equador Celeste | 🔴 Meridiano Celeste | ⚪ Paralelos (na Terra) | 🌍 Terra com eixo inclinado 23.5°
+    </div>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    
+    // --- CONFIGURAÇÃO ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x010118);
+    scene.fog = new THREE.FogExp2(0x010118, 0.0005);
+    
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(4.5, 2.2, 5.8);
+    camera.lookAt(0, 0, 0);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+    
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = false;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.2;
+    controls.rotateSpeed = 1.0;
+    controls.target.set(0, 0, 0);
+    
+    // --- LUZES ---
+    const ambientLight = new THREE.AmbientLight(0x222244);
+    scene.add(ambientLight);
+    
+    const fillLight = new THREE.DirectionalLight(0x88aaff, 0.5);
+    fillLight.position.set(1, 2, 1);
+    scene.add(fillLight);
+    
+    // --- TEXTURA DA TERRA ---
+    const textureLoader = new THREE.TextureLoader();
+    const earthMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+    const earthSpecularMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg');
+    const earthNormalMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');
+    const cloudMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
+    
+    // --- GRUPO DA TERRA (COM INCLINAÇÃO AXIAL CORRETA - 23.5°) ---
+    const earthGroup = new THREE.Group();
+    scene.add(earthGroup);
+    
+    const AXIAL_TILT = 23.5 * Math.PI / 180;
+    earthGroup.rotation.x = AXIAL_TILT;  // Eixo inclinado corretamente
+    
+    // ESFERA DA TERRA
+    const earthGeometry = new THREE.SphereGeometry(0.85, 128, 128);
+    const earthMaterial = new THREE.MeshPhongMaterial({
+        map: earthMap,
+        specularMap: earthSpecularMap,
+        specular: new THREE.Color('grey'),
+        shininess: 5,
+        normalMap: earthNormalMap
+    });
+    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+    earth.castShadow = true;
+    earth.receiveShadow = false;
+    earthGroup.add(earth);
+    
+    // NUVENS (camada translúcida)
+    const cloudGeometry = new THREE.SphereGeometry(0.852, 128, 128);
+    const cloudMaterial = new THREE.MeshPhongMaterial({
+        map: cloudMap,
+        transparent: true,
+        opacity: 0.12,
+        blending: THREE.AdditiveBlending
+    });
+    const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    earthGroup.add(clouds);
+    
+    // --- EIXO VISUAL DA TERRA (linha que passa pelo centro, mostrando a inclinação) ---
+    const axisLineMaterial = new THREE.LineBasicMaterial({ color: 0xff8888, transparent: true, opacity: 0.6 });
+    const axisPoints = [];
+    axisPoints.push(new THREE.Vector3(0, -1.35, 0));
+    axisPoints.push(new THREE.Vector3(0, 1.35, 0));
+    const axisGeometry = new THREE.BufferGeometry().setFromPoints(axisPoints);
+    const axisLine = new THREE.Line(axisGeometry, axisLineMaterial);
+    earthGroup.add(axisLine);
+    
+    // Cones indicando os polos
+    const northPole = new THREE.Mesh(
+        new THREE.ConeGeometry(0.045, 0.18, 8),
+        new THREE.MeshStandardMaterial({ color: 0xffaaaa, emissive: 0x441111 })
+    );
+    northPole.position.set(0, 1.28, 0);
+    const southPole = new THREE.Mesh(
+        new THREE.ConeGeometry(0.045, 0.18, 8),
+        new THREE.MeshStandardMaterial({ color: 0xffaaaa, emissive: 0x441111 })
+    );
+    southPole.position.set(0, -1.28, 0);
+    southPole.rotation.x = Math.PI;
+    earthGroup.add(northPole);
+    earthGroup.add(southPole);
+    
+    // --- ANÉIS DE REFERÊNCIA (no espaço inercial, não giram com a Terra) ---
+    const ringRadius = 2.08;
+    
+    // ECLÍPTICA (plano da órbita da Terra ao redor do Sol) - HORIZONTAL
+    const eclipticPoints = [];
+    for (let i = 0; i <= 180; i++) {
+        const angle = (i / 180) * Math.PI * 2;
+        eclipticPoints.push(new THREE.Vector3(ringRadius * Math.cos(angle), 0, ringRadius * Math.sin(angle)));
+    }
+    const eclipticGeo = new THREE.BufferGeometry().setFromPoints(eclipticPoints);
+    const eclipticRing = new THREE.LineLoop(eclipticGeo, new THREE.LineBasicMaterial({ color: 0xffaa55, linewidth: 2 }));
+    scene.add(eclipticRing);
+    
+    // EQUADOR CELESTE (projeção do equador terrestre no céu) - INCLINADO 23.5°
+    const equatorPoints = [];
+    for (let i = 0; i <= 180; i++) {
+        const angle = (i / 180) * Math.PI * 2;
+        equatorPoints.push(new THREE.Vector3(ringRadius * Math.cos(angle), 0, ringRadius * Math.sin(angle)));
+    }
+    const equatorGeo = new THREE.BufferGeometry().setFromPoints(equatorPoints);
+    const celestialEquator = new THREE.LineLoop(equatorGeo, new THREE.LineBasicMaterial({ color: 0x44aaff, linewidth: 2 }));
+    celestialEquator.rotation.x = AXIAL_TILT;
+    scene.add(celestialEquator);
+    
+    // --- MERIDIANO CELESTE (círculo vertical no espaço, alinhado com os polos celestes) ---
+    const meridianPoints = [];
+    for (let i = 0; i <= 180; i++) {
+        const angle = (i / 180) * Math.PI * 2;
+        meridianPoints.push(new THREE.Vector3(0, ringRadius * Math.sin(angle), ringRadius * Math.cos(angle)));
+    }
+    const meridianGeo = new THREE.BufferGeometry().setFromPoints(meridianPoints);
+    const celestialMeridian = new THREE.LineLoop(meridianGeo, new THREE.LineBasicMaterial({ color: 0xff6688, linewidth: 2 }));
+    scene.add(celestialMeridian);
+    
+    // --- PARALELOS TERRESTRES (na superfície da Terra, girando com ela) ---
+    let parallelsGroup = new THREE.Group();
+    
+    function createTerrestrialParallels() {
+        const radius = 0.855;
+        const latitudes = [-80, -60, -40, -20, 0, 20, 40, 60, 80];
+        latitudes.forEach(lat => {
+            const latRad = lat * Math.PI / 180;
+            const r = radius * Math.cos(latRad);
+            const y = radius * Math.sin(latRad);
+            const points = [];
+            for (let i = 0; i <= 120; i++) {
+                const angle = (i / 120) * Math.PI * 2;
+                points.push(new THREE.Vector3(r * Math.cos(angle), y, r * Math.sin(angle)));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const color = (Math.abs(lat) === 0) ? 0x66ccff : 0x5599cc;
+            const circle = new THREE.LineLoop(geo, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.45 }));
+            parallelsGroup.add(circle);
+        });
+        earthGroup.add(parallelsGroup);
+    }
+    createTerrestrialParallels();
+    
+    // --- SOL (posicionado na eclíptica com ângulo variável) ---
+    const sunMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 64, 64),
+        new THREE.MeshStandardMaterial({ color: 0xffaa55, emissive: 0xdd5511, emissiveIntensity: 1.2 })
+    );
+    scene.add(sunMesh);
+    
+    const sunLight = new THREE.PointLight(0xffaa66, 2.2, 55);
+    sunLight.castShadow = true;
+    scene.add(sunLight);
+    
+    // Brilho do sol
+    const sunGlowGeo = new THREE.SphereGeometry(0.31, 16, 16);
+    const sunGlowMat = new THREE.MeshBasicMaterial({ color: 0xff8844, transparent: true, opacity: 0.25 });
+    const sunGlow = new THREE.Mesh(sunGlowGeo, sunGlowMat);
+    sunMesh.add(sunGlow);
+    
+    // --- ESTRELAS DE FUNDO ---
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 4000;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+        starPositions[i*3] = (Math.random() - 0.5) * 600;
+        starPositions[i*3+1] = (Math.random() - 0.5) * 400;
+        starPositions[i*3+2] = (Math.random() - 0.5) * 200 - 80;
+    }
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, transparent: true, opacity: 0.7 });
+    const stars = new THREE.Points(starGeometry, starMaterial);
+    scene.add(stars);
+    
+    // Estrelas mais brilhantes
+    const brightStarsGeo = new THREE.BufferGeometry();
+    const brightCount = 800;
+    const brightPos = new Float32Array(brightCount * 3);
+    for (let i = 0; i < brightCount; i++) {
+        brightPos[i*3] = (Math.random() - 0.5) * 500;
+        brightPos[i*3+1] = (Math.random() - 0.5) * 300;
+        brightPos[i*3+2] = (Math.random() - 0.5) * 150 - 50;
+    }
+    brightStarsGeo.setAttribute('position', new THREE.BufferAttribute(brightPos, 3));
+    const brightStarMat = new THREE.PointsMaterial({ color: 0xaaddff, size: 0.13, transparent: true, opacity: 0.8 });
+    const brightStars = new THREE.Points(brightStarsGeo, brightStarMat);
+    scene.add(brightStars);
+    
+    // --- CONTROLE DE VISIBILIDADE ---
+    document.getElementById('btnEquator').addEventListener('click', () => {
+        celestialEquator.visible = !celestialEquator.visible;
+    });
+    document.getElementById('btnEcliptic').addEventListener('click', () => {
+        eclipticRing.visible = !eclipticRing.visible;
+    });
+    document.getElementById('btnMeridian').addEventListener('click', () => {
+        celestialMeridian.visible = !celestialMeridian.visible;
+    });
+    document.getElementById('btnGrid').addEventListener('click', () => {
+        parallelsGroup.visible = !parallelsGroup.visible;
+    });
+    
+    // --- POSIÇÃO DO SOL NA ECLÍPTICA ---
+    // 0° = Equinócio de Março, 90° = Solstício de Junho, 180° = Equinócio de Setembro, 270° = Solstício de Dezembro
+    let currentSunAngle = 0;
+    
+    function updateSunPosition() {
+        const rad = currentSunAngle * Math.PI / 180;
+        const orbitRadius = 2.9;
+        sunMesh.position.set(Math.cos(rad) * orbitRadius, 0, Math.sin(rad) * orbitRadius);
+        sunLight.position.copy(sunMesh.position);
+        
+        document.getElementById('dayValue').innerHTML = currentSunAngle + "°";
+        
+        // Determinar estação e descrição
+        let seasonText = "";
+        let icon = "";
+        
+        if (currentSunAngle >= 0 && currentSunAngle < 90) {
+            icon = "🌱";
+            if (currentSunAngle < 45) seasonText = "Equinócio de Março - Primavera (HN) / Outono (HS)";
+            else seasonText = "Aproximando do Solstício de Junho";
+        } 
+        else if (currentSunAngle >= 90 && currentSunAngle < 180) {
+            icon = "☀️";
+            if (currentSunAngle < 135) seasonText = "Solstício de Junho - Verão (HN) / Inverno (HS)";
+            else seasonText = "Após solstício, em direção ao equinócio";
+        }
+        else if (currentSunAngle >= 180 && currentSunAngle < 270) {
+            icon = "🍂";
+            if (currentSunAngle < 225) seasonText = "Equinócio de Setembro - Outono (HN) / Primavera (HS)";
+            else seasonText = "Aproximando do Solstício de Dezembro";
+        }
+        else {
+            icon = "❄️";
+            if (currentSunAngle < 315) seasonText = "Solstício de Dezembro - Inverno (HN) / Verão (HS)";
+            else seasonText = "Retornando ao equinócio de Março";
+        }
+        
+        let pontoCardinal = "";
+        if (Math.abs(currentSunAngle) < 3) pontoCardinal = " ✦ Equinócio de Março";
+        else if (Math.abs(currentSunAngle - 90) < 3) pontoCardinal = " ✦ Solstício de Junho";
+        else if (Math.abs(currentSunAngle - 180) < 3) pontoCardinal = " ✦ Equinócio de Setembro";
+        else if (Math.abs(currentSunAngle - 270) < 3) pontoCardinal = " ✦ Solstício de Dezembro";
+        
+        document.getElementById('statusMsg').innerHTML = `${icon} <strong>Sol na eclíptica: ${currentSunAngle}°</strong>${pontoCardinal}<br>📍 ${seasonText}`;
+    }
+    
+    // Evento do slider
+    const slider = document.getElementById('timeSlider');
+    slider.addEventListener('input', (e) => {
+        currentSunAngle = parseInt(e.target.value);
+        updateSunPosition();
+    });
+    
+    // --- ROTAÇÃO DA TERRA (movimento diário) ---
+    let earthRotationSpeed = 0.002;
+    let cloudRotationSpeed = 0.0021;
+    
+    // --- ANIMAÇÃO ---
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // Rotação da Terra em torno do seu eixo inclinado
+        earthGroup.rotation.y += earthRotationSpeed;
+        // Nuvens giram um pouco mais rápido
+        clouds.rotation.y += cloudRotationSpeed;
+        
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    
+    // Inicialização
+    updateSunPosition();
+    
+    // Visibilidade inicial
+    parallelsGroup.visible = true;
+    celestialEquator.visible = true;
+    eclipticRing.visible = true;
+    celestialMeridian.visible = true;
+    
+    animate();
+    
+    window.addEventListener('resize', onWindowResize, false);
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    console.log("✅ Meridiano Celeste adicionado, Meridiano Terrestre removido. Paralelos permanecem na superfície da Terra.");
+</script>
+</body>
+</html>

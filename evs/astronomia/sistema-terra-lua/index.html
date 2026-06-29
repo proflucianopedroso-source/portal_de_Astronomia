@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- HTML5 -->
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>EVS - Sistema Terra-Lua</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:Inter,Arial,Helvetica,sans-serif;background:radial-gradient(ellipse at bottom,#000011 0%,#000000 70%);color:#e6f7ff;overflow:hidden}
+  #canvas-container{position:fixed;inset:0;z-index:1}
+  #labels-container{position:fixed;inset:0;pointer-events:none;z-index:60}
+  .label{position:absolute;font-size:12px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);color:#e6f7ff;text-shadow:0 1px 2px #000;white-space:nowrap;transform:translate(12px,-50%)}
+  #ui{position:fixed;right:18px;top:18px;width:280px;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));backdrop-filter:blur(6px);z-index:120}
+  button{padding:8px;border-radius:8px;border:none;background:#7dd3fc;color:#032;cursor:pointer;font-weight:600;margin:4px 0;width:100%}
+  .row{display:flex;gap:8px}
+  .row button{flex:1;width:auto}
+  #credit{position:fixed;right:18px;bottom:6px;font-size:11px;color:rgba(255,255,255,0.45);z-index:200;pointer-events:none}
+  .speed-indicator{font-size:11px;text-align:center;margin-top:4px;color:#7dd3fc}
+  .coord-inputs{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .coord-row{display:flex;align-items:center;gap:8px}
+  .coord-row label{font-size:12px;color:#7dd3fc;width:60px}
+  .coord-row input{flex:1;padding:6px;border-radius:6px;border:1px solid rgba(125,211,252,0.3);background:rgba(0,0,0,0.2);color:#e6f7ff;font-size:12px}
+  .coord-row select{padding:6px;border-radius:6px;border:1px solid rgba(125,211,252,0.3);background:rgba(0,0,0,0.2);color:#e6f7ff;font-size:12px;cursor:pointer}
+  .coord-row input:focus, .coord-row select:focus{outline:none;border-color:#7dd3fc}
+  .location-info{margin-top:8px;padding:6px;background:rgba(0,0,0,0.2);border-radius:6px;font-size:11px}
+  .coord-display{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:rgba(230,247,255,0.7)}
+  .physics-info{margin-top:12px;padding:8px;background:rgba(0,0,0,0.2);border-radius:6px;font-size:10px;line-height:1.4}
+  .physics-info h4{margin-bottom:6px;color:#7dd3fc;font-size:11px}
+  .physics-item{display:flex;justify-content:space-between;margin-bottom:3px}
+  .physics-label{color:rgba(230,247,255,0.8)}
+  .physics-value{color:#fff;font-weight:500}
+</style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div id="labels-container"></div>
+  <div id="ui">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">EVS - Sistema 
+		Terra-Lua — Controles</div>
+    <div class="row">
+      <button id="focusPlanet">Focar Planeta</button>
+      <button id="focusSatellite">Focar Satélite</button>
+    </div>
+    <div class="row">
+      <button id="zoomIn">🔍 +</button>
+      <button id="zoomOut">🔍 -</button>
+    </div>
+    <button id="speedToggle">Velocidade: Acelerada</button>
+    <button id="pauseBtn">Repouso</button>
+    <button id="reset">Reiniciar</button>
+    <div class="speed-indicator" id="speedIndicator">Rotação: 1x | Translação: 
+		1x</div>
+    
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Localização 
+		no Planeta</div>
+      <div class="coord-inputs">
+        <div class="coord-row">
+          <label>Latitude:</label>
+          <input type="number" id="latValue" placeholder="0-90" min="0" max="90" step="0.000001" value="21.4291667">
+          <select id="latDirection">
+            <option value="N">Norte (N)</option>
+            <option value="S" selected>Sul (S)</option>
+          </select>
+        </div>
+        <div class="coord-row">
+          <label>Longitude:</label>
+          <input type="number" id="lonValue" placeholder="0-180" min="0" max="180" step="0.000001" value="45.9472222">
+          <select id="lonDirection">
+            <option value="L">Leste (L)</option>
+            <option value="O" selected>Oeste (O)</option>
+          </select>
+        </div>
+      </div>
+      <button id="locateBtn">Localizar</button>
+      
+      <div class="location-info" id="locationInfo">
+        <div>Localização atual: 21°25&#39;45&quot;S, 45°56&#39;50&quot;O</div>
+        <div class="coord-display">
+          <span>Decimal: -21.4291667°, -45.9472222°</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="physics-info">
+      <h4>Dados Físicos Reais</h4>
+      <div class="physics-item">
+        <span class="physics-label">Rotação da Terra:</span>
+        <span class="physics-value">15,04°/hora</span>
+      </div>
+      <div class="physics-item">
+        <span class="physics-label">Vel. linear (equador):</span>
+        <span class="physics-value">465 m/s</span>
+      </div>
+      <div class="physics-item">
+        <span class="physics-label">Período da Lua:</span>
+        <span class="physics-value">27,32 dias</span>
+      </div>
+      <div class="physics-item">
+        <span class="physics-label">Vel. orbital da Lua:</span>
+        <span class="physics-value">1,022 km/s</span>
+      </div>
+    </div>
+  </div>
+  <div id="credit">EVS desenvolvido por Luciano Soares Pedroso</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const deg2rad = d => d * Math.PI / 180.0;
+
+    class PlanetSystemSim {
+      constructor(){
+        this.scene = null; this.camera = null; this.renderer = null;
+        this.labels = []; this.labelsContainer = document.getElementById('labels-container');
+        this.controls = null; this.time = 0; this.isPaused = false;
+        
+        this.speedMultiplier = 1;
+        this.normalSpeed = 1;
+        this.fastSpeed = 10;
+        this.isFastMode = false;
+        
+        // Variáveis para o marcador de localização
+        this.locationMarker = null;
+        this.locationPin = null;
+        this.currentLat = -21.4291667;
+        this.currentLon = -45.9472222;
+        
+        // CORREÇÃO: Ajuste para alinhar a textura Blue Marble
+        this.textureOffset = 90;
+        
+        // Dados físicos reais
+        this.earthRotationSpeed = 15.04; // graus por hora
+        this.earthLinearVelocity = 465; // metros por segundo no equador
+        this.moonOrbitalPeriod = 27.32; // dias
+        this.moonOrbitalVelocity = 1.022; // km/s
+        
+        this.init();
+      }
+
+      init(){
+        this.setupScene(); this.setupCamera(); this.setupRenderer(); this.setupLights();
+        this.setupControls(); 
+        // INÍCIO DAS MODIFICAÇÕES
+        // Substituímos o chamado para o complexo sistema de carregamento de texturas
+        // por uma chamada direta para a nova função simplificada.
+        this.loadRealisticTextures(); 
+        // FIM DAS MODIFICAÇÕES
+        this.animate();
+        window.addEventListener('resize', ()=>this.onResize());
+      }
+
+      setupScene(){ this.scene = new THREE.Scene(); this.scene.background = new THREE.Color(0x000015); }
+      setupCamera(){ this.camera = new THREE.PerspectiveCamera(60, window.innerWidth/innerHeight, 0.1, 10000); this.camera.position.set(0, 40, 90); }
+      setupRenderer(){ this.renderer = new THREE.WebGLRenderer({antialias:true}); this.renderer.setSize(window.innerWidth, window.innerHeight); this.renderer.setPixelRatio(window.devicePixelRatio); document.getElementById('canvas-container').appendChild(this.renderer.domElement); }
+
+      setupLights(){
+        const ambient = new THREE.AmbientLight(0xaaaaaa, 0.5);
+        this.scene.add(ambient);
+        
+        // Luz direcional do Sol
+        this.sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        this.sunLight.position.set(100, 0, 0);
+        this.scene.add(this.sunLight);
+
+        // Luz pontual do Sol para iluminação mais realista
+        this.sunPointLight = new THREE.PointLight(0xffffff, 2, 100);
+        this.sunPointLight.position.set(100, 0, 0);
+        this.scene.add(this.sunPointLight);
+      }
+
+      setupControls(){
+        this.controls = {
+          target: new THREE.Vector3(0,0,0),
+          rotation: new THREE.Vector2(0, Math.PI/2.5),
+          distance: 120,
+          update: ()=>{
+            const phi = this.controls.rotation.y;
+            const theta = this.controls.rotation.x;
+            this.camera.position.x = this.controls.target.x + this.controls.distance * Math.sin(phi) * Math.cos(theta);
+            this.camera.position.y = this.controls.target.y + this.controls.distance * Math.cos(phi);
+            this.camera.position.z = this.controls.target.z + this.controls.distance * Math.sin(phi) * Math.sin(theta);
+            this.camera.lookAt(this.controls.target);
+          }
+        };
+        this.setupMouse();
+      }
+
+      setupMouse(){
+        let isDown=false, lastX=0, lastY=0;
+        const dom = this.renderer.domElement;
+        dom.addEventListener('mousedown', e=>{ isDown=true; lastX=e.clientX; lastY=e.clientY; });
+        dom.addEventListener('mousemove', e=>{ if(!isDown) return; const dx=e.clientX-lastX, dy=e.clientY-lastY; this.controls.rotation.x += dx*0.008; this.controls.rotation.y += dy*0.008; this.controls.rotation.y = Math.max(0.1, Math.min(Math.PI-0.1, this.controls.rotation.y)); lastX=e.clientX; lastY=e.clientY; });
+        dom.addEventListener('mouseup', ()=>isDown=false); dom.addEventListener('mouseleave', ()=>isDown=false);
+        dom.addEventListener('wheel', e=>{ e.preventDefault(); this.controls.distance *= e.deltaY>0 ? 1.08 : 0.92; this.controls.distance = Math.max(10, Math.min(2000, this.controls.distance)); });
+        document.addEventListener('keydown', e=>{ if(e.key==='w' || e.key==='ArrowUp') this.controls.distance *= 0.9; if(e.key==='s' || e.key==='ArrowDown') this.controls.distance *= 1.1; });
+      }
+
+      // INÍCIO DAS MODIFICAÇÕES
+      // --- NOVA FUNÇÃO DE CARREGAMENTO DE TEXTURAS ---
+      // Esta função substitui todo o bloco de funções `createMoonTexture`, `createProceduralMoonTexture` e `loadEarthTexture`.
+      // Ela é muito mais simples e eficiente.
+      loadRealisticTextures() {
+        const textureLoader = new THREE.TextureLoader();
+        
+        // URLs das texturas de alta qualidade do repositório do Three.js
+        const earthTextureUrl = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/earth_atmos_2048.jpg';
+        const moonTextureUrl = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/moon_1024.jpg';
+
+        let loadedTextures = 0;
+        const texturesToLoad = 2;
+        let earthTexture, moonTexture;
+
+        // Função para verificar se ambas as texturas foram carregadas
+        const checkAllLoaded = () => {
+          loadedTextures++;
+          if (loadedTextures === texturesToLoad) {
+            // Ambas as texturas foram carregadas, agora podemos criar os corpos celestes
+            this.createBodies(earthTexture, moonTexture);
+          }
+        };
+
+        // Carregar textura da Terra
+        textureLoader.load(
+          earthTextureUrl,
+          (texture) => {
+            earthTexture = texture;
+            // Melhorar a qualidade da textura
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+            console.log("Textura da Terra carregada com sucesso!");
+            checkAllLoaded();
+          },
+          undefined,
+          (err) => {
+            console.error('Erro ao carregar a textura da Terra:', err);
+            earthTexture = null; // Define como null se falhar
+            checkAllLoaded();
+          }
+        );
+
+        // Carregar textura da Lua
+        textureLoader.load(
+          moonTextureUrl,
+          (texture) => {
+            moonTexture = texture;
+            // Melhorar a qualidade da textura
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+            console.log("Textura da Lua carregada com sucesso!");
+            checkAllLoaded();
+          },
+          undefined,
+          (err) => {
+            console.error('Erro ao carregar a textura da Lua:', err);
+            moonTexture = null; // Define como null se falhar
+            checkAllLoaded();
+          }
+        );
+      }
+      // FIM DAS MODIFICAÇÕES
+
+      createBodies(tPlanet, tSatellite){
+        this.system = new THREE.Group(); this.scene.add(this.system);
+
+        // Criar o Sol esférico
+        this.createSun();
+
+        const planetRadius = 6;
+        const planetGeom = new THREE.SphereGeometry(planetRadius, 64, 64);
+        
+        const planetMat = new THREE.MeshPhongMaterial({
+          map: tPlanet, 
+          shininess: 5,
+          specular: new THREE.Color(0x111111)
+        });
+        
+        if (!tPlanet) {
+          planetMat.color = new THREE.Color(0x2266dd);
+          planetMat.shininess = 0;
+        }
+        
+        this.planet = new THREE.Mesh(planetGeom, planetMat);
+
+        this.planetAxis = new THREE.Group();
+        this.planetAxis.rotation.z = deg2rad(23.5);
+        this.planetAxis.add(this.planet);
+        this.system.add(this.planetAxis);
+        
+        // Aplicar o ajuste para alinhar com coordenadas geográficas
+        this.planet.rotation.y = deg2rad(this.textureOffset);
+
+        const axisGeom = new THREE.CylinderGeometry(0.1, 0.1, planetRadius * 2.8, 8);
+        const axisMat = new THREE.MeshBasicMaterial({color: 0xffaaaa, transparent: true, opacity: 0.7});
+        const axisLine = new THREE.Mesh(axisGeom, axisMat);
+        this.planet.add(axisLine);
+
+        this.createEquatorLine(planetRadius);
+        this.createMeridianLine(planetRadius);
+        this.createTropicLine(planetRadius, 23.5, 0xffaa00);
+        this.createTropicLine(planetRadius, -23.5, 0xffaa00);
+
+        // Criar marcador de localização inicial
+        this.createLocationMarker(planetRadius, this.currentLat, this.currentLon);
+
+        this.satelliteDistance = 30;
+
+        const eclipticGrid = new THREE.GridHelper(this.satelliteDistance * 2.2, 10);
+        eclipticGrid.material.opacity = 0.25;
+        eclipticGrid.material.transparent = true;
+        this.system.add(eclipticGrid);
+
+        this.satelliteOrbitGroup = new THREE.Group();
+        this.satelliteOrbitGroup.rotation.x = deg2rad(5);
+        this.system.add(this.satelliteOrbitGroup);
+
+        const satelliteRadius = 1.7;
+        const satelliteGeom = new THREE.SphereGeometry(satelliteRadius, 64, 32);
+        
+        const satelliteMat = new THREE.MeshPhongMaterial({
+          map: tSatellite,
+          shininess: 1,
+          specular: new THREE.Color(0x050505)
+        });
+        
+        if (!tSatellite) {
+          satelliteMat.color = new THREE.Color(0x888888);
+          satelliteMat.shininess = 0;
+        }
+        
+        this.satellite = new THREE.Mesh(satelliteGeom, satelliteMat); 
+        this.satellite.position.set(this.satelliteDistance, 0, 0);
+        this.satelliteOrbitGroup.add(this.satellite);
+
+        // Marca no lado visível da Lua (para referência)
+        const markerGeom = new THREE.SphereGeometry(0.1, 16, 16);
+        const markerMat = new THREE.MeshBasicMaterial({ 
+          color: 0xff0000, 
+          transparent: true, 
+          opacity: 0.8 
+        });
+        this.moonMarker = new THREE.Mesh(markerGeom, markerMat);
+        this.moonMarker.position.set(0, 0, satelliteRadius * 0.9);
+        this.satellite.add(this.moonMarker);
+
+        const orbitMat = new THREE.LineBasicMaterial({color:0x88aaff, transparent:true, opacity:0.5});
+        const pts = [];
+        const numSegments = 128;
+        for(let i=0; i <= numSegments; i++){
+            const a = (i/numSegments) * Math.PI * 2;
+            pts.push(new THREE.Vector3(Math.cos(a) * this.satelliteDistance, 0, Math.sin(a) * this.satelliteDistance));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const line = new THREE.LineLoop(geo, orbitMat);
+        this.satelliteOrbitGroup.add(line);
+
+        // Configurar eventos da UI
+        this.setupUIEvents();
+
+        this.controls.update();
+      }
+
+      createSun() {
+        // Criar o Sol esférico
+        const sunRadius = 3;
+        const sunGeom = new THREE.SphereGeometry(sunRadius, 32, 32);
+        
+        // Material com emissão para fazer o Sol brilhar
+        const sunMat = new THREE.MeshBasicMaterial({
+          color: 0xffff00,
+          emissive: 0xffff00,
+          emissiveIntensity: 1
+        });
+        
+        this.sun = new THREE.Mesh(sunGeom, sunMat);
+        
+        // Posicionar o Sol longe do sistema Terra-Lua
+        this.sun.position.set(200, 0, 0);
+        this.scene.add(this.sun);
+        
+        // Adicionar uma aura de luz ao redor do Sol
+        const glowGeometry = new THREE.SphereGeometry(sunRadius * 1.5, 16, 16);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffaa00,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.BackSide
+        });
+        
+        const sunGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+        this.sun.add(sunGlow);
+      }
+
+      setupUIEvents() {
+        document.getElementById('focusPlanet').addEventListener('click', ()=>{ this.focusOn(this.planet); });
+        document.getElementById('focusSatellite').addEventListener('click', ()=>{ this.focusOn(this.satellite); });
+        document.getElementById('zoomIn').addEventListener('click', ()=>{ this.controls.distance *= 0.8; });
+        document.getElementById('zoomOut').addEventListener('click', ()=>{ this.controls.distance *= 1.18; });
+        document.getElementById('reset').addEventListener('click', ()=>{ 
+          this.controls.target.set(0,0,0); 
+          this.controls.rotation.set(0, Math.PI/2.5); 
+          this.controls.distance = 120; 
+          this.planet.rotation.y = deg2rad(this.textureOffset);
+        });
+        
+        document.getElementById('speedToggle').addEventListener('click', ()=>{ this.toggleSpeed(); });
+        
+        // Evento para o botão de repouso
+        document.getElementById('pauseBtn').addEventListener('click', ()=>{ this.togglePause(); });
+        
+        // Evento para o botão de localização
+        document.getElementById('locateBtn').addEventListener('click', ()=>{ this.updateLocation(); });
+
+        this.raycaster = new THREE.Raycaster(); this.mouse = new THREE.Vector2();
+        this.renderer.domElement.addEventListener('click', e=>{
+          this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+          this.mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
+          this.raycaster.setFromCamera(this.mouse, this.camera);
+          const intersects = this.raycaster.intersectObjects([this.planet, this.satellite]);
+          if(intersects.length>0){ this.focusOn(intersects[0].object); }
+        });
+      }
+
+      // Função para pausar/continuar a simulação
+      togglePause() {
+        this.isPaused = !this.isPaused;
+        const button = document.getElementById('pauseBtn');
+        button.textContent = this.isPaused ? 'Continuar' : 'Repouso';
+        button.style.background = this.isPaused ? '#ffaa00' : '#7dd3fc';
+      }
+
+      updateLocation() {
+        const latValueInput = document.getElementById('latValue');
+        const latDirectionSelect = document.getElementById('latDirection');
+        const lonValueInput = document.getElementById('lonValue');
+        const lonDirectionSelect = document.getElementById('lonDirection');
+        
+        const latValue = parseFloat(latValueInput.value);
+        const latDirection = latDirectionSelect.value;
+        const lonValue = parseFloat(lonValueInput.value);
+        const lonDirection = lonDirectionSelect.value;
+        
+        // Validar coordenadas
+        if (isNaN(latValue) || isNaN(lonValue) || latValue < 0 || latValue > 90 || lonValue < 0 || lonValue > 180) {
+          alert('Por favor, insira coordenadas válidas:\nLatitude: 0-90\nLongitude: 0-180');
+          return;
+        }
+        
+        // Converter para sistema decimal (N positivo, S negativo)
+        const lat = latDirection === 'N' ? latValue : -latValue;
+        
+        // CORREÇÃO: Inverter a direção da longitude
+        // Leste (L) = negativo, Oeste (O) = positivo
+        const lon = lonDirection === 'L' ? -lonValue : lonValue;
+        
+        // Atualizar coordenadas atuais
+        this.currentLat = lat;
+        this.currentLon = lon;
+        
+        // Atualizar marcador
+        this.updateLocationMarker(this.planet.geometry.parameters.radius, lat, lon);
+        
+        // Atualizar informação de localização
+        this.updateLocationDisplay(lat, lon, latValue, latDirection, lonValue, lonDirection);
+        
+        // Focar na nova localização
+        this.focusOnLocation();
+      }
+
+      updateLocationDisplay(lat, lon, latValue, latDirection, lonValue, lonDirection) {
+        const locationInfo = document.getElementById('locationInfo');
+        
+        // Converter para graus, minutos, segundos
+        const latDeg = Math.floor(Math.abs(lat));
+        const latMin = Math.floor((Math.abs(lat) - latDeg) * 60);
+        const latSec = Math.floor(((Math.abs(lat) - latDeg) * 60 - latMin) * 60);
+        
+        const lonDeg = Math.floor(Math.abs(lon));
+        const lonMin = Math.floor((Math.abs(lon) - lonDeg) * 60);
+        const lonSec = Math.floor(((Math.abs(lon) - lonDeg) * 60 - lonMin) * 60);
+        
+        locationInfo.innerHTML = `
+          <div>Localização atual: ${latDeg}°${latMin}'${latSec}"${latDirection}, ${lonDeg}°${lonMin}'${lonSec}"${lonDirection}</div>
+          <div class="coord-display">
+            <span>Decimal: ${lat.toFixed(6)}°, ${lon.toFixed(6)}°</span>
+          </div>
+        `;
+      }
+
+      focusOnLocation() {
+        // Calcular posição do marcador em coordenadas de mundo
+        const planetRadius = this.planet.geometry.parameters.radius;
+        const latRad = deg2rad(this.currentLat);
+        const lonRad = deg2rad(this.currentLon);
+        
+        const x = Math.cos(latRad) * Math.cos(lonRad) * planetRadius;
+        const y = Math.sin(latRad) * planetRadius;
+        const z = Math.cos(latRad) * Math.sin(lonRad) * planetRadius;
+        
+        // Converter para coordenadas de mundo
+        const worldPos = new THREE.Vector3(x, y, 0);
+        worldPos.applyMatrix4(this.planet.matrixWorld);
+        
+        // Definir alvo da câmera para a nova posição
+        this.controls.target.copy(worldPos);
+        this.controls.distance = Math.max(15, planetRadius * 3);
+      }
+
+      createLocationMarker(planetRadius, latitude, longitude) {
+        // Converter coordenadas geográficas para coordenadas 3D
+        const latRad = deg2rad(latitude);
+        const lonRad = deg2rad(longitude);
+        
+        // Calcular posição na esfera
+        const x = Math.cos(latRad) * Math.cos(lonRad) * planetRadius;
+        const y = Math.sin(latRad) * planetRadius;
+        const z = Math.cos(latRad) * Math.sin(lonRad) * planetRadius;
+        
+        // Criar marcador se não existir
+        if (!this.locationMarker) {
+          const markerGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+          const markerMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xff0000, 
+            transparent: true, 
+            opacity: 0.9 
+          });
+          
+          this.locationMarker = new THREE.Mesh(markerGeometry, markerMaterial);
+          this.planet.add(this.locationMarker);
+          
+          // Adicionar um pequeno pino para destacar
+          const pinGeometry = new THREE.CylinderGeometry(0.02, 0.05, 0.3, 8);
+          const pinMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+          this.locationPin = new THREE.Mesh(pinGeometry, pinMaterial);
+          this.planet.add(this.locationPin);
+        }
+        
+        // Atualizar posição do marcador
+        this.locationMarker.position.set(x, y, z);
+        
+        // Posicionar o pino perpendicular à superfície
+        const pinDirection = new THREE.Vector3(x, y, z).normalize();
+        this.locationPin.position.copy(pinDirection.multiplyScalar(planetRadius + 0.15));
+        this.locationPin.lookAt(new THREE.Vector3(0, 0, 0));
+        this.locationPin.rotateX(Math.PI / 2);
+      }
+
+      updateLocationMarker(planetRadius, latitude, longitude) {
+        // Converter coordenadas geográficas para coordenadas 3D
+        const latRad = deg2rad(latitude);
+        const lonRad = deg2rad(longitude);
+        
+        // Calcular posição na esfera
+        const x = Math.cos(latRad) * Math.cos(lonRad) * planetRadius;
+        const y = Math.sin(latRad) * planetRadius;
+        const z = Math.cos(latRad) * Math.sin(lonRad) * planetRadius;
+        
+        // Animar transição do marcador
+        const startPos = this.locationMarker.position.clone();
+        const endPos = new THREE.Vector3(x, y, z);
+        const startPinPos = this.locationPin.position.clone();
+        const pinDirection = new THREE.Vector3(x, y, z).normalize();
+        const endPinPos = pinDirection.multiplyScalar(planetRadius + 0.15);
+        
+        // Criar animação suave
+        const duration = 1000; // ms
+        const startTime = Date.now();
+        
+        const animateMarker = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+          
+          // Interpolar posição
+          this.locationMarker.position.lerpVectors(startPos, endPos, easeProgress);
+          this.locationPin.position.lerpVectors(startPinPos, endPinPos, easeProgress);
+          
+          // Atualizar rotação do pino
+          this.locationPin.lookAt(new THREE.Vector3(0, 0, 0));
+          this.locationPin.rotateX(Math.PI / 2);
+          
+          if (progress < 1) {
+            requestAnimationFrame(animateMarker);
+          }
+        };
+        
+        animateMarker();
+      }
+
+      createEquatorLine(planetRadius) {
+        const equatorPoints = [];
+        const segments = 64;
+        
+        for (let i = 0; i <= segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const x = Math.cos(angle) * planetRadius;
+          const y = 0;
+          const z = Math.sin(angle) * planetRadius;
+          equatorPoints.push(new THREE.Vector3(x, y, z));
+        }
+        
+        const equatorGeometry = new THREE.BufferGeometry().setFromPoints(equatorPoints);
+        const equatorMaterial = new THREE.LineBasicMaterial({
+          color: 0xff4444,
+          linewidth: 2,
+          transparent: true,
+          opacity: 0.8
+        });
+        
+        const equatorLine = new THREE.LineLoop(equatorGeometry, equatorMaterial);
+        this.planet.add(equatorLine);
+      }
+
+      createMeridianLine(planetRadius) {
+        const meridianPoints = [];
+        const segments = 64;
+        
+        for (let i = 0; i <= segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const x = Math.cos(angle) * planetRadius;
+          const y = Math.sin(angle) * planetRadius;
+          const z = 0;
+          meridianPoints.push(new THREE.Vector3(x, y, z));
+        }
+        
+        const meridianGeometry = new THREE.BufferGeometry().setFromPoints(meridianPoints);
+        const meridianMaterial = new THREE.LineBasicMaterial({
+          color: 0x44ff44,
+          linewidth: 2,
+          transparent: true,
+          opacity: 0.8
+        });
+        
+        const meridianLine = new THREE.LineLoop(meridianGeometry, meridianMaterial);
+        this.planet.add(meridianLine);
+      }
+
+      createTropicLine(planetRadius, latitude, color) {
+        const tropicPoints = [];
+        const segments = 64;
+        const latRad = deg2rad(latitude);
+        
+        for (let i = 0; i <= segments; i++) {
+          const lon = (i / segments) * Math.PI * 2;
+          const x = Math.cos(lon) * Math.cos(latRad) * planetRadius;
+          const y = Math.sin(latRad) * planetRadius;
+          const z = Math.sin(lon) * Math.cos(latRad) * planetRadius;
+          tropicPoints.push(new THREE.Vector3(x, y, z));
+        }
+        
+        const tropicGeometry = new THREE.BufferGeometry().setFromPoints(tropicPoints);
+        const tropicMaterial = new THREE.LineBasicMaterial({
+          color: color,
+          linewidth: 1.5,
+          transparent: true,
+          opacity: 0.7
+        });
+        
+        const tropicLine = new THREE.LineLoop(tropicGeometry, tropicMaterial);
+        this.planet.add(tropicLine);
+      }
+
+      toggleSpeed() {
+        this.isFastMode = !this.isFastMode;
+        this.speedMultiplier = this.isFastMode ? this.fastSpeed : this.normalSpeed;
+        
+        const button = document.getElementById('speedToggle');
+        const indicator = document.getElementById('speedIndicator');
+        
+        if (this.isFastMode) {
+          button.textContent = 'Velocidade: Normal';
+          indicator.textContent = `Rotação: ${this.fastSpeed}x | Translação: ${this.fastSpeed}x`;
+        } else {
+          button.textContent = 'Velocidade: Acelerada';
+          indicator.textContent = `Rotação: ${this.normalSpeed}x | Translação: ${this.normalSpeed}x`;
+        }
+      }
+
+      focusOn(obj){ 
+        const pos = new THREE.Vector3(); 
+        obj.getWorldPosition(pos); 
+        this.controls.target.copy(pos); 
+        this.controls.distance = Math.max(10, obj.geometry.parameters.radius * 5 + 10); 
+      }
+
+      updateBodies(){
+        if(this.isPaused) return;
+        
+        this.time += 0.005 * this.speedMultiplier;
+        
+        if(this.planet) this.planet.rotation.y += (0.01 * this.speedMultiplier);
+        
+        if(this.satellite) {
+          // CORREÇÃO: Invertido o sentido da translação da Lua
+          // Agora a Lua se move no sentido horário (oposto ao real)
+          const angle = -this.time * 0.4;
+          
+          // Posição da Lua (translação)
+          const x = Math.cos(angle) * this.satelliteDistance;
+          const z = Math.sin(angle) * this.satelliteDistance;
+          this.satellite.position.set(x, 0, z);
+          
+          // Rotação síncrona: a Lua mantém a mesma face voltada para a Terra
+          // Quando vista de fora, mostra o lado oculto
+          this.satellite.rotation.y = -angle + Math.PI;
+        }
+
+        // Atualizar posição das luzes do Sol
+        this.sunLight.position.set(200, 0, 0);
+        this.sunPointLight.position.set(200, 0, 0);
+      }
+
+      updateLabels(){ 
+        // Não há mais labels para atualizar
+      }
+
+      onResize(){ this.camera.aspect = window.innerWidth/window.innerHeight; this.camera.updateProjectionMatrix(); this.renderer.setSize(window.innerWidth, window.innerHeight); }
+
+      animate(){ requestAnimationFrame(()=>this.animate()); this.updateBodies(); if(this.controls) this.controls.update(); this.updateLabels(); this.renderer.render(this.scene, this.camera); }
+    }
+
+    window.addEventListener('load', ()=>{ try{ window.ps = new PlanetSystemSim(); } catch(err){ console.error(err); alert('Erro ao iniciar: '+err.message); } });
+  </script>
+</body>
+</html>

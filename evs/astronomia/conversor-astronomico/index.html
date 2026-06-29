@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>EVS - Conversor de Unidades Astronômicas</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a0f2a 0%, #0b1525 100%);
+            font-family: 'Segoe UI', 'Poppins', 'Inter', system-ui, -apple-system, 'Roboto', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1.5rem;
+        }
+
+        .converter-card {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(18, 25, 55, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: clamp(1.8rem, 6vw, 2.8rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #E0F2FE, #A5F3FC, #7DD3FC);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            margin-bottom: 2rem;
+        }
+
+        .units-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .unit-card {
+            background: rgba(10, 16, 35, 0.7);
+            border-radius: 2rem;
+            padding: 1.25rem 1.5rem;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid rgba(72, 187, 255, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .unit-card:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.4);
+            background: rgba(20, 30, 55, 0.8);
+        }
+
+        .unit-label {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .unit-name {
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .unit-symbol {
+            font-size: 0.9rem;
+            padding: 0.2rem 0.7rem;
+            border-radius: 2rem;
+            font-weight: 600;
+        }
+
+        /* Cores vibrantes para cada unidade */
+        .unit-card:nth-child(1) .unit-name { color: #60a5fa; }
+        .unit-card:nth-child(1) .unit-symbol {
+            background: rgba(96, 165, 250, 0.25);
+            color: #93c5fd;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+
+        .unit-card:nth-child(2) .unit-name { color: #4ade80; }
+        .unit-card:nth-child(2) .unit-symbol {
+            background: rgba(74, 222, 128, 0.25);
+            color: #86efac;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .unit-card:nth-child(3) .unit-name { color: #f97316; }
+        .unit-card:nth-child(3) .unit-symbol {
+            background: rgba(249, 115, 22, 0.25);
+            color: #fdba74;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .unit-card:nth-child(4) .unit-name { color: #c084fc; }
+        .unit-card:nth-child(4) .unit-symbol {
+            background: rgba(192, 132, 252, 0.25);
+            color: #d8b4fe;
+            border: 1px solid rgba(192, 132, 252, 0.3);
+        }
+
+        .unit-input {
+            width: 100%;
+            background: #0b1120;
+            border: 1px solid #2d3a5e;
+            border-radius: 1.5rem;
+            padding: 0.9rem 1.2rem;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #f0f9ff;
+            font-family: 'JetBrains Mono', 'SF Mono', monospace;
+            transition: 0.2s;
+            outline: none;
+        }
+
+        .unit-input:focus {
+            border-color: #3b82f6;
+            background: #0f1628;
+        }
+
+        .unit-input::placeholder {
+            color: #4a5b83;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0 1.5rem;
+        }
+
+        .btn {
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 0.8rem 2rem;
+            border-radius: 3rem;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            background: rgba(20, 30, 55, 0.9);
+            backdrop-filter: blur(4px);
+            color: white;
+            border: 1px solid rgba(59,130,246,0.5);
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(95deg, #2563eb, #1e40af);
+            border: none;
+            box-shadow: 0 5px 12px rgba(37,99,235,0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(95deg, #3b82f6, #1e3a8a);
+            transform: scale(1.02);
+            box-shadow: 0 8px 18px rgba(59,130,246,0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #334155;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            padding-top: 1.2rem;
+            border-top: 1px solid rgba(100, 150, 255, 0.2);
+            font-size: 0.85rem;
+            color: #9ab3d5;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .footer span { color: #b9d0ff; }
+        .footer b { font-weight: 600; color: #cbdffc; }
+
+        .error-msg {
+            text-align: center;
+            color: #f87171;
+            font-size: 0.85rem;
+            margin-top: 0.8rem;
+            min-height: 2rem;
+            font-weight: 500;
+        }
+
+        .success-msg {
+            text-align: center;
+            color: #4ade80;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .invalid-highlight {
+            border-color: #f87171 !important;
+            background: rgba(220, 38, 38, 0.1) !important;
+        }
+
+        .unit-card:hover {
+            transform: translateY(-2px);
+            transition: transform 0.2s ease;
+        }
+
+        /* ============================================
+           SEÇÃO DIDÁTICA - INFORMAÇÕES DAS UNIDADES
+           ============================================ */
+        
+        .info-section {
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(100, 150, 255, 0.2);
+        }
+
+        .info-section-title {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .info-section-title::before,
+        .info-section-title::after {
+            content: '';
+            width: 50px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(100, 150, 255, 0.3));
+        }
+
+        .info-section-title::after {
+            background: linear-gradient(90deg, rgba(100, 150, 255, 0.3), transparent);
+        }
+
+        .accordion {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .accordion-item {
+            background: rgba(10, 16, 35, 0.6);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(72, 187, 255, 0.15);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-item:hover {
+            border-color: rgba(72, 187, 255, 0.3);
+        }
+
+        .accordion-header {
+            padding: 1.25rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: background 0.2s ease;
+            user-select: none;
+        }
+
+        .accordion-header:hover {
+            background: rgba(30, 45, 80, 0.4);
+        }
+
+        .accordion-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .accordion-item.km .accordion-icon {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+
+        .accordion-item.ly .accordion-icon {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .accordion-item.pc .accordion-icon {
+            background: rgba(249, 115, 22, 0.2);
+            color: #f97316;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .accordion-item.au .accordion-icon {
+            background: rgba(192, 132, 252, 0.2);
+            color: #c084fc;
+            border: 1px solid rgba(192, 132, 252, 0.3);
+        }
+
+        .accordion-title-group {
+            flex: 1;
+        }
+
+        .accordion-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 0.25rem;
+        }
+
+        .accordion-subtitle {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .accordion-arrow {
+            width: 24px;
+            height: 24px;
+            color: #64748b;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-item.active .accordion-arrow {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 2000px;
+        }
+
+        .accordion-body {
+            padding: 0 1.5rem 1.5rem 1.5rem;
+        }
+
+        .info-block {
+            margin-bottom: 1.5rem;
+        }
+
+        .info-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(100, 150, 255, 0.15);
+        }
+
+        .accordion-item.km .info-label { color: #60a5fa; }
+        .accordion-item.ly .info-label { color: #4ade80; }
+        .accordion-item.pc .info-label { color: #f97316; }
+        .accordion-item.au .info-label { color: #c084fc; }
+
+        .info-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #94a3b8;
+            text-align: justify;
+        }
+
+        .formula-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            margin-top: 0.75rem;
+            border: 1px solid rgba(100, 150, 255, 0.1);
+        }
+
+        .formula-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+        }
+
+        .formula-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .formula-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', 'SF Mono', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            background: rgba(30, 45, 80, 0.3);
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        .formula-arrow {
+            color: #64748b;
+        }
+
+        .highlight {
+            color: #f0f9ff;
+            font-weight: 500;
+        }
+
+        .value-highlight {
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        /* Responsividade */
+        @media (max-width: 680px) {
+            .converter-card { padding: 1.5rem; }
+            .unit-card { padding: 1rem; }
+            .unit-input { font-size: 1rem; padding: 0.7rem 1rem; }
+            .btn { padding: 0.6rem 1.4rem; font-size: 1rem; }
+            .unit-name { font-size: 1.2rem; }
+            .accordion-header { padding: 1rem; }
+            .accordion-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+            .accordion-title { font-size: 1rem; }
+            .accordion-body { padding: 0 1rem 1rem 1rem; }
+            .formula-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 1rem; }
+            .units-grid { gap: 1rem; }
+            .info-section-title { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="converter-card">
+    <h1>EVS - Conversor de Unidades Astronômicas&nbsp;</h1>
+    
+    <div class="units-grid">
+        <div class="unit-card">
+            <div class="unit-label">
+                <span class="unit-name">Quilômetros</span>
+                <span class="unit-symbol">km</span>
+            </div>
+            <input type="text" id="quilometros" class="unit-input" placeholder="Ex: 149600000 ou 1,496e8" autocomplete="off">
+        </div>
+        
+        <div class="unit-card">
+            <div class="unit-label">
+                <span class="unit-name">Anos-luz</span>
+                <span class="unit-symbol">ly</span>
+            </div>
+            <input type="text" id="anosLuz" class="unit-input" placeholder="Ex: 4.24" autocomplete="off">
+        </div>
+        
+        <div class="unit-card">
+            <div class="unit-label">
+                <span class="unit-name">Parsec</span>
+                <span class="unit-symbol">pc</span>
+            </div>
+            <input type="text" id="parsec" class="unit-input" placeholder="Ex: 1.3" autocomplete="off">
+        </div>
+        
+        <div class="unit-card">
+            <div class="unit-label">
+                <span class="unit-name">Unidade Astronômica</span>
+                <span class="unit-symbol">AU</span>
+            </div>
+            <input type="text" id="unidadeAstronomica" class="unit-input" placeholder="Ex: 1" autocomplete="off">
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <button class="btn btn-primary" id="converterBtn">🔄 Converter</button>
+        <button class="btn btn-secondary" id="limparBtn">🗑️ Limpar</button>
+    </div>
+    <div id="errorMsg" class="error-msg"></div>
+    <div id="successMsg" class="success-msg"></div>
+    
+    <!-- SEÇÃO DIDÁTICA -->
+    <div class="info-section">
+        <h2 class="info-section-title">📖 Informações Didáticas</h2>
+        
+        <div class="accordion">
+            <!-- QUILÔMETROS -->
+            <div class="accordion-item km">
+                <div class="accordion-header">
+                    <div class="accordion-icon">km</div>
+                    <div class="accordion-title-group">
+                        <div class="accordion-title">Quilômetro</div>
+                        <div class="accordion-subtitle">Múltiplo do metro do Sistema Internacional</div>
+                    </div>
+                    <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="info-block">
+                            <div class="info-label">Descrição</div>
+                            <p class="info-text">
+                                O <span class="highlight">quilômetro</span> é 
+								uma unidade de comprimento do Sistema Internacional de Unidades (SI), equivalente a <span class="value-highlight">1.000 metros</span>. É a unidade mais comum para medir distâncias terrestres e, na 
+								Astronomia, serve como referência para distâncias planetárias dentro do Sistema Solar. Embora inadequado para distâncias interestelares (devido à magnitude dos valores), permanece como base para conversões entre unidades astronômicas.
+                            </p>
+                        </div>
+                        <div class="info-block">
+                            <div class="info-label">História</div>
+                            <p class="info-text">
+                                O prefixo "quilo" deriva do grego <em>chílioi</em> (χίλιοι), significando "mil". O quilômetro foi adotado oficialmente durante a Revolução Francesa (1795), junto com o sistema métrico. Sua definição está ligada ao metro, originalmente calculado como um décimo milionésimo da distância do Equador ao Polo Norte. Em 1983, o metro foi redefinido com base na velocidade da luz no vácuo, tornando o quilômetro uma unidade precisa e universal.
+                            </p>
+                        </div>
+                        <div class="info-block">
+                            <div class="info-label">Conversão</div>
+                            <div class="formula-box">
+                                <div class="formula-title">Converter de Quilômetros para:</div>
+                                <div class="formula-grid">
+                                    <div class="formula-item">1 km → 1,057×10⁻¹³ ly</div>
+                                    <div class="formula-item">1 km → 3,24×10⁻¹⁴ pc</div>
+                                    <div class="formula-item">1 km → 6,68×10⁻⁹ AU</div>
+                                </div>
+                            </div>
+                            <div class="formula-box" style="margin-top: 0.75rem;">
+                                <div class="formula-title">Valores de Referência:</div>
+                                <div class="formula-grid">
+                                    <div class="formula-item">1 AU = 149.597.870,7 km</div>
+                                    <div class="formula-item">1 ly = 9,461×10¹² km</div>
+                                    <div class="formula-item">1 pc = 3,086×10¹³ km</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANOS-LUZ -->
+            <div class="accordion-item ly">
+                <div class="accordion-header">
+                    <div class="accordion-icon">ly</div>
+                    <div class="accordion-title-group">
+                        <div class="accordion-title">Ano-luz</div>
+                        <div class="accordion-subtitle">Distância percorrida pela luz em um ano juliano</div>
+                    </div>
+                    <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="info-block">
+                            <div class="info-label">Descrição</div>
+                            <p class="info-text">
+                                O <span class="highlight">ano-luz</span> é uma unidade de distância, não de tempo, como frequentemente se confunde. Representa a distância que a luz percorre no vácuo durante um ano juliano (365,25 dias). Seu valor exato é de aproximadamente <span class="value-highlight">9,461 trilhões de quilômetros</span>. É amplamente utilizado na divulgação científica e em 
+								Astronomia para expressar distâncias interestelares, como a distância até estrelas próximas.
+                            </p>
+                        </div>
+                        <div class="info-block">
+                            <div class="info-label">História</div>
+                            <p class="info-text">
+                                O conceito foi introduzido pelo astrônomo alemão <em>Friedrich Bessel</em> em 1838, após medir a primeira paralaxe estelar da estrela 61 Cygni. Bessel percebeu que a luz levava 10,3 anos para chegar até nós dessa estrela. A popularização do termo deve-se à sua intuitividade: ao observarmos uma estrela a 100 anos-luz, vemos como ela era há 100 anos, pois essa é a idade da luz que nos chega.
+                            </p>
+                        </div>
+                        <div class="info-block">
+                            <div class="info-label">Conversão</div>
+                            <div class="formula-box">
+                                <div class="formula-title">Converter de Anos-luz para:</div>
+                                <div class="formula-grid">
+                                    <div class="formula-item">1 ly → 9,461×10¹² km</div>
+                                    <div class="formula-item">1 ly → 0,3066 pc</div>
+                                    <div class="formula-item">1 ly → 63.241 AU</div>
+                                </div>
+                            </div>
+                            <div class="formula-box" style="margin-top: 0.75rem;">
+                                <div class="formula-title">Exemplos Práticos:</div>
+                                <div class="formula-grid">
+                                    <div class="formula-item">Próxima Centauri = 4,24 ly</div>
+                                    <div class="formula-item">Centro da Via Láctea = 26.000 ly</div>
+                                    <div class="formula-item">Galáxia de Andrômeda = 2,5 milhões ly</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARSEC -->
+            <div class="accordion-item pc">
+                <div class="accordion-header">
+                    <div class="accordion-icon">pc</div>
+                    <div class="accordion-title-group">
+                        <div class="accordion-title">Parsec</div>
+                        <div class="accordion-subtitle">Baseado no método da paralaxe estelar</div>
+                    </div>
+                    <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="info-block">
+                            <div class="info-label">Descrição</div>
+                            <p class="info-text">
+                                O <span class="highlight">parsec</span> (símbolo: pc) é uma unidade de comprimento usada em 
+								Astronomia para medir grandes distâncias de objetos fora do Sistema Solar. Um parsec é definido como a distância na qual uma unidade astronômica subtende um ângulo de um segundo de arco (1/3600 de grau). Isso equivale a aproximadamente <span class="value-highlight">3,26 anos-luz</span> ou <span class="value-highlight">30,86 trilhões de km</span>. O nome deriva de "paralaxe de um segundo de arco".
+                            </p>
+                        </div>
+                        <div class="info-block">
+                            <div class="info-label">História</div>
+                            <p class="info-text">
+                                O parsec foi proposto pelo astrônomo britânico <em>Herbert Hall Turner</em> em 1913, como uma unidade prática para cálculos de paralaxe estelar. A definição baseia-se no método de medição de distâncias estelares desenvolvido por <em>Friedrich Bessel</em> em 1838. Ao observar uma estrela em pontos opostos da órbita terrestre, o deslocamento aparente (paralaxe) permite calcular sua distância. O parsec tornou-se a unidade preferida em 
+								Astronomia profissional por sua relação direta com observações.
+                            </p>
+                        </div>
+                        <div class="info-block">
+                            <div class="info-label">Conversão</div>
+                            <div class="formula-box">
+                                <div class="formula-title">Converter de Parsecs para:</div>
+                                <div class="formula-grid">
+                                    <div class="formula-item">1 pc → 3,086×10¹³ km</div>
+                                    <div class="formula-item">1 pc → 3,262 ly</div>
+                                    <div class="formula-item">1 pc → 206.265 AU</div>
+                                </div>
+                            </div>
+                            <div class="formula-box" style="margin-top: 0.75rem;">
+                                <div class="formula-title">Fórmula da Paralaxe:</div>
+                                <div class="formula-grid">
+                                    <div class="formula-item">d(pc) = 1 / p(arcsec)</div>
+                                    <div class="formula-item">Onde p = ângulo de paralaxe</div>
+                                    <div class="formula-item">Próxima Centauri = 1,30 pc</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UNIDADE ASTRONÔMICA -->
+            <div class="accordion-item au">
+                <div class="accordion-header">
+                    <div class="accordion-icon">AU</div>
+                    <div class="accordion-title-group">
+                        <div class="accordion-title">Unidade Astronômica</div>
+                        <div class="accordion-subtitle">Distância média Terra-Sol</div>
+                    </div>
+                    <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="info-block">
+                            <div class="info-label">Descrição</div>
+                            <p class="info-text">
+                                A <span class="highlight">Unidade Astronômica</span> (símbolo: AU ou UA) é uma unidade de comprimento aproximadamente igual à distância média da Terra ao Sol. Seu valor definido é exatamente <span class="value-highlight">149.597.870.700 metros</span> (cerca de 150 milhões de km). É a unidade padrão para medir distâncias dentro do Sistema Solar, sendo útil para descrever órbitas planetárias, distâncias de asteroides e cometas.
+                            </p>
+                        </div>
+                        <div class="info-block">
+                            <div class="info-label">História</div>
+                            <p class="info-text">
+                                A necessidade de uma unidade para distâncias solares surgiu com <em>Joannes Kepler</em> no século XVII, ao formular suas leis do movimento planetário. Porém, só em 1672, <em>Giovanni Cassini</em> conseguiu uma estimativa razoável usando a paralaxe de Marte. A definição moderna foi estabelecida pela União Astronômica Internacional (UAI) em 2012, fixando um valor exato em metros, eliminando a dependência de observações astronômicas variáveis.
+                            </p>
+                        </div>
+                        <div class="info-block">
+                            <div class="info-label">Conversão</div>
+                            <div class="formula-box">
+                                <div class="formula-title">Converter de Unidades Astronômicas para:</div>
+                                <div class="formula-grid">
+                                    <div class="formula-item">1 AU → 1,496×10⁸ km</div>
+                                    <div class="formula-item">1 AU → 1,58×10⁻⁵ ly</div>
+                                    <div class="formula-item">1 AU → 4,85×10⁻⁶ pc</div>
+                                </div>
+                            </div>
+                            <div class="formula-box" style="margin-top: 0.75rem;">
+                                <div class="formula-title">Distâncias no Sistema Solar:</div>
+                                <div class="formula-grid">
+                                    <div class="formula-item">Mercúrio = 0,39 AU do Sol</div>
+                                    <div class="formula-item">Júpiter = 5,2 AU do Sol</div>
+                                    <div class="formula-item">Netuno = 30,1 AU do Sol</div>
+                                    <div class="formula-item">Plutão = 39,5 AU do Sol</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <span>© 2026</span> <b>Prof. Luciano Soares Pedroso</b>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Constantes de conversão (base em km)
+        const KM_PER_LY = 9.461e12;
+        const KM_PER_PC = 3.086e13;
+        const KM_PER_AU = 1.496e8;
+        const LY_PER_PC = 3.262;
+        const AU_PER_PC = 206264.0;
+        const LY_PER_AU = 1.5813e-8;
+        const PC_PER_AU = 1 / 206264.0;
+        
+        // Elementos DOM
+        const kmInput = document.getElementById('quilometros');
+        const lyInput = document.getElementById('anosLuz');
+        const pcInput = document.getElementById('parsec');
+        const auInput = document.getElementById('unidadeAstronomica');
+        const errorDiv = document.getElementById('errorMsg');
+        const successDiv = document.getElementById('successMsg');
+        
+        const converterBtn = document.getElementById('converterBtn');
+        const limparBtn = document.getElementById('limparBtn');
+        
+        // Função para converter string em número (aceita vírgula e ponto)
+        function parseNumber(value) {
+            if (!value || value.trim() === "") return NaN;
+            // Remove espaços extras e substitui vírgula por ponto
+            let cleaned = value.trim().replace(/,/g, '.');
+            let num = parseFloat(cleaned);
+            return isNaN(num) ? NaN : num;
+        }
+        
+        // Função para formatar expoente com caracteres sobrescritos normais
+        function formatExponent(exp) {
+            // Mapeamento de números para caracteres sobrescritos
+            const superscripts = {
+                '-': '⁻',
+                '0': '⁰',
+                '1': '¹',
+                '2': '²',
+                '3': '³',
+                '4': '⁴',
+                '5': '⁵',
+                '6': '⁶',
+                '7': '⁷',
+                '8': '⁸',
+                '9': '⁹'
+            };
+            
+            let expStr = exp.toString();
+            let result = '';
+            for (let i = 0; i < expStr.length; i++) {
+                let char = expStr[i];
+                if (superscripts[char]) {
+                    result += superscripts[char];
+                } else {
+                    result += char;
+                }
+            }
+            return result;
+        }
+        
+        // Formatar número em notação científica com expoente sobrescrito
+        function formatScientific(value) {
+            if (isNaN(value) || !isFinite(value)) return "Inválido";
+            if (value === 0) return "0";
+            
+            let absVal = Math.abs(value);
+            let exponent = Math.floor(Math.log10(absVal));
+            let mantissa = absVal / Math.pow(10, exponent);
+            
+            // Arredondar para 4 casas decimais significativas
+            mantissa = Math.round(mantissa * 10000) / 10000;
+            
+            // Ajuste para evitar 10.0
+            if (mantissa >= 9.9995) {
+                mantissa = 1.0;
+                exponent++;
+            }
+            
+            // Formatar mantissa com vírgula decimal
+            let mantissaStr = mantissa.toString().replace('.', ',');
+            
+            // Se o expoente for zero, não mostra a parte de potência
+            if (exponent === 0) {
+                return (value < 0 ? "-" : "") + mantissaStr;
+            }
+            
+            let expFormatted = formatExponent(exponent);
+            let result = mantissaStr + "×10" + expFormatted;
+            return (value < 0 ? "-" : "") + result;
+        }
+        
+        // Função principal de conversão
+        function converterUnidades() {
+            errorDiv.innerText = "";
+            successDiv.innerText = "";
+            
+            let kmVal = parseNumber(kmInput.value);
+            let lyVal = parseNumber(lyInput.value);
+            let pcVal = parseNumber(pcInput.value);
+            let auVal = parseNumber(auInput.value);
+            
+            let validFields = [];
+            if (!isNaN(kmVal)) validFields.push({id: 'km', val: kmVal});
+            if (!isNaN(lyVal)) validFields.push({id: 'ly', val: lyVal});
+            if (!isNaN(pcVal)) validFields.push({id: 'pc', val: pcVal});
+            if (!isNaN(auVal)) validFields.push({id: 'au', val: auVal});
+            
+            if (validFields.length === 0) {
+                errorDiv.innerText = "❌ Por favor, digite um valor em qualquer unidade para converter.";
+                return;
+            }
+            
+            if (validFields.length > 1) {
+                errorDiv.innerText = "⚠️ Por favor, preencha apenas um campo por vez para evitar conflitos.";
+                return;
+            }
+            
+            let source = validFields[0];
+            let kmBase, lyBase, pcBase, auBase;
+            
+            switch(source.id) {
+                case 'km':
+                    kmBase = source.val;
+                    lyBase = kmBase / KM_PER_LY;
+                    pcBase = kmBase / KM_PER_PC;
+                    auBase = kmBase / KM_PER_AU;
+                    break;
+                case 'ly':
+                    lyBase = source.val;
+                    kmBase = lyBase * KM_PER_LY;
+                    pcBase = lyBase / LY_PER_PC;
+                    auBase = lyBase / LY_PER_AU;
+                    break;
+                case 'pc':
+                    pcBase = source.val;
+                    kmBase = pcBase * KM_PER_PC;
+                    lyBase = pcBase * LY_PER_PC;
+                    auBase = pcBase * AU_PER_PC;
+                    break;
+                case 'au':
+                    auBase = source.val;
+                    kmBase = auBase * KM_PER_AU;
+                    lyBase = auBase * LY_PER_AU;
+                    pcBase = auBase * PC_PER_AU;
+                    break;
+                default:
+                    return;
+            }
+            
+            kmInput.value = formatScientific(kmBase);
+            lyInput.value = formatScientific(lyBase);
+            pcInput.value = formatScientific(pcBase);
+            auInput.value = formatScientific(auBase);
+            
+            [kmInput, lyInput, pcInput, auInput].forEach(function(inp) {
+                inp.classList.remove('invalid-highlight');
+            });
+            
+            successDiv.innerText = "✓ Conversão realizada com sucesso!";
+            
+            setTimeout(function() {
+                if (successDiv.innerText === "✓ Conversão realizada com sucesso!") {
+                    successDiv.innerText = "";
+                }
+            }, 3000);
+        }
+        
+        // Função para limpar todos os campos
+        function limparCampos() {
+            kmInput.value = "";
+            lyInput.value = "";
+            pcInput.value = "";
+            auInput.value = "";
+            errorDiv.innerText = "";
+            successDiv.innerText = "";
+            [kmInput, lyInput, pcInput, auInput].forEach(function(inp) {
+                inp.classList.remove('invalid-highlight');
+            });
+        }
+        
+        // Validar campo individualmente
+        function validarCampo(input) {
+            if (input.value.trim() === "") {
+                input.classList.remove('invalid-highlight');
+                return true;
+            }
+            
+            let num = parseNumber(input.value);
+            if (isNaN(num)) {
+                input.classList.add('invalid-highlight');
+                return false;
+            } else {
+                input.classList.remove('invalid-highlight');
+                return true;
+            }
+        }
+        
+        // Evento de blur (quando sai do campo)
+        function onBlurHandler(event) {
+            validarCampo(event.target);
+        }
+        
+        // Evento de tecla Enter
+        function onKeyPressHandler(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (validarCampo(event.target)) {
+                    converterUnidades();
+                } else {
+                    errorDiv.innerText = "❌ Valor inválido. Use números como 12345,67 ou 1,23e5";
+                }
+            }
+        }
+        
+        // Adicionar eventos
+        kmInput.addEventListener('blur', onBlurHandler);
+        lyInput.addEventListener('blur', onBlurHandler);
+        pcInput.addEventListener('blur', onBlurHandler);
+        auInput.addEventListener('blur', onBlurHandler);
+        
+        kmInput.addEventListener('keypress', onKeyPressHandler);
+        lyInput.addEventListener('keypress', onKeyPressHandler);
+        pcInput.addEventListener('keypress', onKeyPressHandler);
+        auInput.addEventListener('keypress', onKeyPressHandler);
+        
+        // Botões
+        converterBtn.addEventListener('click', converterUnidades);
+        limparBtn.addEventListener('click', limparCampos);
+        
+        // =============================================
+        // SISTEMA DE ACORDEÃO PARA INFORMAÇÕES DIDÁTICAS
+        // =============================================
+        
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+        
+        accordionHeaders.forEach(function(header) {
+            header.addEventListener('click', function() {
+                const item = this.parentElement;
+                const isActive = item.classList.contains('active');
+                
+                // Fechar todos os itens abertos
+                document.querySelectorAll('.accordion-item').forEach(function(accItem) {
+                    accItem.classList.remove('active');
+                });
+                
+                // Se não estava ativo, abrir o item clicado
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+        
+        // Abrir o primeiro item por padrão
+        var firstAccordion = document.querySelector('.accordion-item');
+        if (firstAccordion) {
+            firstAccordion.classList.add('active');
+        }
+        
+        console.log("Conversor de Unidades Astronômicas carregado com sucesso!");
+    })();
+</script>
+</body>
+</html>

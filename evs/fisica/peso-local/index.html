@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Cálculo do Peso Local</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+    <!-- Configuração do MathJax 3 -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [
+                    ['\\(', '\\)']
+                ],
+                displayMath: [
+                    ['\\[', '\\]']
+                ],
+                tags: 'none'
+            },
+            options: {
+                ignoreHtmlClass: 'no-mathjax',
+                processHtmlClass: 'mathjax-process'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async>
+    </script>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --success: #059669;
+            --success-bg: #ecfdf5;
+            --error: #dc2626;
+            --error-bg: #fef2f2;
+            --warning: #d97706;
+            --warning-bg: #fffbeb;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-btn: 0 4px 14px rgba(37, 99, 235, 0.3);
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(160deg, #e8edf5 0%, #f0f4f8 30%, #f8fafc 70%, #eef2f7 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        /* ========== CARD PRINCIPAL ========== */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 32px 28px;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        /* ========== CABEÇALHO ========== */
+        .card-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .card-header h1 {
+            font-size: clamp(1.4rem, 3vw, 1.8rem);
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .card-header h1 span {
+            color: var(--primary);
+            position: relative;
+        }
+
+        .card-header h1 span::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+            opacity: 0.25;
+            border-radius: 2px;
+        }
+
+        .creditos {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 2px 0;
+            letter-spacing: 0.01em;
+        }
+
+        .creditos:first-of-type {
+            margin-top: 4px;
+        }
+
+        /* ========== FORMULÁRIO ========== */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: #f8fafc;
+            transition: var(--transition);
+            font-family: inherit;
+            color: var(--text);
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        /* ========== BOTÕES ========== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 13px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            letter-spacing: -0.01em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: var(--shadow-btn);
+            margin-bottom: 10px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-btn);
+        }
+
+        .btn-primary:disabled {
+            background: #93b4f5;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--border);
+            box-shadow: none;
+            margin-bottom: 4px;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+        }
+
+        .btn-calcular {
+            width: 100%;
+            padding: 11px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            margin-top: 8px;
+        }
+
+        .btn-calcular:hover {
+            background: #047857;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .btn-calcular:disabled {
+            background: #86d4b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ========== ÁREA DE ALTITUDE MANUAL ========== */
+        .altitude-manual {
+            background: var(--warning-bg);
+            border: 1px solid #fcd34d;
+            border-radius: var(--radius-md);
+            padding: 18px;
+            margin-top: 6px;
+            margin-bottom: 8px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .altitude-manual label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            color: #92400e;
+        }
+
+        .altitude-manual input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            border: 2px solid #fcd34d;
+            border-radius: var(--radius-sm);
+            background: #fff;
+            transition: var(--transition);
+            font-family: inherit;
+            outline: none;
+            color: var(--text);
+        }
+
+        .altitude-manual input:focus {
+            border-color: #d97706;
+            box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.08);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                max-height: 200px;
+            }
+        }
+
+        /* ========== RESULTADO ========== */
+        .resultado {
+            margin-top: 20px;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .resultado:empty {
+            display: none;
+        }
+
+        .resultado-content {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px 18px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .resultado-content.success {
+            background: var(--success-bg);
+            border-color: #a7f3d0;
+        }
+
+        .resultado-content.error {
+            background: var(--error-bg);
+            border-color: #fecaca;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .resultado-titulo {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .resultado-titulo.success {
+            color: var(--success);
+        }
+        .resultado-titulo.error {
+            color: var(--error);
+        }
+
+        .resultado-dados {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+
+        .resultado-dados span {
+            white-space: nowrap;
+        }
+
+        .resultado-dados strong {
+            color: var(--text);
+        }
+
+        .equacao-step {
+            margin: 14px 0;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .equacao-destaque {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        hr.divisor {
+            border: none;
+            border-top: 1px dashed var(--border);
+            margin: 16px 0;
+        }
+
+        /* ========== FUNDAMENTAÇÃO TEÓRICA ========== */
+        .fundamentacao {
+            margin-top: 24px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .fundamentacao summary {
+            padding: 14px 18px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.01em;
+            transition: var(--transition);
+            list-style: none;
+        }
+
+        .fundamentacao summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .fundamentacao summary::before {
+            content: '▶';
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .fundamentacao[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .fundamentacao summary:hover {
+            background: #f1f5f9;
+        }
+
+        .fundamentacao-conteudo {
+            padding: 6px 18px 18px 18px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .fundamentacao-conteudo p {
+            margin-bottom: 10px;
+        }
+
+        .fundamentacao-conteudo .note {
+            background: #fffbeb;
+            border-left: 3px solid #f59e0b;
+            padding: 8px 12px;
+            border-radius: 0 6px 6px 0;
+            margin: 12px 0;
+            font-size: 0.82rem;
+            color: #92400e;
+        }
+
+        /* ========== SPINNER (injetado via JS) ========== */
+        .spinner-inline {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid rgba(255, 255, 255, 0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ========== RESPONSIVIDADE ========== */
+        @media (max-width: 500px) {
+            .card {
+                padding: 22px 16px;
+                border-radius: var(--radius-md);
+            }
+
+            .card-header h1 {
+                font-size: 1.25rem;
+            }
+
+            .btn {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+
+            .resultado-dados {
+                flex-direction: column;
+                gap: 4px;
+                font-size: 0.8rem;
+            }
+
+            .equacao-step {
+                font-size: 0.78rem;
+            }
+
+            .fundamentacao-conteudo {
+                font-size: 0.8rem;
+                padding: 4px 12px 14px 12px;
+            }
+
+            .fundamentacao summary {
+                font-size: 0.82rem;
+                padding: 12px 14px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .card {
+                padding: 36px 34px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="card">
+            <!-- ========== CABEÇALHO ========== -->
+            <header class="card-header">
+                <h1>⚖️ EVS - Cálculo do Peso <span>Local</span> de um Objeto</h1>
+                <p class="creditos">Prof. Luciano Soares Pedroso</p>
+            </header>
+
+            <!-- ========== FORMULÁRIO PRINCIPAL ========== -->
+            <div class="form-group">
+                <label for="massa">🧱 Massa do objeto (em kg)</label>
+                <input
+                type="number"
+                id="massa"
+                name="massa"
+                placeholder="Ex: 70"
+                min="0.001"
+                step="any"
+                autocomplete="off"
+                >
+            </div>
+
+            <button class="btn btn-primary" id="btnLocalizacao" title="Usa a localização GPS para obter a altitude automaticamente">
+                <span class="btn-text">📍 Obter Localização e Calcular Peso</span>
+            </button>
+
+            <button class="btn btn-outline" id="btnToggleAltitudeManual" title="Insira a altitude manualmente (sem usar GPS)">
+                📏 Usar altitude manual
+            </button>
+
+            <!-- Área de altitude manual (oculta inicialmente) -->
+            <div class="altitude-manual" id="altitudeManual" style="display: none;">
+                <label for="altitudeInput">⛰️ Altitude do local (em metros)</label>
+                <input
+                type="number"
+                id="altitudeInput"
+                placeholder="Ex: 760 (ou -415 para Mar Morto)"
+                step="any"
+                autocomplete="off"
+                >
+                <button class="btn-calcular" id="btnCalcularManual">
+                    Calcular com altitude manual
+                </button>
+            </div>
+
+            <!-- ========== ÁREA DE RESULTADO ========== -->
+            <div class="resultado mathjax-process" id="resultado"></div>
+
+            <!-- ========== FUNDAMENTAÇÃO TEÓRICA ========== -->
+            <details class="fundamentacao" id="fundamentacao">
+                <summary>📐 Fundamentação Teórica</summary>
+                <div class="fundamentacao-conteudo mathjax-process">
+                    <p>
+                        O <strong>peso</strong> (\(P\)) de um objeto é a força gravitacional exercida
+                        pela Terra sobre ele, dada por:
+                    </p>
+                    \[
+                    P = m \cdot g
+                    \]
+                    <p>
+                        Onde \(m\) é a massa do objeto (em kg) e \(g\) é a <strong>aceleração gravitacional local</strong>
+                        (em m/s²). Na superfície terrestre, o valor médio de \(g\) é:
+                    </p>
+                    \[
+                    g_0 \approx 9{,}8 \ \text{m/s}^2
+                    \]
+                    <p>
+                        Contudo, \(g\) <strong>varia com a altitude</strong> \(h\). Para altitudes
+                        muito menores que o raio da Terra (\(R \approx 6.371 \ \text{km}\)),
+                        utiliza-se a seguinte <strong>aproximação linear</strong> (série de Taylor de 1ª ordem):
+                    </p>
+                    \[
+                    g(h) \ =\ g_0 \left( 1 - \frac{h}{R} \right)
+                    \]
+                    <p>
+                        Nesta calculadora, a altitude é obtida automaticamente via GPS e pela
+                        <strong>API Open-Elevation</strong>, ou pode ser informada manualmente.
+                    </p>
+                    <div class="note">
+                        💡 <strong>Nota:</strong> A fórmula exata da gravitação universal fornece
+                        \(g(h) = g_0 \left( \frac{R}{R+h} \right)^2\). A aproximação linear
+                        usada aqui é excelente para altitudes de até algumas dezenas de
+                        quilômetros, com erro inferior a 0,02% para o Monte Everest (~8,8 km).
+                    </div>
+                </div>
+            </details>
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            // Constantes físicas
+            const g0 = 9.8; // aceleração gravitacional na superfície (m/s²)
+            const R = 6371; // raio médio da Terra (km)
+
+            // Elementos do DOM
+            const inputMassa = document.getElementById('massa');
+            const btnLocalizacao = document.getElementById('btnLocalizacao');
+            const btnToggleAltitudeManual = document.getElementById('btnToggleAltitudeManual');
+            const divAltitudeManual = document.getElementById('altitudeManual');
+            const inputAltitude = document.getElementById('altitudeInput');
+            const btnCalcularManual = document.getElementById('btnCalcularManual');
+            const resultadoDiv = document.getElementById('resultado');
+            const detailsFundamentacao = document.getElementById('fundamentacao');
+
+            // Estado
+            let calculando = false;
+
+            // ==================== UTILITÁRIOS ====================
+
+            /** Formata um número para exibição no LaTeX (vírgula como separador decimal) */
+            function formatarParaLaTeX(valor, decimais = 4) {
+                if (!Number.isFinite(valor)) return '0';
+                // Se for inteiro, retorna sem casas decimais
+                if (Number.isInteger(valor) && decimais === 4) {
+                    // Verifica se realmente é inteiro (ex: 70, não 70.0001)
+                    return valor.toString();
+                }
+                let str = valor.toFixed(decimais);
+                // Substitui ponto por {,} para vírgula no LaTeX
+                str = str.replace('.', '{,}');
+                return str;
+            }
+
+            /** Formata número para exibição em texto normal (português) */
+            function formatarNumeroPT(valor, decimais = 4) {
+                if (!Number.isFinite(valor)) return '0';
+                return valor.toLocaleString('pt-BR', {
+                    minimumFractionDigits: decimais,
+                    maximumFractionDigits: decimais
+                });
+            }
+
+            /** Desabilita/habilita botões durante o cálculo */
+            function setCarregando(estado) {
+                calculando = estado;
+                btnLocalizacao.disabled = estado;
+                btnCalcularManual.disabled = estado;
+
+                const btnText = btnLocalizacao.querySelector('.btn-text');
+                if (estado) {
+                    btnText.innerHTML =
+                        '<span class="spinner-inline"></span> Obtendo altitude...';
+                    btnCalcularManual.textContent = 'Calculando...';
+                } else {
+                    btnText.textContent = '📍 Obter Localização e Calcular Peso';
+                    btnCalcularManual.textContent = 'Calcular com altitude manual';
+                }
+            }
+
+            /** Valida a massa informada */
+            function validarMassa() {
+                const massa = parseFloat(inputMassa.value);
+                if (isNaN(massa) || massa <= 0) {
+                    mostrarErro('Por favor, insira um valor válido para a massa (maior que zero).');
+                    return null;
+                }
+                return massa;
+            }
+
+            /** Exibe mensagem de erro na área de resultado */
+            function mostrarErro(mensagem) {
+                resultadoDiv.innerHTML = `
+                    <div class="resultado-content error">
+                        <div class="resultado-titulo error">⚠️ Erro</div>
+                        <p style="font-size:0.9rem; color:#991b1b;">${mensagem}</p>
+                    </div>
+                `;
+                resultadoDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            /** Exibe mensagem de sucesso com os cálculos */
+            function mostrarResultado(massa, altitudeMetros, altitudeKm, g, peso) {
+                const altitudeKmLaTeX = formatarParaLaTeX(altitudeKm, 4);
+                const gLaTeX = formatarParaLaTeX(g, 4);
+                const pesoLaTeX = formatarParaLaTeX(peso, 4);
+                const massaLatex = formatarParaLaTeX(massa, Number.isInteger(massa) ? 0 : 4);
+
+                // Formatação para texto
+                const altitudeFormatada = formatarNumeroPT(altitudeMetros, 1);
+                const gFormatado = formatarNumeroPT(g, 4);
+                const pesoFormatado = formatarNumeroPT(peso, 4);
+
+                const html = `
+                    <div class="resultado-content success">
+                        <div class="resultado-titulo success">✅ Cálculo Realizado</div>
+
+                        <div class="resultado-dados">
+                            <span>🧱 <strong>Massa:</strong> ${formatarNumeroPT(massa, Number.isInteger(massa) ? 0 : 4)} kg</span>
+                            <span>⛰️ <strong>Altitude:</strong> ${altitudeFormatada} m (${formatarNumeroPT(altitudeKm, 4)} km)</span>
+                        </div>
+
+                        <p style="font-weight:600; font-size:0.9rem; margin-bottom:6px;">📐 Passo a passo:</p>
+
+                        <div class="equacao-step">
+                            <strong>1. Aceleração gravitacional local</strong> — aproximação linear:
+                        </div>
+                        \\[
+                        g(h) = g_0 \\left( 1 - \\frac{h}{R} \\right)
+                        \\]
+                        <div class="equacao-step">
+                            Substituindo os valores:
+                        </div>
+                        \\[
+                        g = 9{,}8 \\times \\left( 1 - \\frac{${altitudeKmLaTeX}}{6371} \\right)
+                        \\]
+                        \\[
+                        g \\approx ${gLaTeX} \\ \\text{m/s}^2
+                        \\]
+
+                        <hr class="divisor">
+
+                        <div class="equacao-step">
+                            <strong>2. Peso do objeto</strong>:
+                        </div>
+                        \\[
+                        P = m \\cdot g
+                        \\]
+                        \\[
+                        P = ${massaLatex} \\times ${gLaTeX}
+                        \\]
+                        <div class="equacao-destaque">
+                            \\[ \\boxed{ P \\approx ${pesoLaTeX} \\ \\text{N} } \\]
+                        </div>
+
+                        <p style="font-size:0.8rem; color: var(--text-secondary); margin-top:10px;">
+                            🎯 <strong>Resultado:</strong> O peso do objeto é
+                            <strong style="color:var(--primary);">${pesoFormatado} N</strong>
+                            e a aceleração gravitacional local é
+                            <strong style="color:var(--primary);">${gFormatado} m/s²</strong>.
+                        </p>
+                    </div>
+                `;
+
+                resultadoDiv.innerHTML = html;
+                resultadoDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                // Re-renderiza o MathJax no elemento de resultado
+                if (window.MathJax && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([resultadoDiv]).catch(function(err) {
+                        console.warn('MathJax render error:', err);
+                    });
+                }
+            }
+
+            // ==================== CÁLCULO PRINCIPAL ====================
+
+            /**
+             * Calcula o peso e a gravidade local a partir da altitude.
+             * @param {number} massa - massa em kg
+             * @param {number} altitudeMetros - altitude em metros
+             */
+            function calcularComAltitude(massa, altitudeMetros) {
+                const altitudeKm = altitudeMetros / 1000; // converte para km
+                // Aproximação linear: g = g0 * (1 - h/R)
+                const g = g0 * (1 - altitudeKm / R);
+                const peso = massa * g;
+
+                return {
+                    altitudeMetros,
+                    altitudeKm,
+                    g,
+                    peso
+                };
+            }
+
+            // ==================== FLUXO: GEOLOCALIZAÇÃO + API ====================
+
+            function obterLocalizacaoECalcular() {
+                const massa = validarMassa();
+                if (massa === null) return;
+
+                if (!navigator.geolocation) {
+                    mostrarErro(
+                        'Geolocalização não é suportada pelo seu navegador. Por favor, use a opção de altitude manual.'
+                        );
+                    return;
+                }
+
+                setCarregando(true);
+                resultadoDiv.innerHTML = `
+                    <div class="resultado-content" style="background:#f8fafc; border-color:#e2e8f0; text-align:center; padding:24px;">
+                        <p style="color:var(--text-secondary);">🛰️ Obtendo sua localização GPS...</p>
+                    </div>
+                `;
+                resultadoDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+                        consultarAPIElevacao(latitude, longitude, massa);
+                    },
+                    function(erro) {
+                        setCarregando(false);
+                        let mensagem = 'Não foi possível obter a localização. ';
+                        switch (erro.code) {
+                            case erro.PERMISSION_DENIED:
+                                mensagem += 'Permissão de localização negada. Verifique as configurações do navegador ou use a altitude manual.';
+                                break;
+                            case erro.POSITION_UNAVAILABLE:
+                                mensagem += 'Localização indisponível. Tente novamente ou use a altitude manual.';
+                                break;
+                            case erro.TIMEOUT:
+                                mensagem += 'Tempo esgotado. Tente novamente ou use a altitude manual.';
+                                break;
+                            default:
+                                mensagem += 'Erro desconhecido. Use a altitude manual.';
+                        }
+                        mostrarErro(mensagem);
+                    }, {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 60000
+                    }
+                );
+            }
+
+            function consultarAPIElevacao(latitude, longitude, massa) {
+                const url =
+                    'https://api.open-elevation.com/api/v1/lookup?locations=' +
+                    encodeURIComponent(latitude) + ',' + encodeURIComponent(longitude);
+
+                // Timeout de 12 segundos
+                const controller = new AbortController();
+                const timeoutId = setTimeout(function() {
+                    controller.abort();
+                }, 12000);
+
+                fetch(url, { signal: controller.signal })
+                    .then(function(response) {
+                        clearTimeout(timeoutId);
+                        if (!response.ok) {
+                            throw new Error('Erro na API: ' + response.status + ' ' + response.statusText);
+                        }
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        if (!data.results || data.results.length === 0) {
+                            throw new Error('API não retornou dados de altitude para estas coordenadas.');
+                        }
+                        const altitudeMetros = data.results[0].elevation;
+                        const resultado = calcularComAltitude(massa, altitudeMetros);
+                        mostrarResultado(massa, resultado.altitudeMetros, resultado.altitudeKm, resultado.g,
+                            resultado.peso);
+                        setCarregando(false);
+                    })
+                    .catch(function(erro) {
+                        clearTimeout(timeoutId);
+                        setCarregando(false);
+                        if (erro.name === 'AbortError') {
+                            mostrarErro(
+                                'Tempo esgotado ao consultar a API de altitude. Verifique sua conexão ou use a altitude manual.'
+                                );
+                        } else {
+                            mostrarErro(
+                                'Erro ao consultar a altitude: ' + erro.message +
+                                '. Tente usar a altitude manual.'
+                                );
+                        }
+                    });
+            }
+
+            // ==================== FLUXO: ALTITUDE MANUAL ====================
+
+            function calcularComAltitudeManual() {
+                const massa = validarMassa();
+                if (massa === null) return;
+
+                const altitudeStr = inputAltitude.value.trim();
+                if (altitudeStr === '') {
+                    mostrarErro('Por favor, insira um valor para a altitude (em metros).');
+                    return;
+                }
+                const altitudeMetros = parseFloat(altitudeStr);
+                if (isNaN(altitudeMetros)) {
+                    mostrarErro('Valor de altitude inválido. Use apenas números (ex: 760 ou -415).');
+                    return;
+                }
+
+                setCarregando(true);
+                // Pequeno delay para feedback visual
+                setTimeout(function() {
+                    const resultado = calcularComAltitude(massa, altitudeMetros);
+                    mostrarResultado(massa, resultado.altitudeMetros, resultado.altitudeKm, resultado.g,
+                    resultado.peso);
+                    setCarregando(false);
+                }, 300);
+            }
+
+            // ==================== EVENT LISTENERS ====================
+
+            // Botão principal: geolocalização
+            btnLocalizacao.addEventListener('click', function() {
+                if (calculando) return;
+                obterLocalizacaoECalcular();
+            });
+
+            // Toggle da área de altitude manual
+            btnToggleAltitudeManual.addEventListener('click', function() {
+                if (calculando) return;
+                const estaOculto = divAltitudeManual.style.display === 'none';
+                divAltitudeManual.style.display = estaOculto ? 'block' : 'none';
+                if (estaOculto) {
+                    divAltitudeManual.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    inputAltitude.focus();
+                }
+                // Atualiza texto do botão
+                btnToggleAltitudeManual.textContent = estaOculto ?
+                    '📏 Ocultar altitude manual' :
+                    '📏 Usar altitude manual';
+            });
+
+            // Botão de cálculo com altitude manual
+            btnCalcularManual.addEventListener('click', function() {
+                if (calculando) return;
+                calcularComAltitudeManual();
+            });
+
+            // Permitir Enter no input de massa para acionar geolocalização
+            inputMassa.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!calculando) {
+                        obterLocalizacaoECalcular();
+                    }
+                }
+            });
+
+            // Permitir Enter no input de altitude manual
+            inputAltitude.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!calculando) {
+                        calcularComAltitudeManual();
+                    }
+                }
+            });
+
+            // ==================== MATHJAX NO <details> ====================
+            // Garante que o MathJax renderize o conteúdo quando o usuário abrir a fundamentação
+            detailsFundamentacao.addEventListener('toggle', function() {
+                if (this.open && window.MathJax && MathJax.typesetPromise) {
+                    const conteudo = this.querySelector('.fundamentacao-conteudo');
+                    if (conteudo) {
+                        MathJax.typesetPromise([conteudo]).catch(function(err) {
+                            console.warn('MathJax render error in details:', err);
+                        });
+                    }
+                }
+            });
+
+            // ==================== INICIALIZAÇÃO ====================
+            // Renderiza o MathJax na fundamentação se já estiver visível
+            if (window.MathJax && MathJax.typesetPromise && detailsFundamentacao.open) {
+                const conteudo = detailsFundamentacao.querySelector('.fundamentacao-conteudo');
+                if (conteudo) {
+                    MathJax.typesetPromise([conteudo]).catch(function() {});
+                }
+            }
+
+            console.log('🧪 Calculadora de Peso Local inicializada.');
+            console.log('   Fórmula usada: g = g₀ × (1 - h/R)');
+            console.log('   g₀ = 9,8 m/s² | R = 6371 km');
+            console.log('   Geolocalização + API Open-Elevation | Altitude manual disponível.');
+        })();
+    </script>
+</body>
+</html>

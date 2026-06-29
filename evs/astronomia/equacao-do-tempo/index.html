@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVS - Equação do Tempo - Relógio de Sol</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {font-family: 'Inter', sans-serif; background: linear-gradient(135deg,#f6f8fb,#e0f2fe); color: #0f172a; margin: 0; padding: 20px;}
+    .container {max-width: 800px; margin: auto; background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.1);}
+    h1 {text-align: center; color: #0b6fbd; margin-bottom: 10px;}
+    p.intro {text-align: center; font-size: 1.1rem; color: #334155;}
+    label {display: block; margin-top: 15px; font-weight: 600;}
+    input, button {width: 100%; padding: 12px; margin-top: 8px; border-radius: 10px; border: 1px solid #d1d5db; font-size: 1rem;}
+    button {background: #0b6fbd; color: white; cursor: pointer; font-weight: bold; transition: 0.3s;}
+    button:hover {background: #095c9d; transform: scale(1.02);}
+    .resultado {margin-top: 20px; background: #e8f3ff; padding: 15px; border-radius: 10px; font-size: 1.1rem; animation: fadeIn 0.6s;}
+    .formula, .explicacao {margin-top: 20px; padding: 15px; border-radius: 10px;}
+    .formula {background: #fefce8; border: 1px solid #facc15;}
+    .explicacao {background: #f0fdf4; border: 1px solid #22c55e;}
+    canvas {margin-top: 30px;}
+    footer {text-align: center; margin-top: 30px; color: #6b7280; font-size: 0.9rem;}
+    @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>☀️ EVS - Equação do Tempo (E.T.) - Relógio Solar</h1>
+    <p class="intro">
+      Descubra a diferença entre o horário solar e o horário civil ao longo do ano.
+      <br>
+      <span class="alerta">
+        ⚠️ Caso esteja utilizando este EVS em seu Smartphone, rotacione para o modo paisagem para melhor visualização do gráfico!
+      </span>
+    </p>
+
+    <div class="formula">
+      <strong>Função utilizada nos cálculos:</strong>
+      <p>E.T. = 9,87 × sen(2B) − 7,53 × cos(B) − 1,5 × sen(B)</p>
+      <p>B = 360 × (N − 81) / 365</p>
+      <p>N = número do dia do ano (exemplo: 1 de janeiro = 1)</p>
+    </div>
+
+    <label for="data">Selecione uma data:</label>
+    <input type="date" id="data">
+
+    <button onclick="calcularET()">Calcular E.T. e mostrar no gráfico</button>
+
+    <div class="resultado" id="resultado"></div>
+
+    <canvas id="graficoET" width="600" height="300"></canvas>
+
+    <div class="explicacao">
+      <strong>Por que existe diferença?</strong>
+      <p>O relógio de Sol segue o movimento real do Sol. Já o relógio civil usa fusos horários fixos. A diferença (Equação do Tempo) varia até ±16 minutos ao longo do ano, causada pela órbita elíptica da Terra e pela inclinação do seu eixo.</p>
+      <p><em>Exemplo:</em> Em 13/11, o relógio de Sol adianta cerca de 15 minutos. Se ele marca 12h00min, o horário civil é 11h45min.</p>
+      <p class="MsoNormal" style="text-align:justify">A&nbsp;<b>Equação do Tempo</b>&nbsp;existe porque o movimento aparente do Sol no céu não é perfeitamente uniforme ao longo do ano. Isso ocorre devido a dois fatores astronômicos principais:&nbsp;</p>
+      <p class="MsoNormal" style="text-align:justify"><b>1. A Excentricidade da Órbita Terrestre</b></p>
+      <p class="MsoNormal" style="text-align:justify">A órbita da Terra ao redor do Sol não é um círculo perfeito, mas sim uma&nbsp;<b>elipse</b>. De acordo com a Segunda Lei de Kepler, a Terra se move mais rápido quando está mais próxima do Sol (periélio, em janeiro) e mais devagar quando está mais longe (afélio, em julho). Essa variação de velocidade faz com que a contribuição do movimento orbital para o "dia solar" mude constantemente.&nbsp;</p>
+      <p class="MsoNormal" style="text-align:justify"><b>2. A Obliquidade da Eclíptica</b></p>
+      <p class="MsoNormal" style="text-align:justify">O eixo de rotação da Terra está inclinado aproximadamente&nbsp;de 23,5 graus em relação ao plano de sua órbita. Mesmo que a Terra se movesse a uma velocidade constante, o Sol se desloca ao longo da&nbsp;<b>eclíptica</b>&nbsp;(o caminho aparente no céu), e não ao longo do equador celeste. A projeção desse movimento no equador (que define o nosso tempo de 24h) varia: é mais rápida nos solstícios e mais lenta nos equinócios.&nbsp;</p>
+    </div>
+  </div>
+
+  <footer>EVS produzido por: Luciano Soares Pedroso - 2026</footer>
+
+  <script>
+    function numeroDoDia(dia, mes) {
+      const diasPorMes = [31,28,31,30,31,30,31,31,30,31,30,31];
+      let N = 0;
+      for (let i=0; i<mes-1; i++) N += diasPorMes[i];
+      return N+dia;
+    }
+
+    function equacaoDoTempo(N) {
+      const B = (360*(N-81)/365)*Math.PI/180;
+      return 9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+    }
+
+    const ctx = document.getElementById('graficoET');
+    const dados = [];
+    for (let N=1; N<=365; N++) dados.push(equacaoDoTempo(N));
+
+    const grafico = new Chart(ctx,{
+      type:'line',
+      data:{
+        labels:Array.from({length:365},(_,i)=>i+1),
+        datasets:[{
+          label:'Equação do Tempo (minutos)',
+          data:dados,
+          borderColor:'#0b6fbd',
+          backgroundColor:'rgba(11,111,189,0.1)',
+          tension:0.3,
+          fill:true
+        },{
+          label:'Dia selecionado',
+          data:[],
+          pointRadius:6,
+          pointBackgroundColor:'#ef4444',
+          showLine:false
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{position:'bottom'},
+          title:{display:true,text:'Variação da Equação do Tempo ao longo do ano'}
+        },
+        scales:{
+          x:{title:{display:true,text:'Dia do ano (N)'}},
+          y:{title:{display:true,text:'E.T. (minutos)'}}
+        }
+      }
+    });
+
+    function calcularET(){
+      const data=document.getElementById('data').value;
+      if(!data){document.getElementById('resultado').innerHTML='<span style="color:red">Selecione uma data válida.</span>';return;}
+      const d=new Date(data);
+      const dia=d.getDate(); const mes=d.getMonth()+1;
+      const N=numeroDoDia(dia,mes);
+      const ET=equacaoDoTempo(N);
+      const ETstr=ET.toFixed(2).replace('.',',');
+
+      let texto;
+      if(ET>0){texto=`☀️ O relógio de Sol adianta ${ETstr} minutos em relação ao relógio civil.`;}
+      else if(ET<0){texto=`☀️ O relógio de Sol atrasa ${ETstr.replace('-','')} minutos em relação ao relógio civil.`;}
+      else{texto='☀️ Neste dia, o relógio de Sol coincide com o relógio civil.';}
+
+      document.getElementById('resultado').innerHTML=`<strong>Dia ${dia}/${mes}</strong><br>E.T. = ${ETstr} minutos<br><br>${texto}`;
+      grafico.data.datasets[1].data=[{x:N,y:ET}];
+      grafico.update();
+    }
+  </script>
+</body>
+</html>

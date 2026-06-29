@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EVS - Calculadora de Dia Juliano (JD)</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-dark: #3a56d4;
+      --secondary: #7209b7;
+      --accent: #f72585;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --success: #4cc9f0;
+      --card-bg: #ffffff;
+      --shadow: 0 4px 12px rgba(0,0,0,0.08);
+      --border-radius: 12px;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: var(--dark);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+    
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    .subtitle {
+      color: #555;
+      font-size: 1rem;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin: 16px 0;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    input[type="number"], input[type="text"], select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    
+    input[type="number"]:focus, input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+    
+    .small {
+      width: 80px;
+      flex: 0 0 auto;
+    }
+    
+    button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    button.primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    button.primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    
+    button.secondary {
+      background: var(--secondary);
+      color: white;
+    }
+    
+    button.secondary:hover {
+      background: #5a08a0;
+      transform: translateY(-1px);
+    }
+    
+    button.accent {
+      background: var(--accent);
+      color: white;
+    }
+    
+    button.accent:hover {
+      background: #e11674;
+      transform: translateY(-1px);
+    }
+    
+    pre {
+      background: #0b1220;
+      color: #e6eef8;
+      padding: 16px;
+      border-radius: 8px;
+      overflow: auto;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin-top: 12px;
+    }
+    
+    .muted {
+      color: #666;
+      font-size: 0.95rem;
+    }
+    
+    .equation {
+      background: #f1f5f9;
+      padding: 16px;
+      border-radius: var(--border-radius);
+      margin: 16px 0;
+      font-family: 'Times New Roman', serif;
+      white-space: pre-wrap;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .equation strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+    }
+    
+    footer {
+      margin-top: 20px;
+      color: #666;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 12px;
+    }
+    
+    .result-section {
+      margin-top: 16px;
+    }
+    
+    .result-label {
+      font-weight: 600;
+      color: var(--secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+    
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 8px;
+    }
+    
+    .input-group .small {
+      width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+      
+      .card {
+        padding: 16px;
+      }
+      
+      .row {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .small {
+        width: 100%;
+      }
+      
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .equation {
+        padding: 12px;
+        font-size: 0.9rem;
+      }
+      
+      pre {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
+    }
+    
+    .icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* MODERNIZE INPUT STYLE */
+    .modern-input {
+      background: #f4f6fb;
+      border: 1.5px solid #cbd0db;
+      border-radius: 10px;
+      transition: border 0.2s, box-shadow 0.2s;
+      font-size: 1rem;
+    }
+    .modern-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px #a9b8f3;
+      background: #f8fafd;
+    }
+
+    .modern-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .modern-date-group {
+      flex: 1;
+      min-width: 185px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .modern-date-group label {
+      margin: 0 4px 0 0;
+      font-weight: 500;
+      color: #3a56d4;
+      font-size: 0.98rem;
+    }
+    .modern-date-group select, .modern-date-group input {
+      min-width: 54px;
+    }
+
+    .modern-time-group {
+      flex: 2;
+      min-width: 200px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .modern-time-group label {
+      margin: 0 4px 0 0;
+      font-weight: 500;
+      color: #3a56d4;
+      font-size: 0.98rem;
+    }
+    .modern-colon {
+      font-size: 1.1em;
+      color: #888;
+      font-weight: 700;
+      margin: 0 1px;
+      user-select: none;
+    }
+    .modern-offset-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 16px;
+    }
+    @media (max-width: 600px) {
+      .modern-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .modern-date-group,
+      .modern-time-group {
+        flex-direction: row;
+        min-width: unset;
+        width: 100%;
+      }
+      .modern-offset-group {
+        margin-left: 0;
+      }
+    }
+  </style>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header>
+    <h1 align="center">🌌 EVS - Calculadora de Dia Juliano (JD)</h1>
+	<p align="center"><b><font size="4" color="#000080">
+	<a target="_blank" href="./paginas/historico/index.html">
+	<font color="#000080">Histórico</font></a></font></b></p>
+	<p align="center">&nbsp;</p>
+	<p align="center">Prof. Dr. Artur Justiniano Roberto Junior</p>
+	<p align="center">Prof. Dr. Luciano Soares Pedroso</p>
+	<p align="center" class="subtitle"><font color="#000000">Discente: Julio 
+	Marcos de Oliveira Domingues</font></p>
+	<p align="center" class="subtitle"><font color="#000000">Discente: Camila 
+	Cristina da Silva Ximenes</font></p>
+    <p class="subtitle">Insira uma data e hora — a calculadora retorna o JD (Dia Juliano), MJD (Modified JD), JDN e partes inteiras/fracionárias.</p>
+  </header>
+
+  <div class="equation">
+    <strong>Forma pedagógica e usual (passo a passo):</strong>
+
+    1) Ajuste de mês/ano (se necessário):
+    $$\text{Se } M\le 2:\quad Y' = Y - 1,\quad M' = M + 12.\quad \text{Caso contrário: } Y'=Y,\; M'=M.$$ 
+
+    2) Calcule:
+    $$A = \left\lfloor\dfrac{Y'}{100}\right\rfloor,\qquad
+    B = \begin{cases}2 - A + \left\lfloor\dfrac{A}{4}\right\rfloor,&\text{se calendário gregoriano}\\[4pt]
+    0,&\text{se calendário juliano}\end{cases}$$
+
+    3) Defina o dia com fração (D):
+    $$D = \text{dia} + \dfrac{h}{24} + \dfrac{m}{1440} + \dfrac{s}{86400}.$$ 
+
+    4) Algorítimo final (use Y' e M'):
+    $$\mathrm{JD} = \left\lfloor 365.25\,(Y' + 4716) \right\rfloor + \left\lfloor 30.6001\,(M' + 1) \right\rfloor + D + B - 1524.5.$$ 
+
+    Observação: o Dia Juliano (JD) é contínuo e começa ao meio-dia UT; o <em>Julian Day Number</em> (JDN) é o número inteiro do dia:
+    $$\mathrm{JDN} = \left\lfloor \mathrm{JD} + 0.5 \right\rfloor.$$ 
+  </div>
+
+  <div class="card">
+    <label>📅 Data (Calendário)</label>
+    <!-- Modern date row: select for year, month, day -->
+    <div class="modern-row">
+      <div class="modern-date-group">
+        <label for="year">Ano:</label>
+        <select id="year" class="modern-input"></select>
+        <label for="month">Mês:</label>
+        <select id="month" class="modern-input"></select>
+        <label for="day">Dia:</label>
+        <select id="day" class="modern-input"></select>
+      </div>
+    </div>
+
+    <label>⏰ Hora (local) — use seu horário local e informe o offset abaixo para converter a UT</label>
+    <!-- Modern time row: select for hour, minute, second, input for offset -->
+    <div class="modern-row">
+      <div class="modern-time-group">
+        <label for="hour">Hora:</label>
+        <select id="hour" class="modern-input"></select>
+        <span class="modern-colon">:</span>
+        <select id="minute" class="modern-input"></select>
+        <span class="modern-colon">:</span>
+        <select id="second" class="modern-input"></select>
+
+        <div class="modern-offset-group">
+          <label for="tz">Offset (h):</label>
+          <input id="tz" type="number" step="0.5" value="-3" class="modern-input small" style="width:60px;" />
+        </div>
+      </div>
+    </div>
+    
+    <div class="row" style="margin-top: 16px;">
+      <div class="input-group" style="flex: 1;">
+        <label style="margin: 0;">Calendário:</label>
+        <select id="calendar">
+          <option value="gregorian">Gregoriano (padrão)</option>
+          <option value="julian">Juliano</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="row" style="margin-top: 16px; justify-content: space-between;">
+      <button id="calc" class="primary">📊 Calcular JD</button>
+      <button id="copy" class="secondary">📋 Copiar resultado</button>
+      <button id="export" class="accent">💾 Exportar .txt</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="result-label">📈 Resultado</label>
+    <pre id="result">Clique em "Calcular JD" para ver os resultados</pre>
+  </div>
+
+  <footer>
+  </footer>
+
+  <script>
+    // Populate selects for year, month, day, hour, minute, second
+    function fillYearSelect(sel, min, max, selected) {
+      sel.innerHTML = '';
+      for (let y = max; y >= min; y--) {
+        let opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        if (y == selected) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    }
+    function fillMonthSelect(sel, selected) {
+      sel.innerHTML = '';
+      const months = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
+      for (let m = 1; m <= 12; m++) {
+        let opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = months[m-1];
+        if (m == selected) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    }
+    function fillDaySelect(sel, year, month, selected) {
+      sel.innerHTML = '';
+      let days = 31;
+      if (month==2) {
+        // Bissexto
+        days = ((year%4===0 && year%100!==0)||year%400===0)?29:28;
+      } else if ([4,6,9,11].includes(month)) days = 30;
+      for (let d = 1; d <= days; d++) {
+        let opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        if (d == selected) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    }
+    function fillTimeSelect(sel, max, selected) {
+      sel.innerHTML = '';
+      for (let t = 0; t <= max; t++) {
+        let opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = String(t).padStart(2,'0');
+        if (t == selected) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    }
+
+    // Set default values
+    let defaultYear = 2025, defaultMonth = 9, defaultDay = 24;
+    let defaultHour = 0, defaultMinute = 0, defaultSecond = 0;
+
+    // Get elements
+    const yearSel = document.getElementById('year');
+    const monthSel = document.getElementById('month');
+    const daySel = document.getElementById('day');
+    const hourSel = document.getElementById('hour');
+    const minuteSel = document.getElementById('minute');
+    const secondSel = document.getElementById('second');
+
+    // Fill selects
+    fillYearSelect(yearSel, 1800, 2100, defaultYear);
+    fillMonthSelect(monthSel, defaultMonth);
+    fillDaySelect(daySel, defaultYear, defaultMonth, defaultDay);
+    fillTimeSelect(hourSel, 23, defaultHour);
+    fillTimeSelect(minuteSel, 59, defaultMinute);
+    fillTimeSelect(secondSel, 59, defaultSecond);
+
+    // Day select reactivity
+    monthSel.addEventListener('change', function(){
+      fillDaySelect(daySel, Number(yearSel.value), Number(monthSel.value), 1);
+    });
+    yearSel.addEventListener('change', function(){
+      fillDaySelect(daySel, Number(yearSel.value), Number(monthSel.value), 1);
+    });
+
+    // If user changes day, keep selection if possible
+    daySel.addEventListener('focus', function(){
+      daySel._prev = Number(daySel.value);
+    });
+    function tryRestoreDay(){
+      let prev = daySel._prev||1;
+      let max = daySel.options.length;
+      daySel.value = (prev<=max)?prev:max;
+    }
+    monthSel.addEventListener('change', tryRestoreDay);
+    yearSel.addEventListener('change', tryRestoreDay);
+
+    // Patch: Set value as Number for calculation, keep the IDs/logic the same
+    function getInputValue(id) {
+      // For selects, get value as number
+      const el = document.getElementById(id);
+      return Number(el.value);
+    }
+
+    function computeJD(Y_in, M_in, D_in, h, m, s, calendar){
+      // D_in is integer day (dia), fracDay is fraction from time
+      const fracDay = (h + m/60 + s/3600)/24;
+      let Y = Number(Y_in);
+      let M = Number(M_in);
+      // Ajuste: use Y' e M' conforme notação pedagógica
+      if (M <= 2){
+        Y = Y - 1; // aqui Y representa Y'
+        M = M + 12; // M representa M'
+      }
+
+      const D = Number(D_in) + fracDay; // dia com fração
+
+      const A = Math.floor(Y/100);
+      let B;
+      if (calendar === 'gregorian'){
+        B = 2 - A + Math.floor(A/4);
+      } else {
+        B = 0;
+      }
+
+      const JD = Math.floor(365.25*(Y + 4716)) + Math.floor(30.6001*(M + 1)) + D + B - 1524.5;
+      return JD;
+    }
+
+    function formatNumber(x, decimals=6){
+      if (!Number.isFinite(x)) return '---';
+      return x.toFixed(decimals).replace('.', ',');
+    }
+
+    function doCalculate(){
+      const year = getInputValue('year');
+      const month = getInputValue('month');
+      const day = getInputValue('day');
+      let hour = getInputValue('hour');
+      const minute = getInputValue('minute');
+      const second = getInputValue('second');
+      const tz = Number(document.getElementById('tz').value);
+      const calendar = document.getElementById('calendar').value;
+
+      // converter hora local para UT
+      const hourUT = hour - tz;
+      let Y = year, M = month, D = day;
+      let hUT = hourUT;
+      if (hUT < 0){
+        const delta = Math.ceil(Math.abs(hUT) / 24);
+        hUT = hUT + 24*delta;
+        const date = new Date(Date.UTC(year, month-1, day));
+        date.setUTCDate(date.getUTCDate() - delta);
+        Y = date.getUTCFullYear();
+        M = date.getUTCMonth() + 1;
+        D = date.getUTCDate();
+      } else if (hUT >= 24){
+        const delta = Math.floor(hUT / 24);
+        hUT = hUT - 24*delta;
+        const date = new Date(Date.UTC(year, month-1, day));
+        date.setUTCDate(date.getUTCDate() + delta);
+        Y = date.getUTCFullYear();
+        M = date.getUTCMonth() + 1;
+        D = date.getUTCDate();
+      }
+
+      const JD = computeJD(Y, M, D, hUT, minute, second, calendar);
+      const MJD = JD - 2400000.5;
+      const JDN = Math.floor(JD + 0.5);
+      const JD_int = Math.floor(JD + 1e-12);
+      const JD_frac = JD - JD_int;
+
+      const out = [];
+      out.push(`Data local informada: ${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}`);
+      out.push(`Offset (h): ${tz} → Hora UT usada: ${formatNumber(hUT,6)} (ajustada para data ${Y}-${String(M).padStart(2,'0')}-${String(Math.floor(D)).padStart(2,'0')})`);
+      out.push(`Calendário usado: ${calendar}`);
+      out.push('\nResultados:');
+      out.push(`JD = ${formatNumber(JD,6)}`);
+      out.push(`JDN = ${JDN}`);
+      out.push(`Parte inteira (JD) = ${JD_int}`);
+      out.push(`Parte fracionária (JD) = ${formatNumber(JD_frac,8)}`);
+      out.push(`MJD = ${formatNumber(MJD,6)}`);
+
+      document.getElementById('result').textContent = out.join('\n');
+      document.getElementById('result').dataset.txt = out.join('\n');
+    }
+
+    document.getElementById('calc').addEventListener('click', doCalculate);
+
+    document.getElementById('copy').addEventListener('click', function(){
+      const txt = document.getElementById('result').dataset.txt || document.getElementById('result').textContent;
+      navigator.clipboard.writeText(txt).then(()=>{
+        alert('✅ Resultado copiado para a área de transferência');
+      }).catch(()=>{alert('❌ Não foi possível copiar automaticamente. Selecione e copie manualmente.');});
+    });
+
+    document.getElementById('export').addEventListener('click', function(){
+      const txt = document.getElementById('result').dataset.txt || document.getElementById('result').textContent;
+      const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'JD_result.txt';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // Enter key for selects and offset input
+    Array.from(document.querySelectorAll('input, select')).forEach(inp=>{
+      inp.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') doCalculate(); });
+    });
+
+    // Calcular automaticamente ao carregar a página
+    window.addEventListener('DOMContentLoaded', doCalculate);
+  </script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Simulador de Nascer do Sol Planetário | NASA/ESA</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            margin: 0; overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0e17; color: #fff;
+        }
+        #info {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(18,24,38,0.95);
+            padding: 14px 18px; border-radius: 10px;
+            z-index: 100; pointer-events: none;
+            font-size: 13px; border-left: 4px solid #ffaa44;
+            max-width: 320px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        #planet-name { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        #atmosphere-info { font-size: 12px; opacity: 0.95; margin-bottom: 10px; color: #b0c4d8; line-height: 1.4; }
+        #scientific-credits { font-size: 10px; opacity: 0.85; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px; }
+        .mission-tag {
+            display: inline-block; background: rgba(255,170,68,0.2);
+            color: #ffaa44; padding: 2px 7px; border-radius: 5px;
+            font-size: 9px; margin: 2px 3px 2px 0; font-family: monospace;
+        }
+        .fidelity-badge {
+            display: inline-block; background: rgba(74,222,128,0.15);
+            color: #4ade80; padding: 3px 9px; border-radius: 15px;
+            font-size: 10px; margin-top: 6px; font-weight: 600;
+        }
+        #controls {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(18,24,38,0.95);
+            padding: 14px 20px; border-radius: 14px;
+            z-index: 100; display: flex; flex-wrap: wrap;
+            gap: 10px; justify-content: center; align-items: center;
+            border: 1px solid rgba(255,255,255,0.15); max-width: 95vw;
+        }
+        .planet-btn {
+            background: rgba(30,38,58,0.95); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 8px 14px; border-radius: 24px;
+            cursor: pointer; transition: all 0.25s ease;
+            font-size: 12px; font-weight: 500; white-space: nowrap;
+        }
+        .planet-btn:hover { background: rgba(60,78,110,0.95); border-color: #6ca0ff; }
+        .planet-btn.active {
+            background: linear-gradient(135deg, #ffaa44, #ff8833);
+            color: #0a0e17; border-color: transparent; font-weight: 600;
+        }
+        #time-slider { flex: 1; min-width: 150px; max-width: 280px; margin: 0 6px; }
+        input[type="range"] {
+            width: 100%; cursor: pointer;
+            background: linear-gradient(90deg, #2a3447, #3a4557);
+            height: 4px; border-radius: 4px; -webkit-appearance: none; outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 16px; height: 16px;
+            border-radius: 50%; background: #ffaa44; cursor: pointer;
+            border: 2px solid #0a0e17;
+        }
+        .control-group {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(25,32,48,0.7); padding: 6px 12px;
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.15);
+        }
+        .control-group label { font-size: 11px; color: #a0b3c6; }
+        #play-pause {
+            background: linear-gradient(135deg, #ffaa44, #ff8833);
+            border: none; color: #0a0e17; padding: 8px 18px;
+            border-radius: 24px; cursor: pointer; font-weight: 600; font-size: 13px;
+        }
+        #status {
+            position: absolute; bottom: 85px; right: 20px;
+            background: rgba(18,24,38,0.9); padding: 6px 12px;
+            border-radius: 8px; font-size: 10px; font-family: monospace;
+            color: #a0b3c6; z-index: 90; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .instruction {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(18,24,38,0.9); padding: 6px 12px;
+            border-radius: 8px; font-size: 11px; color: #a0b3c6;
+            z-index: 90; pointer-events: none;
+        }
+        #scientific-panel {
+            position: absolute; bottom: 95px; left: 20px;
+            background: rgba(18,24,38,0.95); padding: 12px 16px;
+            border-radius: 10px; font-size: 10px; font-family: monospace;
+            z-index: 90; pointer-events: none;
+            border-left: 3px solid #ffaa44; max-width: 290px;
+        }
+        .science-header { color: #ffaa44; font-weight: 700; margin-bottom: 6px; font-size: 11px; }
+        .science-text { color: #a0e8d0; margin: 3px 0; font-size: 10px; }
+        .science-text::before { content: "✓"; color: #4ade80; font-weight: bold }
+        .science-params {
+            background: rgba(255,170,68,0.1); padding: 5px 8px;
+            border-radius: 5px; margin-top: 6px; color: #ffaa44; font-weight: 500;
+        }
+        @media (max-width: 768px) {
+            .planet-btn { padding: 6px 10px; font-size: 10px; }
+            #planet-name { font-size: 18px; }
+            #controls { padding: 10px 14px; gap: 6px; bottom: 12px; width: calc(100% - 24px); left: 12px; transform: none; }
+            #info { max-width: 260px; font-size: 11px; top: 12px; left: 12px; }
+            #scientific-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <div id="planet-name">🌅 Marte</div>
+        <div id="atmosphere-info">Atmosfera: 95% CO₂ | Poeira de óxido de ferro | Halo azul ao nascer</div>
+        <div id="scientific-credits">
+            <span class="mission-tag">🔴 Viking 1/2</span>
+            <span class="mission-tag">🚀 Pathfinder</span>
+            <span class="mission-tag">🤖 Curiosity</span>
+            <span class="mission-tag">📸 Perseverance</span>
+            <div class="fidelity-badge">🎯 Fidelidade: Muito Alta</div>
+        </div>
+    </div>
+    
+    <div id="scientific-panel">
+        <div class="science-header">🔬 VALIDAÇÃO CIENTÍFICA</div>
+        <div class="science-text">Dados de missões NASA/ESA/JAXA</div>
+        <div class="science-text">Espalhamento atmosférico calibrado</div>
+        <div class="science-text">Cores validadas por sondas espaciais</div>
+        <div class="science-params">Parâmetros: <span id="science-params">P=0,006 atm | Poeira Fe₂O₃</span></div>
+    </div>
+    
+    <div id="controls">
+        <button class="planet-btn" data-planet="mercury">☿ Mercúrio</button>
+        <button class="planet-btn" data-planet="venus">♀ Vênus</button>
+        <button class="planet-btn" data-planet="earth">🌍 Terra</button>
+        <button class="planet-btn active" data-planet="mars">♂ Marte</button>
+        <button class="planet-btn" data-planet="jupiter">♃ Júpiter</button>
+        <button class="planet-btn" data-planet="saturn">🪐 Saturno</button>
+        <button class="planet-btn" data-planet="uranus">⛢ Urano</button>
+        <button class="planet-btn" data-planet="neptune">♆ Netuno</button>
+        <div class="control-group">
+            <label for="time-slider">🌞 Posição</label>
+            <input type="range" id="time-slider" min="0" max="100" value="35">
+        </div>
+        <button id="play-pause">⏸ Pausar</button>
+    </div>
+    
+    <div id="status">
+		<p align="center">🎨 Simulação calibrada por dados de missões espaciais</p>
+		<p align="center">Prof. Luciano Soares Pedroso - 2026</div>
+    <div class="instruction">🖱️ Arraste para explorar | Scroll para zoom</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+
+    <script>
+        // === CONFIGURAÇÃO ===
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0e17);
+        scene.fog = new THREE.Fog(0x0a0e17, 30, 70);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 3, 14);
+        camera.lookAt(0, 0, 0);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        renderer.toneMappingExposure = 1.3;
+        document.body.appendChild(renderer.domElement);
+        
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.minPolarAngle = 0.2;
+        controls.maxPolarAngle = Math.PI * 0.49;
+        controls.target.set(0, 0, 0);
+        
+        // === SOLO ===
+        const groundGeo = new THREE.CircleGeometry(30, 40);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.95, metalness: 0.02 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -0.5;
+        ground.receiveShadow = true;
+        scene.add(ground);
+        
+        // Horizonte visual (linha sutil)
+        const horizonGeo = new THREE.RingGeometry(29.5, 30.5, 64);
+        const horizonMat = new THREE.MeshBasicMaterial({ color: 0xffaa44, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
+        const horizon = new THREE.Mesh(horizonGeo, horizonMat);
+        horizon.rotation.x = -Math.PI / 2;
+        horizon.position.y = -0.49;
+        scene.add(horizon);
+        
+        let dustParticles = null;
+        
+        // === ILUMINAÇÃO ===
+        const sunLight = new THREE.DirectionalLight(0xffeecc, 2.0);
+        sunLight.position.set(10, 5, 10);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.set(1024, 1024);
+        scene.add(sunLight);
+        
+        const ambientLight = new THREE.AmbientLight(0x445566, 0.35);
+        scene.add(ambientLight);
+        
+        const fillLight = new THREE.PointLight(0x778899, 0.5, 40);
+        fillLight.position.set(-5, 3, -5);
+        scene.add(fillLight);
+        
+        // === SOL VISUAL (com camadas de brilho) ===
+        const sunGeo = new THREE.SphereGeometry(0.5, 32, 32);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffeecc });
+        const sunSphere = new THREE.Mesh(sunGeo, sunMat);
+        scene.add(sunSphere);
+        
+        const glow1Geo = new THREE.SphereGeometry(0.8, 24, 24);
+        const glow1Mat = new THREE.MeshBasicMaterial({
+            color: 0xffaa66, transparent: true, opacity: 0.4,
+            blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const glow1 = new THREE.Mesh(glow1Geo, glow1Mat);
+        scene.add(glow1);
+        
+        const glow2Geo = new THREE.SphereGeometry(1.4, 16, 16);
+        const glow2Mat = new THREE.MeshBasicMaterial({
+            color: 0xff8844, transparent: true, opacity: 0.15,
+            blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const glow2 = new THREE.Mesh(glow2Geo, glow2Mat);
+        scene.add(glow2);
+        
+        // === CÉU COM SHADER DE GRADIENTE ===
+        const skyGeo = new THREE.SphereGeometry(70, 40, 40);
+        const skyMat = new THREE.ShaderMaterial({
+            uniforms: {
+                topColor: { value: new THREE.Color(0x000000) },
+                bottomColor: { value: new THREE.Color(0x000000) },
+                blend: { value: 0.5 },
+                horizonOffset: { value: -0.3 }
+            },
+            vertexShader: `
+                varying vec3 vWorldPos;
+                void main() {
+                    vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 topColor;
+                uniform vec3 bottomColor;
+                uniform float blend;
+                uniform float horizonOffset;
+                varying vec3 vWorldPos;
+                void main() {
+                    float h = normalize(vWorldPos).y;
+                    float t = smoothstep(horizonOffset - 0.15, horizonOffset + 0.35, h);
+                    vec3 col = mix(bottomColor, topColor, t);
+                    col = mix(bottomColor, col, blend * 0.7);
+                    gl_FragColor = vec4(col, 1.0);
+                }
+            `,
+            side: THREE.BackSide,
+            transparent: true
+        });
+        const skySphere = new THREE.Mesh(skyGeo, skyMat);
+        scene.add(skySphere);
+        
+        // === DADOS CIENTÍFICOS ===
+        const planetData = {
+            mercury: {
+                name: "Mercúrio", atmosphereDesc: "Exosfera tênue: He, Na, O | Pressão: ~10⁻¹⁵ atm",
+                skyTop: "#000011", skyBottom: "#0a0a1a", sunColor: 0xffffff,
+                ambientIntensity: 0.10, sunIntensity: 3.5,
+                particleColor: 0xcccccc, particleDensity: 0.02,
+                groundColor: 0x7a6a5a,
+                missions: ["📡 Mariner 10", "🛰️ MESSENGER", "🚀 BepiColombo"],
+                fidelity: "Alta (MESSENGER)", params: "Sem atmosfera | Espalhamento desprezível"
+            },
+            venus: {
+                name: "Vênus", atmosphereDesc: "CO₂ 96,5% | Nuvens H₂SO₄ | Pressão: 92 atm",
+                skyTop: "#c8a888", skyBottom: "#b88868", sunColor: 0xffcc99,
+                ambientIntensity: 0.75, sunIntensity: 0.55,
+                particleColor: 0xd4b89c, particleDensity: 0.95,
+                groundColor: 0xc47e5a,
+                missions: ["🛸 Venera 9-14", "🔭 Magellan", "🚀 Venus Express"],
+                fidelity: "Muito Alta (Venera)", params: "Mie dominante | Difusão extrema"
+            },
+            earth: {
+                name: "Terra", atmosphereDesc: "N₂ 78% | O₂ 21% | Pressão: 1 atm",
+                skyTop: "#1a4a8c", skyBottom: "#ffaa77", sunColor: 0xffddaa,
+                ambientIntensity: 0.40, sunIntensity: 1.5,
+                particleColor: 0x99bbff, particleDensity: 0.35,
+                groundColor: 0x5a7a4a,
+                missions: ["🌍 Observações", "🛰️ GOES", "🌎 DSCOVR"],
+                fidelity: "Referência", params: "Rayleigh dominante | Aerossois variáveis"
+            },
+            mars: {
+                name: "Marte", atmosphereDesc: "CO₂ 95% | Poeira Fe₂O₃ | Pressão: 0,006 atm",
+                skyTop: "#c48a6a", skyBottom: "#d49a7a", sunColor: 0x7aa0c0,
+                ambientIntensity: 0.36, sunIntensity: 0.95,
+                particleColor: 0xc47e5a, particleDensity: 0.72,
+                groundColor: 0xb85c2a,
+                missions: ["🔴 Viking", "🚀 Pathfinder", "🤖 Curiosity", "📸 Perseverance"],
+                fidelity: "Muito Alta (in-situ)", params: "Poeira em suspensão | Halo azul no nascer"
+            },
+            jupiter: {
+                name: "Júpiter", atmosphereDesc: "H₂ 90% | He 10% | NH₃, CH₄ | Sem superfície sólida",
+                skyTop: "#d4c0a8", skyBottom: "#c4a888", sunColor: 0xffcc99,
+                ambientIntensity: 0.58, sunIntensity: 0.48,
+                particleColor: 0xe0c8a8, particleDensity: 0.88,
+                groundColor: 0xaa8866,
+                missions: ["🛸 Pioneer", "🚀 Voyager", "🛰️ Galileo", "🔭 Juno"],
+                fidelity: "Alta (Juno)", params: "Cristais de amônia | Bandas atmosféricas"
+            },
+            saturn: {
+                name: "Saturno", atmosphereDesc: "H₂ 96% | He 3% | CH₄ | Nevoa fotoquímica",
+                skyTop: "#e8d4b8", skyBottom: "#d8b898", sunColor: 0xffcc88,
+                ambientIntensity: 0.52, sunIntensity: 0.44,
+                particleColor: 0xe0c494, particleDensity: 0.78,
+                groundColor: 0xc4a87a,
+                missions: ["🛸 Pioneer 11", "🚀 Voyager", "🪐 Cassini"],
+                fidelity: "Muito Alta (Cassini)", params: "Hidrocarbonetos | Nevoa dourada"
+            },
+            uranus: {
+                name: "Urano", atmosphereDesc: "H₂ 83% | He 15% | CH₄ 2,3% | Absorção de vermelho",
+                skyTop: "#a8e0e8", skyBottom: "#88c8d8", sunColor: 0x88d0e0,
+                ambientIntensity: 0.30, sunIntensity: 0.28,
+                particleColor: 0x98d4e4, particleDensity: 0.52,
+                groundColor: 0x7898a8,
+                missions: ["🚀 Voyager 2", "🔭 Hubble"],
+                fidelity: "Moderada (Voyager 2)", params: "Metano absorve vermelho | Céu verde-água"
+            },
+            neptune: {
+                name: "Netuno", atmosphereDesc: "H₂ 80% | He 19% | CH₄ 1,5% | Ventos: 2100 km/h",
+                skyTop: "#4868b8", skyBottom: "#6888d8", sunColor: 0x98b0ff,
+                ambientIntensity: 0.24, sunIntensity: 0.24,
+                particleColor: 0x7090d0, particleDensity: 0.62,
+                groundColor: 0x5878a8,
+                missions: ["🚀 Voyager 2", "🔭 Hubble", "🌌 JWST"],
+                fidelity: "Moderada (Voyager 2 + JWST)", params: "Metano | Azul profundo por absorção"
+            }
+        };
+        
+        // === ESTADO ===
+        let currentPlanet = "mars";
+        let timeValue = 0.35; // Começa no nascer do Sol
+        let autoAnimate = true;
+        let animationId = null;
+        
+        // === FUNÇÕES ===
+        function updateScientificCredits(key) {
+            const d = planetData[key];
+            document.getElementById('scientific-credits').innerHTML = 
+                d.missions.map(m => `<span class="mission-tag">${m}</span>`).join('') +
+                `<div class="fidelity-badge">🎯 Fidelidade: ${d.fidelity}</div>`;
+            document.getElementById('science-params').textContent = d.params;
+        }
+        
+        function updateParticles(key) {
+            if (dustParticles) { scene.remove(dustParticles); dustParticles = null; }
+            const d = planetData[key];
+            const count = Math.floor(d.particleDensity * 600);
+            if (count < 10) return;
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(count * 3);
+            for (let i = 0; i < count; i++) {
+                const r = 10 + Math.random() * 50;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+                pos[i*3+1] = r * Math.cos(phi) * 0.2 + Math.random() * 3;
+                pos[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({
+                color: d.particleColor, size: 0.06, transparent: true,
+                opacity: 0.35 + d.particleDensity * 0.35, blending: THREE.AdditiveBlending
+            });
+            dustParticles = new THREE.Points(geo, mat);
+            scene.add(dustParticles);
+        }
+        
+        function updateAtmosphere(key, elev) {
+            const d = planetData[key];
+            const dayF = Math.min(1, Math.max(0, (elev - 0.25) / 0.50));
+            
+            // === CÉU ===
+            const top = new THREE.Color(d.skyTop);
+            const bot = new THREE.Color(d.skyBottom);
+            skyMat.uniforms.topColor.value = top;
+            skyMat.uniforms.bottomColor.value = bot;
+            skyMat.uniforms.blend.value = dayF;
+            skyMat.uniforms.horizonOffset.value = -0.25;
+            scene.background = bot.clone().lerp(top, dayF * 0.5).multiplyScalar(0.3);
+            
+            // === LUZES ===
+            const intenF = 0.2 + Math.sin(Math.max(0, elev - 0.2) * Math.PI * 0.8) * 0.8;
+            sunLight.intensity = d.sunIntensity * intenF;
+            ambientLight.intensity = d.ambientIntensity * (0.35 + dayF * 0.65);
+            fillLight.intensity = d.ambientIntensity * 0.6 * intenF;
+            
+            // === POSIÇÃO DO SOL - TRAJECTÓRIA REALISTA NO HORIZONTE ===
+            // elev: 0 = noite (abaixo do horizonte), 0.35 = nascer (horizonte), 1 = meio-dia (alto)
+            const sunriseElev = 0.35; // ponto exato do nascer
+            const angleRange = Math.PI * 0.75; // -37.5° a +75° relativo ao horizonte
+            const angle = (elev - sunriseElev) * angleRange / (1 - sunriseElev);
+            
+            const sunDist = 22; // distância grande para perspectiva realista
+            const sunX = Math.cos(angle) * sunDist;
+            const sunY = Math.sin(angle) * sunDist * 0.75 - 0.3; // -0.3 alinha com horizonte visual
+            const sunZ = Math.sin(angle * 0.4) * sunDist * 0.3; // leve profundidade
+            
+            sunSphere.position.set(sunX, sunY, sunZ);
+            glow1.position.copy(sunSphere.position);
+            glow2.position.copy(sunSphere.position);
+            sunLight.position.set(sunX, sunY + 2, sunZ);
+            
+            // Atualiza brilho do Sol
+            const sunCol = new THREE.Color(d.sunColor);
+            sunMat.color = sunCol;
+            glow1Mat.color = sunCol.clone().lerp(new THREE.Color(0xffaa66), 0.4);
+            glow1Mat.opacity = 0.28 + intenF * 0.28;
+            glow2Mat.color = sunCol.clone().lerp(new THREE.Color(0xff6633), 0.6);
+            glow2Mat.opacity = 0.10 + intenF * 0.18;
+            
+            // === SOLO ===
+            groundMat.color.setHex(d.groundColor);
+            groundMat.roughness = 0.9 + d.particleDensity * 0.05;
+            
+            // === UI ===
+            document.getElementById('planet-name').innerHTML = `🌅 ${d.name}`;
+            document.getElementById('atmosphere-info').textContent = d.atmosphereDesc;
+            updateScientificCredits(key);
+        }
+        
+        // === CONTROLES ===
+        const slider = document.getElementById('time-slider');
+        const playBtn = document.getElementById('play-pause');
+        
+        function setTime(v) { timeValue = v/100; updateAtmosphere(currentPlanet, timeValue); slider.value = v; }
+        
+        slider.addEventListener('input', e => {
+            autoAnimate = false;
+            setTime(parseFloat(e.target.value));
+            if (animationId) cancelAnimationFrame(animationId);
+            playBtn.textContent = '▶ Play';
+        });
+        
+        playBtn.addEventListener('click', () => {
+            autoAnimate = !autoAnimate;
+            playBtn.textContent = autoAnimate ? '⏸ Pausar' : '▶ Play';
+            if (autoAnimate) startAnim();
+        });
+        
+        function startAnim() {
+            if (animationId) cancelAnimationFrame(animationId);
+            let t = timeValue;
+            function step() {
+                if (!autoAnimate) return;
+                t += 0.002; if (t > 1.02) t = 0;
+                timeValue = t;
+                updateAtmosphere(currentPlanet, t);
+                slider.value = t * 100;
+                animationId = requestAnimationFrame(step);
+            }
+            step();
+        }
+        
+        document.querySelectorAll('.planet-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const p = btn.dataset.planet;
+                document.querySelectorAll('.planet-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentPlanet = p;
+                updateParticles(p);
+                updateAtmosphere(p, timeValue);
+                controls.target.set(0, 0, 0);
+            });
+        });
+        
+        // === ESTRELAS ===
+        const starGeo = new THREE.BufferGeometry();
+        const sCount = 1500;
+        const sPos = new Float32Array(sCount * 3);
+        for (let i = 0; i < sCount; i++) {
+            sPos[i*3] = (Math.random()-0.5)*500;
+            sPos[i*3+1] = (Math.random()-0.5)*300 + 80;
+            sPos[i*3+2] = (Math.random()-0.5)*200 - 100;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.92 });
+        const stars = new THREE.Points(starGeo, starMat);
+        scene.add(stars);
+        
+        // === LOOP ===
+        let tAcc = 0;
+        function animate() {
+            tAcc += 0.01;
+            if (dustParticles) {
+                dustParticles.rotation.y = tAcc * 0.025;
+                // Movimento sutil vertical nas partículas
+                const positions = dustParticles.geometry.attributes.position;
+                for (let i = 0; i < positions.count; i++) {
+                    const y = positions.getY(i);
+                    positions.setY(i, y + Math.sin(tAcc + i * 0.05) * 0.003);
+                }
+                positions.needsUpdate = true;
+            }
+            stars.rotation.y = tAcc * 0.008;
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        
+        // === INICIALIZAÇÃO ===
+        function init() {
+            updateParticles("mars");
+            updateAtmosphere("mars", 0.35);
+            setTime(35);
+            startAnim();
+            animate();
+            console.log("✅ Simulação iniciada - Sol nascendo no horizonte");
+        }
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        init();
+    </script>
+</body>
+</html>

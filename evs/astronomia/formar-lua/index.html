@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Formação da Lua</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        :root {
+            --bg: #000010;
+            --panel-bg: rgba(8, 8, 24, 0.92);
+            --accent: #ff7733;
+            --accent2: #00ddcc;
+            --text: #e0e0e0;
+            --muted: #999;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: var(--text);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #ui-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: var(--panel-bg);
+            padding: 20px 22px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            max-width: 440px;
+            width: calc(100vw - 40px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s ease;
+        }
+        h1 {
+            font-size: 1.25rem;
+            margin: 0 0 3px 0;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(255, 119, 51, 0.5);
+            letter-spacing: 0.02em;
+        }
+        .subtitle {
+            font-size: 0.7rem;
+            color: var(--muted);
+            margin-bottom: 12px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .phase-indicator {
+            display: inline-block;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            letter-spacing: 0.03em;
+            transition: all 0.5s ease;
+        }
+        .phase-1,
+        .phase-2,
+        .phase-3,
+        .phase-4,
+        .phase-5,
+        .phase-6,
+        .phase-7,
+        .phase-8,
+        .phase-9 {
+            background: rgba(100, 180, 255, 0.2);
+            color: #88ccff;
+            border: 1px solid rgba(100, 180, 255, 0.4);
+        }
+        .phase-2 {
+            background: rgba(255, 80, 30, 0.25);
+            color: #ff6644;
+            border: 1px solid rgba(255, 80, 30, 0.5);
+            animation: pulse-phase 0.6s ease-in-out infinite;
+        }
+        .phase-3 {
+            background: rgba(255, 170, 40, 0.2);
+            color: #ffaa33;
+            border: 1px solid rgba(255, 170, 40, 0.4);
+        }
+        .phase-4 {
+            background: rgba(0, 200, 160, 0.18);
+            color: #00ccaa;
+            border: 1px solid rgba(0, 200, 160, 0.35);
+        }
+        .phase-5 {
+            background: rgba(255, 200, 60, 0.2);
+            color: #ffc844;
+            border: 1px solid rgba(255, 200, 60, 0.45);
+        }
+        .phase-6 {
+            background: rgba(220, 180, 140, 0.2);
+            color: #ddbb88;
+            border: 1px solid rgba(220, 180, 140, 0.4);
+        }
+        .phase-7 {
+            background: rgba(140, 200, 255, 0.2);
+            color: #88ccff;
+            border: 1px solid rgba(140, 200, 255, 0.4);
+        }
+        .phase-8 {
+            background: rgba(180, 140, 255, 0.2);
+            color: #bb99ee;
+            border: 1px solid rgba(180, 140, 255, 0.4);
+        }
+        .phase-9 {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        @keyframes pulse-phase {
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(255, 80, 30, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 24px rgba(255, 120, 50, 0.8);
+            }
+        }
+
+        #description {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #ddd;
+            margin: 6px 0 10px;
+            min-height: 40px;
+            transition: all 0.4s ease;
+            font-weight: 500;
+        }
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 3px 0;
+            font-size: 0.75rem;
+            color: #bbb;
+        }
+        .legend-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .time-control {
+            margin: 14px 0 6px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .time-label-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 7px;
+            font-size: 0.78rem;
+            color: #aaa;
+        }
+        input[type=range] {
+            width: 100%;
+            height: 7px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #0a0a1e 0%, #1a1a3a 30%, #2a1a20 60%, #1a2a2a 100%);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 35%, #ff9944, #e04400);
+            cursor: pointer;
+            box-shadow: 0 0 16px rgba(255, 100, 20, 0.7);
+            border: 2px solid #fff;
+            transition: all 0.15s ease;
+        }
+        .time-buttons {
+            display: flex;
+            gap: 7px;
+            margin-top: 9px;
+            flex-wrap: wrap;
+        }
+        .time-buttons button {
+            flex: 1;
+            min-width: 50px;
+            background: linear-gradient(135deg, #e04400, #ff7722);
+            border: none;
+            color: #fff;
+            padding: 9px 6px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.76rem;
+            letter-spacing: 0.02em;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            white-space: nowrap;
+        }
+        .time-buttons button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+        }
+        .time-buttons button.rewind-btn {
+            background: linear-gradient(135deg, #1a5faa, #3399ee);
+        }
+        .time-buttons button.pause-btn {
+            background: linear-gradient(135deg, #444, #5a5a5a);
+        }
+        .time-buttons button.pause-btn.active {
+            background: linear-gradient(135deg, #555, #777);
+        }
+        #time-display {
+            text-align: center;
+            margin-top: 7px;
+            font-size: 0.8rem;
+            color: #ffaa44;
+            font-weight: 600;
+        }
+        .phase-info-tip {
+            margin-top: 9px;
+            padding: 8px 10px;
+            background: rgba(0, 220, 200, 0.06);
+            border-left: 3px solid var(--accent2);
+            border-radius: 4px;
+            font-size: 0.74rem;
+            color: #aaa;
+        }
+        .hint-text {
+            font-size: 0.68rem;
+            margin-top: 9px;
+            color: #666;
+            text-align: center;
+        }
+        #overlay-explanation {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 14px 26px;
+            max-width: 720px;
+            width: calc(100% - 40px);
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            opacity: 1;
+            pointer-events: none;
+            color: #fff;
+        }
+        .overlay-phase-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 5px 0;
+            text-shadow: 0 0 15px currentColor;
+        }
+        .overlay-phase-desc {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            font-weight: 500;
+            color: #ddd;
+            margin: 0;
+        }
+        .overlay-icon {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 3px;
+        }
+        @media (max-width: 600px) {
+            #ui-panel {
+                top: 6px;
+                left: 6px;
+                padding: 12px 14px;
+            }
+            h1 {
+                font-size: 1.05rem;
+            }
+            .time-buttons button {
+                font-size: 0.68rem;
+                padding: 7px 4px;
+            }
+            #description {
+                font-size: 0.76rem;
+            }
+            .overlay-phase-title {
+                font-size: 1.2rem;
+            }
+            .overlay-phase-desc {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-panel">
+        <h1 align="center">🌍 EVS - Hipótese da Sinéstia</h1>
+        <div class="subtitle">
+			<p align="center"><b>Simulação Completa da Formação da Lua</b></p>
+			<p align="center"><font color="#FFFFFF">Prof. luciano Soares Pedroso</font></div>
+        <span id="phase-text" class="phase-indicator phase-1">Fase 1: Aproximação Gravitacional</span>
+        <p id="description">A Proto-Terra e Theia aproximam-se lentamente para um impacto oblíquo cataclísmico.</p>
+        <div class="legend-row"><span class="legend-dot" style="background:#ff5533;"></span> Proto-Terra (magma)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#cc2200;"></span> Theia (impactante)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#ff9933;"></span> Fragmentos ejetados / disco</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#ffcc66;"></span> Disco da Sinéstia</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#aa9977;"></span> Proto-Lua (fragmentos)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#00ffcc;"></span> Limite de Roche (~3 raios terrestres)</div>
+        <div class="time-control">
+            <div class="time-label-row"><span>⏳ Linha do Tempo</span><span id="time-value">0%</span></div>
+            <input type="range" id="time-slider" min="0" max="1000" value="0" step="1">
+            <div class="time-buttons">
+                <button class="rewind-btn" onclick="rewind()">⏮ Início</button>
+                <button class="pause-btn" id="pause-btn" onclick="togglePause()">⏸ Pausar</button>
+                <button onclick="playForward()">▶ Avançar</button>
+            </div>
+            <div id="time-display">Tempo: 0 milhões de anos</div>
+        </div>
+        <div class="phase-info-tip" id="phase-detail">💡 Use o <b>slider</b> para navegar no tempo ou o botão <b>Avançar</b> para reprodução automática.</div>
+        <p class="hint-text">🖱️ Arraste para girar | Scroll para zoom | Botão direito para mover</p>
+    </div>
+    <div id="overlay-explanation">
+        <span class="overlay-icon">🌌</span>
+        <div class="overlay-phase-title">Fase 1: Aproximação Gravitacional</div>
+        <p class="overlay-phase-desc">A Proto-Terra e Theia se aproximam lentamente, deformadas pelas forças de maré.</p>
+    </div>
+    <div id="canvas-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js">
+    </script>
+    <script>
+        (function () {
+            // ═══════════════════════════════════════════════════════
+            // SETUP: Scene, Camera, Renderer, Controls
+            // ═══════════════════════════════════════════════════════
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000010, 0.00030);
+
+            const camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 600);
+            camera.position.set(8, 14, 38);
+            camera.lookAt(0, 0, 0);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.35;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.07;
+            controls.minDistance = 5;
+            controls.maxDistance = 110;
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            // ─── Camera cinematic state ──────────────────────────
+            let camTargetPos = new THREE.Vector3(8, 14, 38);
+            let camTargetLook = new THREE.Vector3(0, 0, 0);
+            let camLookCurrent = new THREE.Vector3(0, 0, 0);
+            let userInteracting = false;
+            let lastInteractTime = 0;
+            renderer.domElement.addEventListener('pointerdown', () => { userInteracting = true; lastInteractTime = performance.now(); });
+            renderer.domElement.addEventListener('pointerup',   () => { userInteracting = false; lastInteractTime = performance.now(); });
+            renderer.domElement.addEventListener('wheel',       () => { lastInteractTime = performance.now(); });
+
+            // ═══════════════════════════════════════════════════════
+            // LIGHTS
+            // ═══════════════════════════════════════════════════════
+            const ambientLight = new THREE.AmbientLight(0x303050, 0.5);
+            scene.add(ambientLight);
+            const sunLight = new THREE.DirectionalLight(0xfff8ee, 0.9);
+            sunLight.position.set(45, 28, 32);
+            scene.add(sunLight);
+            const impactGlow   = new THREE.PointLight(0xff5500, 0, 80);
+            const diskGlow     = new THREE.PointLight(0xff8833, 0, 60);
+            diskGlow.position.set(0, 1, 0);
+            const accretionGlow = new THREE.PointLight(0xffaa55, 0, 35);
+            scene.add(impactGlow, diskGlow, accretionGlow);
+
+            // ═══════════════════════════════════════════════════════
+            // STARS
+            // ═══════════════════════════════════════════════════════
+            const starsGeo = new THREE.BufferGeometry();
+            const starsCount = 4500;
+            const starsPos = new Float32Array(starsCount * 3);
+            const starsCols = new Float32Array(starsCount * 3);
+            for (let i = 0; i < starsCount; i++) {
+                starsPos[i*3]   = (Math.random()-0.5)*450;
+                starsPos[i*3+1] = (Math.random()-0.5)*450;
+                starsPos[i*3+2] = (Math.random()-0.5)*450;
+                const temp = Math.random();
+                starsCols[i*3]   = 0.7 + temp*0.3;
+                starsCols[i*3+1] = 0.75 + (1-temp)*0.2;
+                starsCols[i*3+2] = 0.9 + (1-temp)*0.1;
+            }
+            starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+            starsGeo.setAttribute('color',    new THREE.BufferAttribute(starsCols, 3));
+            const stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({
+                size: 0.22, vertexColors: true, transparent: true, opacity: 0.9,
+                blending: THREE.AdditiveBlending, depthWrite: false
+            }));
+            scene.add(stars);
+
+            // ═══════════════════════════════════════════════════════
+            // TEXTURES
+            // ═══════════════════════════════════════════════════════
+            function createMagmaTexture() {
+                const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+                const ctx = c.getContext('2d');
+                const g = ctx.createLinearGradient(0,0,0,512);
+                g.addColorStop(0, '#ff8844'); g.addColorStop(0.3,'#cc3300');
+                g.addColorStop(0.7,'#661100'); g.addColorStop(1,'#220500');
+                ctx.fillStyle = g; ctx.fillRect(0,0,1024,512);
+                for (let i=0;i<220;i++){
+                    ctx.beginPath(); ctx.moveTo(Math.random()*1024,Math.random()*512);
+                    for(let j=0;j<6;j++) ctx.lineTo((Math.random()*1024+512)%1024,Math.random()*512);
+                    ctx.strokeStyle=`rgba(255,${120+Math.random()*135},${30+Math.random()*70},${0.3+Math.random()*0.5})`;
+                    ctx.lineWidth=Math.random()*7+1; ctx.stroke();
+                }
+                const tex = new THREE.CanvasTexture(c);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                tex.colorSpace = THREE.SRGBColorSpace;
+                return tex;
+            }
+
+            function createMoonTexture() {
+                const c = document.createElement('canvas'); c.width=512; c.height=256;
+                const ctx = c.getContext('2d');
+                const g = ctx.createRadialGradient(256,128,20,256,128,280);
+                g.addColorStop(0,'#cccccc'); g.addColorStop(0.5,'#999999'); g.addColorStop(1,'#666666');
+                ctx.fillStyle = g; ctx.fillRect(0,0,512,256);
+                for(let i=0;i<500;i++){
+                    ctx.beginPath(); ctx.arc(Math.random()*512,Math.random()*256,Math.random()*18+2,0,Math.PI*2);
+                    ctx.fillStyle=`rgba(25,25,28,${0.25+Math.random()*0.5})`; ctx.fill();
+                }
+                const mare = ctx.createRadialGradient(260,130,10,260,130,110);
+                mare.addColorStop(0,'rgba(18,18,22,0.95)'); mare.addColorStop(0.7,'rgba(30,30,35,0.55)'); mare.addColorStop(1,'rgba(80,80,80,0)');
+                ctx.fillStyle=mare; ctx.beginPath(); ctx.arc(260,130,105,0,Math.PI*2); ctx.fill();
+                const tex = new THREE.CanvasTexture(c);
+                tex.colorSpace = THREE.SRGBColorSpace;
+                return tex;
+            }
+
+            const magmaTex = createMagmaTexture();
+            const moonTex  = createMoonTexture();
+
+            // ═══════════════════════════════════════════════════════
+            // BODIES
+            // ═══════════════════════════════════════════════════════
+            const earthGeo = new THREE.SphereGeometry(3, 72, 72);
+
+            // Proto-Terra
+            const earthMat = new THREE.MeshStandardMaterial({
+                map: magmaTex, roughness: 0.6, metalness: 0.25,
+                emissive: new THREE.Color(0xff3300), emissiveIntensity: 0.7
+            });
+            const protoEarth = new THREE.Mesh(earthGeo, earthMat);
+            protoEarth.position.set(-9, 0, 0);
+            scene.add(protoEarth);
+
+            // Theia — raio 1.55 ≈ 0.52×Terra (massa ~0.15 M⊕, raio ~0.53)
+            const theiaGeo = new THREE.SphereGeometry(1.55, 64, 64);
+            const theiaMat = new THREE.MeshStandardMaterial({
+                color: 0xcc3300, roughness: 0.75, metalness: 0.15,
+                emissive: new THREE.Color(0x661100), emissiveIntensity: 0.3
+            });
+            const theia = new THREE.Mesh(theiaGeo, theiaMat);
+            theia.position.set(20, 3.5, 9);
+            scene.add(theia);
+
+            // Post-impact Earth (inchada)
+            const postEarthGeo = new THREE.SphereGeometry(3.8, 72, 72);
+            const postEarthMat = new THREE.MeshStandardMaterial({
+                map: magmaTex, roughness: 0.4, metalness: 0.2,
+                emissive: new THREE.Color(0xff4400), emissiveIntensity: 1.5
+            });
+            const postImpactEarth = new THREE.Mesh(postEarthGeo, postEarthMat);
+            postImpactEarth.visible = false;
+            scene.add(postImpactEarth);
+
+            // Terra final (resfriada)
+            const finalEarthMat = new THREE.MeshStandardMaterial({
+                map: magmaTex, roughness: 0.7, metalness: 0.3,
+                emissive: new THREE.Color(0xff2200), emissiveIntensity: 0.45
+            });
+            const finalEarth = new THREE.Mesh(earthGeo, finalEarthMat);
+            finalEarth.visible = false;
+            scene.add(finalEarth);
+
+            // ─── Proto-Lua: grupo de fragmentos rochosos ──────────
+            const protoMoonGroup = new THREE.Group();
+            protoMoonGroup.visible = false;
+            scene.add(protoMoonGroup);
+            const FRAGMENT_COUNT = 300;
+            const fragmentData = [];
+            const rockMats = [0x665544,0x554433,0x776655,0x443322,0x5a4a3a].map(col =>
+                new THREE.MeshStandardMaterial({color: col, roughness:0.9, metalness:0.05, transparent:true, opacity:0})
+            );
+            function irregularGeo(s) {
+                const w=s*(0.4+Math.random()*0.7), h=s*(0.3+Math.random()*0.8), d=s*(0.35+Math.random()*0.7);
+                const geo = new THREE.BoxGeometry(w,h,d,2,2,2);
+                const pos = geo.attributes.position;
+                for(let i=0;i<pos.count;i++) pos.setXYZ(i, pos.getX(i)+(Math.random()-0.5)*s*0.35, pos.getY(i)+(Math.random()-0.5)*s*0.35, pos.getZ(i)+(Math.random()-0.5)*s*0.35);
+                geo.computeVertexNormals(); return geo;
+            }
+            for (let i=0;i<FRAGMENT_COUNT;i++){
+                const s = 0.07+Math.random()*0.26;
+                const mesh = new THREE.Mesh(irregularGeo(s), rockMats[Math.floor(Math.random()*5)].clone());
+                const r=1.8+Math.random()*2.8, th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+                const lx=r*Math.sin(ph)*Math.cos(th), ly=r*Math.sin(ph)*Math.sin(th), lz=r*Math.cos(ph);
+                mesh.position.set(lx,ly,lz);
+                mesh.rotation.set(Math.random()*Math.PI*2,Math.random()*Math.PI*2,Math.random()*Math.PI*2);
+                protoMoonGroup.add(mesh);
+                const tr=0.78+Math.random()*0.12, tth=Math.random()*Math.PI*2, tph=Math.acos(2*Math.random()-1);
+                fragmentData.push({
+                    mesh, startPos:new THREE.Vector3(lx,ly,lz),
+                    targetPos:new THREE.Vector3(tr*Math.sin(tph)*Math.cos(tth),tr*Math.sin(tph)*Math.sin(tth),tr*Math.cos(tph)),
+                    startRot:new THREE.Euler(mesh.rotation.x,mesh.rotation.y,mesh.rotation.z)
+                });
+            }
+
+            // ─── Lua final ────────────────────────────────────────
+            const moonGeo = new THREE.SphereGeometry(0.82, 72, 72);
+            const moonMat = new THREE.MeshStandardMaterial({
+                map: moonTex, roughness: 0.85, metalness: 0.05,
+                emissive: new THREE.Color(0x111111), emissiveIntensity: 0.1,
+                transparent: true, opacity: 0
+            });
+            const finalMoon = new THREE.Mesh(moonGeo, moonMat);
+            finalMoon.scale.set(0.01,0.01,0.01);
+            finalMoon.visible = false;
+            scene.add(finalMoon);
+
+            // ═══════════════════════════════════════════════════════
+            // PARTICLES — disco de detritos
+            // ═══════════════════════════════════════════════════════
+            const particleCount = 14000;
+            const pGeo = new THREE.BufferGeometry();
+            const posArr   = new Float32Array(particleCount*3);
+            const colArr   = new Float32Array(particleCount*3);
+            const sizeArr  = new Float32Array(particleCount);
+            const pData = [];
+            const cMagma=new THREE.Color('#ff6633'), cHot=new THREE.Color('#ff9944'),
+                  cVapor=new THREE.Color('#ffcc77'), cWhite=new THREE.Color('#fff8ee');
+            for (let i=0;i<particleCount;i++){
+                posArr[i*3]=posArr[i*3+1]=posArr[i*3+2]=9999;
+                const col=[cMagma,cHot,cVapor,cWhite][Math.floor(Math.random()*4)].clone();
+                const br=0.55+Math.random()*0.45;
+                colArr[i*3]=col.r*br; colArr[i*3+1]=col.g*br; colArr[i*3+2]=col.b*br;
+                sizeArr[i]=Math.random()*0.3+0.05;
+                const thetaOrbit=Math.random()*Math.PI*2;
+                const majorR=6.0+Math.random()*5.5, minorR=0.6+Math.random()*3.0;
+                const phiTube=Math.random()*Math.PI*2;
+                const isAccreting=Math.random()<0.22?1:0;
+                pData.push({
+                    orbitR:majorR, orbitTheta:thetaOrbit,
+                    orbitHeight:minorR*Math.sin(phiTube),
+                    isAccreting, accretionDelay:Math.random()*0.6,
+                    orbitSpeed:0.4+Math.random()*1.4, captured:false,
+                    cloudOffsetX:(Math.random()-0.5)*5,
+                    cloudOffsetY:(Math.random()-0.5)*8,
+                    cloudOffsetZ:(Math.random()-0.5)*5,
+                });
+            }
+            pGeo.setAttribute('position',new THREE.BufferAttribute(posArr,3));
+            pGeo.setAttribute('color',   new THREE.BufferAttribute(colArr,3));
+            pGeo.setAttribute('size',    new THREE.BufferAttribute(sizeArr,1));
+            const pCanvas2=document.createElement('canvas'); pCanvas2.width=pCanvas2.height=32;
+            const pCtx2=pCanvas2.getContext('2d');
+            const pGrad2=pCtx2.createRadialGradient(16,16,0,16,16,16);
+            pGrad2.addColorStop(0,'rgba(255,255,255,1)'); pGrad2.addColorStop(0.2,'rgba(255,200,120,0.9)');
+            pGrad2.addColorStop(0.5,'rgba(255,100,40,0.4)'); pGrad2.addColorStop(1,'rgba(255,50,0,0)');
+            pCtx2.fillStyle=pGrad2; pCtx2.fillRect(0,0,32,32);
+            const particleTex2=new THREE.CanvasTexture(pCanvas2);
+            const pMat = new THREE.PointsMaterial({
+                size:0.32, map:particleTex2, vertexColors:true,
+                blending:THREE.AdditiveBlending, depthWrite:false, transparent:true, opacity:0.9
+            });
+            const particleSystem = new THREE.Points(pGeo, pMat);
+            particleSystem.visible=false;
+            scene.add(particleSystem);
+
+            // ═══════════════════════════════════════════════════════
+            // DISCO ACHATADO (sinéstia) — CylinderGeometry
+            // ═══════════════════════════════════════════════════════
+            function ringMesh(inner, outer, height, color) {
+                const geo = new THREE.CylinderGeometry(outer, inner, height, 160, 1, true);
+                const mat = new THREE.MeshBasicMaterial({
+                    color, transparent:true, opacity:0,
+                    blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                scene.add(mesh);
+                return mesh;
+            }
+            const ring1 = ringMesh(8.5, 8.5, 0.14, 0xff8833);
+            const ring2 = ringMesh(5.5, 8.5, 0.20, 0xffaa55);
+            const ring3 = ringMesh(4.0, 6.5, 0.26, 0xffcc77);
+
+            // ─── Limite de Roche ─────────────────────────────────
+            const rocheMat = new THREE.MeshBasicMaterial({
+                color:0x00ffcc, transparent:true, opacity:0,
+                blending:THREE.AdditiveBlending, depthWrite:false
+            });
+            const rocheMarker = new THREE.Mesh(
+                new THREE.TorusGeometry(9.0, 0.07, 8, 140), rocheMat
+            );
+            rocheMarker.rotation.x = Math.PI/2;
+            scene.add(rocheMarker);
+            const rocheMat2 = new THREE.MeshBasicMaterial({
+                color:0x00ffcc, transparent:true, opacity:0,
+                blending:THREE.AdditiveBlending, depthWrite:false
+            });
+            const rocheMarker2 = new THREE.Mesh(
+                new THREE.TorusGeometry(9.0, 0.25, 8, 140), rocheMat2
+            );
+            rocheMarker2.rotation.x = Math.PI/2;
+            scene.add(rocheMarker2);
+
+            // ─── Flash e onda de choque ──────────────────────────
+            const impactFlash = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5,32,32),
+                new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false})
+            );
+            scene.add(impactFlash);
+            const shockRing = new THREE.Mesh(
+                new THREE.TorusGeometry(1,0.15,16,80),
+                new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false})
+            );
+            shockRing.rotation.x = Math.PI/2;
+            scene.add(shockRing);
+
+            // ═══════════════════════════════════════════════════════
+            // LABEL 2D — Limite de Roche
+            // ═══════════════════════════════════════════════════════
+            const rocheLabel = document.createElement('div');
+            rocheLabel.style.cssText = `
+                position:fixed;pointer-events:none;z-index:15;
+                font-size:0.72rem;font-weight:700;letter-spacing:0.05em;
+                color:#00ffcc;text-shadow:0 0 10px #00ffcc88;
+                background:rgba(0,0,0,0.5);padding:3px 8px;border-radius:4px;
+                border:1px solid rgba(0,255,200,0.3);opacity:0;transition:opacity 0.6s;
+                white-space:nowrap;`;
+            rocheLabel.textContent = '▸ Limite de Roche (~3 R⊕)';
+            document.body.appendChild(rocheLabel);
+
+            // ═══════════════════════════════════════════════════════
+            // STATE
+            // ═══════════════════════════════════════════════════════
+            let simTime = 0, isPaused = false, autoPlay = false;
+            let moonOrbitAngle = 0, moonSpinAngle = 0, moonOrbitRadius = 10.5;
+            const totalTime = 1000, TOTAL_MYR = 500;
+            const TWO_PI = Math.PI*2;
+
+            const slider       = document.getElementById('time-slider');
+            const timeValueEl  = document.getElementById('time-value');
+            const timeDisplayEl= document.getElementById('time-display');
+            const pauseBtn     = document.getElementById('pause-btn');
+            const phaseTextEl  = document.getElementById('phase-text');
+            const descriptionEl= document.getElementById('description');
+            const phaseDetailEl= document.getElementById('phase-detail');
+            const overlayEl    = document.getElementById('overlay-explanation');
+            const overlayTitle = overlayEl.querySelector('.overlay-phase-title');
+            const overlayDesc  = overlayEl.querySelector('.overlay-phase-desc');
+            const overlayIcon  = overlayEl.querySelector('.overlay-icon');
+
+            slider.addEventListener('input', () => {
+                simTime = parseInt(slider.value);
+                autoPlay = false;
+                pData.forEach(pd => pd.captured = false);
+                updateSimulation();
+                timeValueEl.textContent = Math.round((simTime/totalTime)*100)+'%';
+            });
+            window.togglePause = () => {
+                isPaused = !isPaused;
+                pauseBtn.textContent = isPaused ? '▶ Continuar' : '⏸ Pausar';
+                pauseBtn.classList.toggle('active', isPaused);
+            };
+            window.rewind = () => {
+                simTime=0; slider.value=0; isPaused=false; autoPlay=false;
+                pData.forEach(pd => pd.captured = false);
+                pauseBtn.textContent='⏸ Pausar'; pauseBtn.classList.remove('active');
+                timeValueEl.textContent='0%'; updateSimulation();
+            };
+            window.playForward = () => {
+                isPaused=false; autoPlay=true;
+                pauseBtn.textContent='⏸ Pausar'; pauseBtn.classList.remove('active');
+            };
+
+            // ═══════════════════════════════════════════════════════
+            // HELPERS
+            // ═══════════════════════════════════════════════════════
+            function smoothstep(t)  { const c=Math.max(0,Math.min(1,t)); return c*c*(3-2*c); }
+            function smootherstep(t){ const c=Math.max(0,Math.min(1,t)); return c*c*c*(c*(c*6-15)+10); }
+            function lerp(a,b,t)    { return a+(b-a)*t; }
+            function phaseProgress(t,s,e){ return Math.max(0,Math.min(1,(t-s)/(e-s))); }
+
+            // Fases: 1=Aproximação, 2=Impacto, 3=Sinéstia, 4=Disco,
+            //        5=Acreção, 6=Lua jovem, 7=Marés, 8=Lock, 9=Atual
+            function getPhase(t){
+                if(t<50)  return 1; if(t<100) return 2; if(t<200) return 3;
+                if(t<330) return 4; if(t<530) return 5; if(t<650) return 6;
+                if(t<800) return 7; if(t<940) return 8; return 9;
+            }
+
+            // ─── Câmera cinematográfica por fase ─────────────────
+            const phaseCams = {
+                1:{ pos:new THREE.Vector3(4,10,42),  look:new THREE.Vector3(-2,0,2)   },
+                2:{ pos:new THREE.Vector3(0,8,28),   look:new THREE.Vector3(0,0,0)    },
+                3:{ pos:new THREE.Vector3(6,18,32),  look:new THREE.Vector3(0,0,0)    },
+                4:{ pos:new THREE.Vector3(8,20,30),  look:new THREE.Vector3(0,0,0)    },
+                5:{ pos:new THREE.Vector3(10,16,34), look:new THREE.Vector3(2,0,2)    },
+                6:{ pos:new THREE.Vector3(10,12,34), look:new THREE.Vector3(0,0,0)    },
+                7:{ pos:new THREE.Vector3(12,14,40), look:new THREE.Vector3(0,0,0)    },
+                8:{ pos:new THREE.Vector3(14,12,40), look:new THREE.Vector3(0,0,0)    },
+                9:{ pos:new THREE.Vector3(10,12,42), look:new THREE.Vector3(0,0,0)    },
+            };
+
+            function updateCinematicCamera(phase) {
+                const idleSecs = (performance.now() - lastInteractTime) / 1000;
+                if (userInteracting || idleSecs < 2.5) return;
+                const target = phaseCams[phase];
+                if (!target) return;
+                camTargetPos.copy(target.pos);
+                camTargetLook.copy(target.look);
+                camera.position.lerp(camTargetPos, 0.018);
+                camLookCurrent.lerp(camTargetLook, 0.018);
+                camera.lookAt(camLookCurrent);
+                controls.target.lerp(camLookCurrent, 0.018);
+            }
+
+            // ─── Label do Limite de Roche no canvas ──────────────
+            const _rV = new THREE.Vector3();
+            function updateRocheLabel(visible) {
+                if (!visible) { rocheLabel.style.opacity='0'; return; }
+                _rV.set(9.5, 0.4, 0);
+                _rV.project(camera);
+                const hw=window.innerWidth/2, hh=window.innerHeight/2;
+                const sx=(+_rV.x+1)*hw, sy=(-_rV.y+1)*hh;
+                rocheLabel.style.left=sx+'px'; rocheLabel.style.top=(sy-18)+'px';
+                rocheLabel.style.opacity='1';
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // UPDATE SIMULATION — transições suaves cross-fade
+            // ═══════════════════════════════════════════════════════
+            function resetAll() {
+                protoEarth.visible=theia.visible=postImpactEarth.visible=finalEarth.visible=false;
+                particleSystem.visible=false; impactFlash.visible=shockRing.visible=false;
+                ring1.material.opacity=ring2.material.opacity=ring3.material.opacity=0;
+                rocheMarker.material.opacity=rocheMarker2.material.opacity=0;
+                impactGlow.intensity=diskGlow.intensity=accretionGlow.intensity=0;
+                finalMoon.material.opacity=0; finalMoon.scale.set(0.01,0.01,0.01);
+                finalMoon.visible=false; protoMoonGroup.visible=false;
+                protoMoonGroup.children.forEach(c=>{if(c.material)c.material.opacity=0;});
+                // reset particles
+                for(let i=0;i<particleCount;i++) posArr[i*3]=posArr[i*3+1]=posArr[i*3+2]=9999;
+                pGeo.attributes.position.needsUpdate=true;
+                updateRocheLabel(false);
+            }
+
+            function updateSimulation() {
+                const t = simTime;
+                const phase = getPhase(t);
+                updatePhaseUI(phase);
+                resetAll();
+
+                // ── Fase 1: Aproximação gravitacional (t: 0–50) ──
+                if (phase === 1) {
+                    const sp = smoothstep(phaseProgress(t, 0, 50));
+                    protoEarth.visible=true; theia.visible=true;
+                    protoEarth.position.set(lerp(-9,-5,sp), 0, 0);
+                    theia.position.set(lerp(20,8,sp), lerp(3.5,1,sp), lerp(9,4,sp));
+                    protoEarth.scale.setScalar(1); theia.scale.setScalar(1);
+                    if (sp > 0.65) {
+                        const tide=(sp-0.65)/0.35;
+                        const st=1+tide*0.28; protoEarth.scale.set(st,1/Math.sqrt(st),st);
+                        const stt=1+tide*0.38; theia.scale.set(stt,1/Math.sqrt(stt),stt);
+                    }
+                    protoEarth.rotation.y+=0.003; theia.rotation.y-=0.004;
+
+                // ── Fase 2: Impacto gigante (t: 50–100) ──────────
+                } else if (phase === 2) {
+                    const prog = phaseProgress(t, 50, 100);
+                    const colX=-5, colY=0.8, colZ=3;
+
+                    if (prog < 0.35) {
+                        const sub = prog/0.35;
+                        protoEarth.visible=true; theia.visible=true;
+                        protoEarth.position.set(lerp(-5,colX,sub), lerp(0,colY,sub), lerp(0,colZ,sub));
+                        theia.position.set(lerp(8,colX+2.5,sub), lerp(1,colY+0.3,sub), lerp(4,colZ+1.5,sub));
+                        const comp=1+sub*0.6;
+                        protoEarth.scale.set(1/comp,comp,1/comp);
+                        theia.scale.set(1/(comp*0.7),comp*0.7,1/(comp*0.7));
+                        impactGlow.intensity=sub*16;
+                        impactFlash.visible=true;
+                        impactFlash.position.copy(protoEarth.position).add(theia.position).multiplyScalar(0.5);
+                        impactFlash.scale.setScalar(0.3+sub*4);
+                        impactFlash.material.opacity=sub*0.9;
+                    } else if (prog < 0.7) {
+                        const sub=(prog-0.35)/0.35;
+                        postImpactEarth.visible=true;
+                        postImpactEarth.position.set(colX,colY,colZ);
+                        postImpactEarth.scale.setScalar(1.3+sub*0.6);
+                        postImpactEarth.material.emissiveIntensity=1.5+sub*0.7;
+                        impactGlow.intensity=20-sub*9;
+                        impactFlash.visible=true;
+                        impactFlash.position.set(colX,colY,colZ);
+                        impactFlash.scale.setScalar(4+sub*9);
+                        impactFlash.material.opacity=1-sub;
+                        shockRing.visible=true;
+                        shockRing.position.set(colX,colY,colZ);
+                        shockRing.scale.setScalar(1+sub*22);
+                        shockRing.material.opacity=(1-sub)*0.8;
+                        particleSystem.visible=true;
+                        for(let i=0;i<particleCount;i++){
+                            const pd=pData[i];
+                            const locP=Math.min(1,(sub-pd.accretionDelay*0.3)/0.7);
+                            if(locP>0){
+                                const exR=locP*(3+Math.random()*9), ang=pd.orbitTheta;
+                                posArr[i*3]  =colX+Math.cos(ang)*exR+pd.cloudOffsetX*(1-locP);
+                                posArr[i*3+1]=colY+pd.cloudOffsetY*(1-locP)+pd.orbitHeight*locP;
+                                posArr[i*3+2]=colZ+Math.sin(ang)*exR+pd.cloudOffsetZ*(1-locP);
+                            }
+                        }
+                        pGeo.attributes.position.needsUpdate=true;
+                        pMat.opacity=0.3+sub*0.6;
+                    } else {
+                        const sub=(prog-0.7)/0.3;
+                        postImpactEarth.visible=true;
+                        postImpactEarth.position.set(
+                            lerp(colX,0,smoothstep(sub)),
+                            lerp(colY,0,smoothstep(sub)),
+                            lerp(colZ,0,smoothstep(sub))
+                        );
+                        postImpactEarth.scale.setScalar(1.9-sub*0.5);
+                        postImpactEarth.material.emissiveIntensity=2.2-sub*0.9;
+                        impactGlow.intensity=11-sub*7;
+                        impactFlash.material.opacity=Math.max(0,0.3-sub*0.3);
+                        shockRing.material.opacity=Math.max(0,0.5-sub*0.5);
+                        particleSystem.visible=true;
+                        for(let i=0;i<particleCount;i++){
+                            const pd=pData[i], r=pd.orbitR, ang=pd.orbitTheta, h=pd.orbitHeight;
+                            posArr[i*3]  =lerp(colX+Math.cos(ang)*(3+Math.random()*9)+pd.cloudOffsetX,Math.cos(ang)*r,sub);
+                            posArr[i*3+1]=lerp(colY+pd.cloudOffsetY,h,sub);
+                            posArr[i*3+2]=lerp(colZ+Math.sin(ang)*(3+Math.random()*9)+pd.cloudOffsetZ,Math.sin(ang)*r,sub);
+                        }
+                        pGeo.attributes.position.needsUpdate=true;
+                        pMat.opacity=0.9;
+                    }
+
+                // ── Fase 3: Sinéstia (t: 100–200) ────────────────
+                } else if (phase === 3) {
+                    const sp = smoothstep(phaseProgress(t, 100, 200));
+                    postImpactEarth.visible=true;
+                    postImpactEarth.position.set(0,0,0);
+                    postImpactEarth.scale.setScalar(1.45-sp*0.06);
+                    postImpactEarth.material.emissiveIntensity=1.3-sp*0.4;
+                    postImpactEarth.rotation.y+=0.005;
+                    ring1.material.opacity=sp*0.55; ring2.material.opacity=sp*0.40; ring3.material.opacity=sp*0.25;
+                    diskGlow.intensity=sp*6; impactGlow.intensity=Math.max(0,5-sp*4);
+                    particleSystem.visible=true; particleSystem.rotation.y+=(1-sp)*0.01;
+                    for(let i=0;i<particleCount;i++){
+                        const pd=pData[i], r=pd.orbitR;
+                        const ang=pd.orbitTheta+sp*pd.orbitSpeed*TWO_PI;
+                        const h=pd.orbitHeight*(1-sp*0.65);
+                        posArr[i*3]=Math.cos(ang)*r; posArr[i*3+1]=h; posArr[i*3+2]=Math.sin(ang)*r;
+                    }
+                    pGeo.attributes.position.needsUpdate=true;
+                    pMat.opacity=0.85; pMat.size=0.32-sp*0.08;
+
+                // ── Fase 4: Disco circunterrestre (t: 200–330) ───
+                } else if (phase === 4) {
+                    const sp = smoothstep(phaseProgress(t, 200, 330));
+                    postImpactEarth.visible=true;
+                    postImpactEarth.position.set(0,0,0);
+                    postImpactEarth.scale.setScalar(1.39-sp*0.35);
+                    postImpactEarth.material.emissiveIntensity=0.9-sp*0.3;
+                    postImpactEarth.rotation.y+=0.004;
+                    ring1.material.opacity=Math.max(0,0.55-sp*0.35);
+                    ring2.material.opacity=Math.max(0,0.40-sp*0.25);
+                    ring3.material.opacity=Math.max(0,0.25-sp*0.20);
+                    diskGlow.intensity=Math.max(0,6-sp*4);
+                    rocheMarker.material.opacity=sp*0.55; rocheMarker2.material.opacity=sp*0.2;
+                    updateRocheLabel(sp>0.3);
+                    particleSystem.visible=true; particleSystem.rotation.y+=0.01;
+                    for(let i=0;i<particleCount;i++){
+                        const pd=pData[i], r=pd.orbitR;
+                        const ang=pd.orbitTheta+sp*pd.orbitSpeed*TWO_PI;
+                        const h=pd.orbitHeight*lerp(0.35,0.15,sp);
+                        posArr[i*3]=Math.cos(ang)*r; posArr[i*3+1]=h; posArr[i*3+2]=Math.sin(ang)*r;
+                    }
+                    pGeo.attributes.position.needsUpdate=true;
+                    pMat.opacity=0.75; pMat.size=0.24;
+
+                // ── Fase 5: Acreção da proto-Lua (t: 330–530) ────
+                } else if (phase === 5) {
+                    const sp = smoothstep(phaseProgress(t, 330, 530));
+                    if (sp < 0.35) {
+                        postImpactEarth.visible=true; finalEarth.visible=false;
+                        const shrink=sp/0.35;
+                        postImpactEarth.scale.setScalar(1.04-shrink*0.04);
+                        postImpactEarth.material.emissiveIntensity=0.6-shrink*0.2;
+                    } else {
+                        postImpactEarth.visible=false; finalEarth.visible=true;
+                        finalEarth.position.set(0,0,0); finalEarth.scale.setScalar(1);
+                        finalEarth.material.emissiveIntensity=lerp(0.4,0.35,smoothstep((sp-0.35)/0.65));
+                    }
+                    if(finalEarth.visible) finalEarth.rotation.y+=0.003;
+                    if(postImpactEarth.visible) postImpactEarth.rotation.y+=0.003;
+                    ring1.material.opacity=Math.max(0,0.2-sp*0.2);
+                    ring2.material.opacity=Math.max(0,0.15-sp*0.15);
+                    ring3.material.opacity=Math.max(0,0.08-sp*0.08);
+                    diskGlow.intensity=Math.max(0,2-sp*2);
+                    rocheMarker.material.opacity=lerp(0.55,0.75,sp);
+                    rocheMarker2.material.opacity=lerp(0.2,0.35,sp);
+                    updateRocheLabel(true);
+                    moonOrbitRadius=lerp(10.5,9.8,sp);
+                    moonOrbitAngle+=0.012*(1+sp);
+                    const pmX=Math.cos(moonOrbitAngle)*moonOrbitRadius;
+                    const pmZ=Math.sin(moonOrbitAngle)*moonOrbitRadius;
+                    protoMoonGroup.position.set(pmX,0,pmZ); protoMoonGroup.visible=true;
+                    const fragOp=smoothstep(Math.min(1,sp*1.2));
+                    protoMoonGroup.children.forEach(c=>{if(c.material)c.material.opacity=fragOp;});
+                    const conv=smoothstep(Math.max(0,(sp-0.08)/0.85));
+                    fragmentData.forEach(fd=>{
+                        fd.mesh.position.lerpVectors(fd.startPos,fd.targetPos,conv);
+                        fd.mesh.rotation.set(
+                            lerp(fd.startRot.x,fd.targetPos.x*3,conv),
+                            lerp(fd.startRot.y,fd.targetPos.y*3,conv),
+                            lerp(fd.startRot.z,fd.targetPos.z*3,conv)
+                        );
+                        fd.mesh.scale.setScalar(lerp(1,0.85,conv));
+                    });
+                    accretionGlow.intensity=sp*6; accretionGlow.position.copy(protoMoonGroup.position);
+                    particleSystem.visible=true; particleSystem.rotation.y+=0.008;
+                    for(let i=0;i<particleCount;i++){
+                        const pd=pData[i], r=pd.orbitR;
+                        const ang=pd.orbitTheta+sp*pd.orbitSpeed*TWO_PI;
+                        const h=pd.orbitHeight*0.3;
+                        const dx=Math.cos(ang)*r, dy=h, dz=Math.sin(ang)*r;
+                        if(pd.isAccreting && sp>0.1+pd.accretionDelay*0.5){
+                            const ap=smoothstep(Math.min(1,(sp-(0.1+pd.accretionDelay*0.5))/0.7));
+                            const cx=lerp(dx,pmX,ap), cy=lerp(dy,0,ap), cz=lerp(dz,pmZ,ap);
+                            const dist=Math.sqrt((cx-pmX)**2+cy**2+(cz-pmZ)**2);
+                            if(dist<0.7+sp*0.4 && ap>0.85){
+                                pd.captured=true; posArr[i*3]=posArr[i*3+1]=posArr[i*3+2]=9999;
+                            } else {
+                                posArr[i*3]=cx; posArr[i*3+1]=cy; posArr[i*3+2]=cz;
+                                colArr[i*3]=1.0; colArr[i*3+1]=0.8; colArr[i*3+2]=0.5;
+                            }
+                        } else {
+                            posArr[i*3]=dx; posArr[i*3+1]=dy; posArr[i*3+2]=dz;
+                        }
+                    }
+                    pGeo.attributes.position.needsUpdate=true;
+                    pGeo.attributes.color.needsUpdate=true;
+                    pMat.opacity=0.75-sp*0.35; pMat.size=0.24-sp*0.1;
+
+                // ── Fase 6: Lua jovem (t: 530–650) ───────────────
+                } else if (phase === 6) {
+                    const sp = smoothstep(phaseProgress(t, 530, 650));
+                    protoMoonGroup.visible=true; finalMoon.visible=true;
+                    finalEarth.visible=true; finalEarth.position.set(0,0,0);
+                    finalEarth.scale.setScalar(1);
+                    finalEarth.material.emissiveIntensity=lerp(0.35,0.28,sp);
+                    finalEarth.rotation.y+=0.002;
+                    moonOrbitRadius=lerp(9.8,10.5,sp);
+                    moonOrbitAngle+=0.011*(1-sp*0.2);
+                    const pmX6=Math.cos(moonOrbitAngle)*moonOrbitRadius;
+                    const pmZ6=Math.sin(moonOrbitAngle)*moonOrbitRadius;
+                    protoMoonGroup.position.set(pmX6,0,pmZ6);
+                    finalMoon.position.copy(protoMoonGroup.position);
+                    const blend=smoothstep(sp*1.4);
+                    finalMoon.scale.setScalar(lerp(0.01,1,blend));
+                    finalMoon.material.opacity=blend; finalMoon.material.transparent=true;
+                    protoMoonGroup.children.forEach(c=>{if(c.material){c.material.opacity=Math.max(0,1-blend);c.material.transparent=true;}});
+                    accretionGlow.intensity=Math.max(0,4-sp*4);
+                    accretionGlow.position.copy(protoMoonGroup.position);
+                    rocheMarker.material.opacity=Math.max(0,0.75-sp*0.75);
+                    rocheMarker2.material.opacity=Math.max(0,0.35-sp*0.35);
+                    updateRocheLabel(sp<0.5);
+                    particleSystem.visible=sp<0.6;
+                    if(sp<0.6){
+                        for(let i=0;i<particleCount;i++){
+                            const pd=pData[i];
+                            if(pd.captured||pd.isAccreting){posArr[i*3]=posArr[i*3+1]=posArr[i*3+2]=9999;}
+                            else {
+                                const ang=pd.orbitTheta+sp*pd.orbitSpeed*TWO_PI;
+                                posArr[i*3]=Math.cos(ang)*pd.orbitR;
+                                posArr[i*3+1]=pd.orbitHeight*0.2;
+                                posArr[i*3+2]=Math.sin(ang)*pd.orbitR;
+                            }
+                        }
+                        pGeo.attributes.position.needsUpdate=true;
+                        pMat.opacity=Math.max(0.05,0.6-sp*0.6);
+                    }
+
+                // ── Fase 7: Evolução por marés (t: 650–800) ───────
+                } else if (phase === 7) {
+                    const sp = smoothstep(phaseProgress(t, 650, 800));
+                    finalEarth.visible=true; finalEarth.position.set(0,0,0);
+                    finalEarth.scale.setScalar(1);
+                    finalEarth.material.emissiveIntensity=lerp(0.28,0.22,sp);
+                    finalEarth.rotation.y+=lerp(0.002,0.0015,sp);
+                    finalMoon.visible=true; finalMoon.material.opacity=1;
+                    finalMoon.material.transparent=false; finalMoon.scale.setScalar(1);
+                    moonOrbitRadius=lerp(10.5,15,sp);
+                    moonOrbitAngle+=lerp(0.010,0.007,sp);
+                    finalMoon.position.set(Math.cos(moonOrbitAngle)*moonOrbitRadius,0,Math.sin(moonOrbitAngle)*moonOrbitRadius);
+                    moonSpinAngle+=0.025;
+                    finalMoon.rotation.y=moonSpinAngle;
+                    rocheMarker.material.opacity=Math.max(0,0.25-sp*0.25);
+                    rocheMarker2.material.opacity=Math.max(0,0.1-sp*0.1);
+                    diskGlow.intensity=Math.max(0,0.5-sp*0.5);
+                    updateRocheLabel(sp<0.3);
+
+                // ── Fase 8: Travamento rotacional (t: 800–940) ───
+                } else if (phase === 8) {
+                    const sp = smoothstep(phaseProgress(t, 800, 940));
+                    finalEarth.visible=true; finalEarth.position.set(0,0,0);
+                    finalEarth.scale.setScalar(1);
+                    finalEarth.material.emissiveIntensity=lerp(0.22,0.18,sp);
+                    finalEarth.rotation.y+=lerp(0.0015,0.0012,sp);
+                    finalMoon.visible=true; finalMoon.material.opacity=1;
+                    finalMoon.material.transparent=false; finalMoon.scale.setScalar(1);
+                    moonOrbitRadius=lerp(15,18,sp);
+                    moonOrbitAngle+=lerp(0.007,0.005,sp)*(1-sp*0.3);
+                    finalMoon.position.set(Math.cos(moonOrbitAngle)*moonOrbitRadius,0,Math.sin(moonOrbitAngle)*moonOrbitRadius);
+                    const freeSpin=0.025, lockedSpin=moonOrbitAngle;
+                    moonSpinAngle+=lerp(freeSpin,0,sp);
+                    const desiredY=moonOrbitAngle+Math.PI;
+                    finalMoon.rotation.y=lerp(moonSpinAngle,desiredY,smootherstep(sp));
+
+                // ── Fase 9: Sistema estabilizado (t: 940–1000) ───
+                } else if (phase === 9) {
+                    const sp = smoothstep(phaseProgress(t, 940, 1000));
+                    finalEarth.visible=true; finalEarth.position.set(0,0,0);
+                    finalEarth.scale.setScalar(1);
+                    finalEarth.material.emissiveIntensity=lerp(0.18,0.15,sp);
+                    finalEarth.rotation.y+=0.0012;
+                    finalMoon.visible=true; finalMoon.material.opacity=1;
+                    finalMoon.material.transparent=false; finalMoon.scale.setScalar(1);
+                    moonOrbitRadius=lerp(18,19.5,sp);
+                    moonOrbitAngle+=0.005;
+                    finalMoon.position.set(Math.cos(moonOrbitAngle)*moonOrbitRadius,0,Math.sin(moonOrbitAngle)*moonOrbitRadius);
+                    finalMoon.lookAt(finalEarth.position);
+                }
+
+                // ── HUD ──────────────────────────────────────────
+                const myr=((t/totalTime)*TOTAL_MYR).toFixed(1);
+                timeDisplayEl.textContent='Tempo: '+myr+' milhões de anos';
+                timeValueEl.textContent=Math.round((t/totalTime)*100)+'%';
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // UI TEXT
+            // ═══════════════════════════════════════════════════════
+            const phaseData = {
+                1: {
+                    title:'Fase 1: Aproximação Gravitacional',
+                    desc:'A Proto-Terra e Theia aproximam-se lentamente ao longo de dias. A gravidade mútua causa deformações de maré, alongando ambos os corpos.',
+                    detail:'💡 <b>Deformação de maré:</b> À medida que os planetas se aproximam, a diferença de atração gravitacional sobre faces opostas estica os corpos — o mesmo mecanismo que causa as marés oceânicas na Terra.',
+                    icon:'🌌', color:'#88ccff'
+                },
+                2: {
+                    title:'Fase 2: Impacto Gigante (~45°)',
+                    desc:'Colisão violenta e oblíqua a ~45°! Theia é destruída. Seu núcleo ferroso funde-se ao manto da Proto-Terra. Rocha vaporizada é ejetada em horas.',
+                    detail:'💡 <b>Escala de tempo real:</b> O impacto em si durou <b>horas</b>. O ângulo oblíquo de ~45° é essencial: um impacto frontal teria fundido tudo na Terra; oblíquo ejetou material para órbita.',
+                    icon:'💥', color:'#ff6644'
+                },
+                3: {
+                    title:'Fase 3: Sinéstia — Estrutura Contínua',
+                    desc:'Terra e disco formam uma estrutura contínua de rocha vaporizada: a Sinéstia. Planeta e disco são uma só entidade girando rapidamente.',
+                    detail:'💡 <b>Sinéstia:</b> Uma sinéstia é uma <em>estrutura coroidal</em> de vapor de rocha em rápida rotação, sem fronteira nítida entre planeta e disco. Apenas ~1–2% da massa total formará a Lua.',
+                    icon:'🌡️', color:'#ffaa33'
+                },
+                4: {
+                    title:'Fase 4: Disco Circunterrestre',
+                    desc:'O disco esfria e condensa além do limite de Roche (~3 raios terrestres). Somente além desse raio a aglomeração gravitacional é estável.',
+                    detail:'💡 <b>Limite de Roche:</b> Dentro deste raio, as forças de maré da Terra destroem qualquer agregado em formação. A Lua só pôde nascer <em>além</em> deste limite crítico.',
+                    icon:'💫', color:'#00ccaa'
+                },
+                5: {
+                    title:'Fase 5: Acreção da Proto-Lua',
+                    desc:'A Lua está sendo construída! Fragmentos colidem e fundem-se gravitacionalmente. Correntes de acreção fluem do disco para o corpo em crescimento.',
+                    detail:'💡 <b>Composição isotópica:</b> Como Theia e a Proto-Terra tinham composição silicática semelhante, a Lua formada tem assinatura isotópica quase idêntica à Terra — evidência chave da hipótese da sinéstia.',
+                    icon:'🪨', color:'#ffc844'
+                },
+                6: {
+                    title:'Fase 6: Lua Jovem',
+                    desc:'A Lua jovem já é quase esférica — o relaxamento gravitacional moldou o corpo irregular. A superfície ainda está quente e a órbita é muito mais próxima.',
+                    detail:'💡 <b>Lua jovem:</b> Logo após a formação, a Lua estava a apenas ~3–5 raios terrestres de distância (hoje está a ~60). O oceano de magma lunar solidificou-se em dezenas de milhões de anos.',
+                    icon:'🌕', color:'#ddbb88'
+                },
+                7: {
+                    title:'Fase 7: Evolução por Marés',
+                    desc:'Forças de maré transferem momento angular da rotação terrestre para a órbita lunar. A Lua afasta-se gradualmente ao longo de centenas de Ma.',
+                    detail:'💡 <b>Recuo lunar:</b> A Lua ainda se afasta da Terra a ~3,8 cm/ano, medido com retroreflectores lunares e lasers. Quando a Terra era jovem, os dias duravam apenas ~6 horas.',
+                    icon:'🌊', color:'#88ccff'
+                },
+                8: {
+                    title:'Fase 8: Travamento Rotacional',
+                    desc:'A rotação da Lua desacelera por dissipação de maré até igualar seu período orbital. A mesma face fica permanentemente voltada para a Terra.',
+                    detail:'💡 <b>Rotação síncrona:</b> Este processo levou <b>centenas de milhões de anos</b> — não ocorreu durante a formação. O mesmo fenômeno afetará a Terra eventualmente, travando-a na mesma face lunar.',
+                    icon:'🔒', color:'#bb99ee'
+                },
+                9: {
+                    title:'Fase 9: Sistema Terra–Lua Atual',
+                    desc:'Sistema estabilizado: Lua em órbita distante com rotação síncrona. Esta configuração persiste há ~4 bilhões de anos.',
+                    detail:'💡 <b>Evidências:</b> A hipótese da sinéstia explica: (1) a composição isotópica idêntica Terra–Lua, (2) o baixo teor de voláteis lunares, (3) o momento angular elevado do sistema.',
+                    icon:'🌍', color:'#ffffff'
+                },
+            };
+
+            let lastPhaseUI = -1;
+            function updatePhaseUI(phase) {
+                if (phase === lastPhaseUI) return;
+                lastPhaseUI = phase;
+                const d = phaseData[phase];
+                phaseTextEl.className  = 'phase-indicator phase-'+phase;
+                phaseTextEl.textContent = d.title;
+                descriptionEl.textContent = d.desc;
+                phaseDetailEl.innerHTML = d.detail;
+                overlayEl.classList.remove('hidden');
+                overlayEl.querySelector('.overlay-icon').textContent = d.icon;
+                overlayTitle.textContent = d.title;
+                overlayTitle.style.color = d.color;
+                overlayDesc.textContent = d.desc;
+                // subtle flash on phase change
+                overlayEl.style.transform='translateX(-50%) scale(1.03)';
+                setTimeout(()=>overlayEl.style.transform='translateX(-50%) scale(1)',250);
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // ANIMATION LOOP
+            // ═══════════════════════════════════════════════════════
+            function animate() {
+                requestAnimationFrame(animate);
+                if (autoPlay && !isPaused && simTime < totalTime) {
+                    simTime += 0.18;
+                    if (simTime > totalTime) simTime = totalTime;
+                    slider.value = Math.round(simTime);
+                    updateSimulation();
+                }
+                stars.rotation.y += 0.00008;
+                stars.rotation.x += 0.00004;
+                updateCinematicCamera(getPhase(simTime));
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            updateSimulation();
+            animate();
+        })();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Esfera Celeste</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #060913; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #control-panel { position: absolute; top: 15px; left: 15px; width: 290px; background: rgba(10, 17, 32, 0.96); border: 2px solid #0ea5e9; border-radius: 10px; padding: 15px; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto; }
+        h2 { font-size: 14px; color: #38bdf8; margin: 0 0 12px 0; text-align: center; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid #1e293b; padding-bottom: 8px; }
+        .section-title { font-size: 11px; color: #64748b; text-transform: uppercase; margin: 12px 0 6px 0; font-weight: bold; letter-spacing: 0.5px; }
+        .control-group { margin-bottom: 10px; }
+        .label-container { display: flex; justify-content: space-between; font-size: 12px; color: #e2e8f0; margin-bottom: 3px; }
+        .val { font-weight: bold; color: #38bdf8; }
+        input[type=range] { width: 100%; height: 5px; background: #334155; border-radius: 3px; accent-color: #38bdf8; cursor: pointer; }
+        .view-toggle-container { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+        .btn-view { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold; transition: all 0.2s; }
+        .btn-view.active { background: #0ea5e9; color: #fff; border-color: #0ea5e9; box-shadow: 0 0 12px rgba(14,165,233,0.4); }
+        .checkbox-grid { display: grid; grid-template-columns: 1fr; gap: 6px; background: #111827; padding: 10px; border-radius: 6px; border: 1px solid #1f2937; }
+        .checkbox-item { display: flex; align-items: center; font-size: 11.5px; color: #9ca3af; cursor: pointer; }
+        .checkbox-item input { margin-right: 8px; cursor: pointer; }
+        #signo-text { margin-top: 8px; padding: 8px; background: #1e293b; border-radius: 5px; color: #fde047; font-size: 12px; font-weight: bold; text-align: center; }
+        #canvas-instruction { position: absolute; bottom: 15px; right: 20px; background: rgba(15,23,42,0.8); padding: 8px 14px; border-radius: 6px; font-size: 11px; color: #38bdf8; pointer-events: none; border: 1px solid #1e293b; line-height: 1.4; text-align: right; }
+    </style>
+</head>
+<body>
+<div id="control-panel">
+    <h2>EVS - Céu e Zodíaco - Esfera Celeste</h2>
+	<p align="center"><font size="2">Prof. Luciano Soares Pedroso</font></p>
+    <div class="section-title">Ponto de Vista</div>
+    <div class="view-toggle-container">
+        <button class="btn-view active" id="btn-externa" onclick="setViewMode('externa')">🌍 Visão Externa</button>
+        <button class="btn-view" id="btn-interna" onclick="setViewMode('interna')">👁️ Horizonte Real</button>
+    </div>
+    <div class="section-title">Parâmetros de Observação</div>
+    <div class="control-group">
+        <div class="label-container"><span>Latitude:</span> <span id="lbl-lat" class="val">0°</span></div>
+        <input id="sld-lat" type="range" min="-90" max="90" value="0">
+    </div>
+    <div class="control-group">
+        <div class="label-container"><span>Hora Local:</span> <span id="lbl-hora" class="val">00:00</span></div>
+        <input id="sld-hora" type="range" min="0" max="24" step="0.1" value="20">
+    </div>
+    <div class="control-group">
+        <div class="label-container"><span>Mês Sidereal:</span> <span id="lbl-mes" class="val">Janeiro</span></div>
+        <input id="sld-mes" type="range" min="1" max="12" value="3">
+    </div>
+    <div class="section-title">Filtros Didáticos</div>
+    <div class="checkbox-grid">
+        <label class="checkbox-item"><input type="checkbox" id="chk-horizon" checked> Solo / Horizonte Local</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-cage" checked> Esfera e Eixo Celeste (PNC/PSC)</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-ecliptic" checked> 🌟 Linha da Eclíptica (Zodíaco)</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-sun" checked> ☀️ Mostrar Sol</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-guias" checked> Linha do Meridiano e Zênite</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-lines" checked> Traçado das Constelações</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-names" checked> Nomes das Constelações</label>
+        <label class="checkbox-item"><input type="checkbox" id="chk-ptnames" checked> Nomes dos Pontos / Guias</label>
+    </div>
+    <div id="signo-text">☀️ Sol está em: Áries</div>
+</div>
+<div id="canvas-instruction">
+    Templates Estilo JavaLab Ativo<br>
+    Clique e <b>Arrastar:</b> Rotacionar Câmera<br>
+    Scroll do <b>Mouse:</b> Zoom (<span id="zoom-val">90%</span>)
+</div>
+
+<script>
+const constelacoes = [
+    {name:'Áries', s:[[2.1,23],[2.6,21],[3.0,19]], l:[[0,1],[1,2]]},
+    {name:'Touro', s:[[4.6,16],[4.5,15],[4.3,16],[4.1,19],[3.8,17],[5.6,22]], l:[[0,1],[1,2],[2,3],[3,4],[0,5]]},
+    {name:'Gêmeos', s:[[7.7,28],[7.6,32],[6.7,25],[6.5,20],[7.3,17],[7.2,22]], l:[[0,1],[0,2],[2,3],[1,5],[5,4]]},
+    {name:'Câncer', s:[[8.9,12],[8.7,18],[8.2,20],[9.3,30]], l:[[0,1],[1,2],[1,3]]},
+    {name:'Leão', s:[[10.1,12],[11.2,15],[11.8,14],[11.1,20],[10.3,23],[9.9,26],[9.8,18]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0]]},
+    {name:'Virgem', s:[[13.4,-11],[13.1,-6],[12.8,3],[13.2,11],[14.1,-1]], l:[[0,1],[1,2],[2,3],[1,4]]},
+    {name:'Libra', s:[[14.8,-16],[15.2,-9],[15.6,-15],[15.1,-23]], l:[[0,1],[1,2],[2,3],[3,0]]},
+    {name:'Escorpião', s:[[16.5,-26],[16.0,-22],[16.8,-34],[17.5,-37],[17.8,-43],[17.6,-42]], l:[[0,1],[0,2],[2,3],[3,4],[4,5]]},
+    {name:'Sagitário', s:[[18.9,-26],[18.3,-25],[19.0,-30],[18.1,-30],[18.5,-37]], l:[[0,1],[0,2],[1,3],[2,3],[1,4]]},
+    {name:'Capricórnio', s:[[20.3,-21],[21.7,-15],[21.8,-27],[20.2,-18]], l:[[0,1],[1,2],[2,3],[3,0]]},
+    {name:'Aquário', s:[[22.1,-1],[22.4,-9],[22.9,-15],[23.3,-20]], l:[[0,1],[1,2],[2,3]]},
+    {name:'Peixes', s:[[0.2,8],[0.9,15],[1.3,15],[0.5,23]], l:[[0,1],[1,2],[0,3]]},
+    {name:'Cruzeiro do Sul', s:[[12.4,-63],[12.8,-60],[12.7,-57],[12.2,-59]], l:[[0,2],[1,3]]},
+    {name:'Ursa Maior', s:[[11,62],[11,56],[12,54],[12.5,57],[13,56]], l:[[0,1],[1,2],[2,3],[3,4]]}
+];
+
+const nomesMeses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const signosPorLongitude = [
+    {nome:'Áries', inicio:0, fim:30}, {nome:'Touro', inicio:30, fim:60},
+    {nome:'Gêmeos', inicio:60, fim:90}, {nome:'Câncer', inicio:90, fim:120},
+    {nome:'Leão', inicio:120, fim:150}, {nome:'Virgem', inicio:150, fim:180},
+    {nome:'Libra', inicio:180, fim:210}, {nome:'Escorpião', inicio:210, fim:240},
+    {nome:'Sagitário', inicio:240, fim:270}, {nome:'Capricórnio', inicio:270, fim:300},
+    {nome:'Aquário', inicio:300, fim:330}, {nome:'Peixes', inicio:330, fim:360}
+];
+
+let viewMode = 'externa';
+let rx = 0.4, ry = -0.7;
+let lat = 0, hora = 20, mes = 3;
+let zoom = 0.9;
+let showHorizon=true, showCage=true, showEcliptic=true, showSun=true, showGuias=true, showLines=true, showNames=true, showPtNames=true;
+const raioEsferaCeleste = 650;
+
+function criarTextTexto(txt, size) {
+    let g = createGraphics(txt.length * size * 0.6 + 15, size * 1.8);
+    g.background(10, 17, 32, 180); // Fundo escuro semitransparente em vez de branco opaco
+    g.noStroke();
+    g.fill(226, 232, 240); // Texto claro para contraste elegante
+    g.textSize(size);
+    g.textAlign(CENTER, CENTER);
+    g.textFont('Arial');
+    g.text(txt, g.width/2, g.height/2);
+    return g;
+}
+
+function drawBillboard(txt, x, y, z, size, isLocal = false, angTempo = 0) {
+    let tex = criarTextTexto(txt, size);
+    
+    push();
+    translate(x, y, z);
+    
+    if (!isLocal && angTempo !== 0) {
+        rotateY(-angTempo);
+        rotateX(-radians(90 - lat));
+    }
+    
+    rotateY(-ry);
+    rotateX(-rx);
+    translate(0, 0, 10);
+    
+    texture(tex);
+    noStroke();
+    plane(tex.width, tex.height);
+    pop();
+    
+    tex.remove();
+}
+
+function drawLocalBillboard(txt, x, y, z, clr, size) {
+    if(!showPtNames) return; // Filtro para ocultar pontos locais
+    drawBillboard(txt, x, y, z, size, true, 0);
+}
+
+function drawCosmicBillboard(txt, x, y, z, clr, size, angTempo) {
+    if(!showPtNames) return; // Filtro para ocultar guias cósmicos
+    drawBillboard(txt, x, y, z, size, false, angTempo);
+}
+
+function eclipticToEquatorial(lambdaDeg) {
+    const eps = 23.44;
+    const epsRad = eps * Math.PI / 180;
+    const lam = lambdaDeg * Math.PI / 180;
+    const x = Math.cos(lam);
+    const y = Math.sin(lam) * Math.cos(epsRad);
+    const z = Math.sin(lam) * Math.sin(epsRad);
+    let alpha = Math.atan2(y, x);
+    if (alpha < 0) alpha += 2 * Math.PI;
+    return [ (alpha * 180 / Math.PI) / 15, Math.asin(z) * 180 / Math.PI ];
+}
+
+function obterSigno(lambda) {
+    lambda = ((lambda % 360) + 360) % 360;
+    for (let s of signosPorLongitude) {
+        if (lambda >= s.inicio && lambda < s.fim) return s.nome;
+    }
+    return 'Peixes';
+}
+
+function setup() {
+    createCanvas(windowWidth, windowHeight, WEBGL);
+    textFont('Arial');
+    document.getElementById('sld-lat').oninput = e => lat = +e.target.value;
+    document.getElementById('sld-hora').oninput = e => hora = +e.target.value;
+    document.getElementById('sld-mes').oninput = e => mes = +e.target.value;
+}
+
+function setViewMode(mode) {
+    viewMode = mode;
+    document.getElementById('btn-externa').classList.toggle('active', mode === 'externa');
+    document.getElementById('btn-interna').classList.toggle('active', mode === 'interna');
+    if (mode === 'externa') { rx = 0.4; ry = -0.7; } else { rx = 0.1; ry = 0; }
+}
+
+function mouseWheel(event) {
+    if (mouseX > 300) {
+        zoom -= event.delta * 0.0008;
+        zoom = constrain(zoom, 0.3, 3.0);
+        document.getElementById('zoom-val').innerText = Math.round(zoom * 100) + '%';
+        return false;
+    }
+}
+
+function draw() {
+    background(6, 8, 18);
+
+    document.getElementById('lbl-lat').innerText = lat + '° (' + (lat >= 0 ? 'Norte' : 'Sul') + ')';
+    document.getElementById('lbl-hora').innerText = Math.floor(hora).toString().padStart(2,'0') + ':' + Math.floor((hora%1)*60).toString().padStart(2,'0');
+    document.getElementById('lbl-mes').innerText = nomesMeses[mes-1];
+
+    showHorizon = document.getElementById('chk-horizon').checked;
+    showCage = document.getElementById('chk-cage').checked;
+    showEcliptic = document.getElementById('chk-ecliptic').checked;
+    showSun = document.getElementById('chk-sun').checked;
+    showGuias = document.getElementById('chk-guias').checked;
+    showLines = document.getElementById('chk-lines').checked;
+    showNames = document.getElementById('chk-names').checked;
+    showPtNames = document.getElementById('chk-ptnames').checked;
+
+    let lambdaSol = ((mes - 3 + 12) % 12) * 30;
+    let [raSolHoras, decSolGraus] = eclipticToEquatorial(lambdaSol);
+    let nomeSigno = obterSigno(lambdaSol);
+    document.getElementById('signo-text').innerHTML = `☀️ Sol está em: ${nomeSigno}`;
+
+    if (viewMode === 'externa') {
+        translate(0, 180, -900);
+        scale(zoom);
+        rotateX(rx);
+        rotateY(ry);
+    } else {
+        scale(zoom);
+        rotateX(rx);
+        rotateY(ry);
+    }
+
+    if (showHorizon) {
+        push();
+        rotateX(HALF_PI);
+        fill(16, 38, 26, 210); stroke(16, 185, 129); strokeWeight(1.5);
+        ellipse(0, 0, 420, 420);
+        noFill(); stroke(16, 185, 129, 50);
+        ellipse(0, 0, 300, 300);
+        ellipse(0, 0, 150, 150);
+        pop();
+        let distCardial = 225;
+        // Fontes dos pontos reduzidas de 14/16 para 10/11
+        drawLocalBillboard("N", 0, 0, -distCardial, null, 11);
+        drawLocalBillboard("S", 0, 0, distCardial, null, 11);
+        drawLocalBillboard("L", distCardial, 0, 0, null, 11);
+        drawLocalBillboard("O", -distCardial, 0, 0, null, 11);
+        drawLocalBillboard("HORIZONTE", 0, 5, 160, null, 9);
+        desenharObservadorRealista();
+    }
+
+    if (showGuias) {
+        stroke(234, 179, 8, 200); strokeWeight(2);
+        line(0, 0, 0, 0, -340, 0);
+        drawLocalBillboard("ZÊNITE", 0, -355, 0, null, 10);
+
+        stroke(100, 116, 139, 120); strokeWeight(1.5);
+        line(0, 0, 0, 0, 340, 0);
+        drawLocalBillboard("NADIR", 0, 355, 0, null, 10);
+
+        noFill(); stroke(234, 179, 8, 60); strokeWeight(2);
+        beginShape();
+        for (let a = 0; a <= PI; a += 0.05) {
+            let z = -320 * cos(a); let y = -320 * sin(a);
+            vertex(0, y, z);
+        }
+        endShape();
+        drawLocalBillboard("MERIDIANO LOCAL", 0, -300, 60, null, 9);
+    }
+
+    push();
+    rotateX(radians(90 - lat));
+    let anguloTempo = radians((hora + mes * 2) * 15);
+    rotateY(anguloTempo);
+
+    if (showCage) {
+        noFill(); stroke(14, 165, 233, 30); strokeWeight(1);
+        for (let r = 0; r < 180; r += 30) {
+            push(); rotateY(radians(r)); ellipse(0, 0, raioEsferaCeleste*2, raioEsferaCeleste*2); pop();
+        }
+        push(); rotateX(HALF_PI);
+        stroke(14, 165, 233, 240); strokeWeight(3.5);
+        ellipse(0, 0, raioEsferaCeleste*2, raioEsferaCeleste*2);
+        pop();
+        drawCosmicBillboard("EQUADOR CELESTE", raioEsferaCeleste + 40, 0, 0, null, 10, anguloTempo);
+        stroke(239, 68, 68, 180); strokeWeight(2);
+        line(0, -raioEsferaCeleste * 1.08, 0, 0, raioEsferaCeleste * 1.08, 0);
+        drawCosmicBillboard("PNC", 0, -raioEsferaCeleste * 1.13, 0, null, 10, anguloTempo);
+        drawCosmicBillboard("PSC", 0, raioEsferaCeleste * 1.13, 0, null, 10, anguloTempo);
+    }
+
+    if (showEcliptic) {
+        stroke(249, 115, 22, 240); strokeWeight(3); noFill();
+        beginShape();
+        for (let i = 0; i <= 360; i++) {
+            let [raH, dec] = eclipticToEquatorial(i);
+            let ra = radians(raH * 15), d = radians(dec);
+            let sx = raioEsferaCeleste * cos(d) * sin(ra);
+            let sy = -raioEsferaCeleste * sin(d);
+            let sz = raioEsferaCeleste * cos(d) * cos(ra);
+            vertex(sx, sy, sz);
+        }
+        endShape(CLOSE);
+        let [raL, decL] = eclipticToEquatorial(0);
+        let raLr = radians(raL*15), dLr = radians(decL);
+        let lx = (raioEsferaCeleste+35)*cos(dLr)*sin(raLr);
+        let ly = -(raioEsferaCeleste+35)*sin(dLr);
+        let lz = (raioEsferaCeleste+35)*cos(dLr)*cos(raLr);
+        drawCosmicBillboard("ECLÍPTICA", lx, ly, lz, null, 11, anguloTempo);
+    }
+
+    randomSeed(42);
+    for (let i = 0; i < 280; i++) {
+        let theta = random(TWO_PI); let phi = acos(random(-1,1));
+        let sx = raioEsferaCeleste * sin(phi) * cos(theta);
+        let sy = raioEsferaCeleste * cos(phi);
+        let sz = raioEsferaCeleste * sin(phi) * sin(theta);
+        strokeWeight(random(1.5,4)); stroke(255,255,255,180);
+        point(sx, sy, sz);
+    }
+
+    for (let c of constelacoes) {
+        let pontos3D = [];
+        for (let s of c.s) {
+            let ra = radians(s[0]*15), dec = radians(s[1]);
+            let sx = raioEsferaCeleste * cos(dec) * sin(ra);
+            let sy = -raioEsferaCeleste * sin(dec);
+            let sz = raioEsferaCeleste * cos(dec) * cos(ra);
+            pontos3D.push(createVector(sx, sy, sz));
+            stroke(254,240,138); strokeWeight(6);
+            point(sx, sy, sz);
+        }
+        if (showLines) {
+            stroke(56,189,248,160); strokeWeight(1.5);
+            for (let edge of c.l) {
+                if (pontos3D[edge[0]] && pontos3D[edge[1]]) {
+                    line(pontos3D[edge[0]].x, pontos3D[edge[0]].y, pontos3D[edge[0]].z,
+                         pontos3D[edge[1]].x, pontos3D[edge[1]].y, pontos3D[edge[1]].z);
+                }
+            }
+        }
+        if (showNames && pontos3D.length > 0) {
+            let p = pontos3D[0];
+            // Tamanho da fonte reduzido de 20 para 11 para evitar poluição visual
+            drawBillboard(c.name, p.x, p.y, p.z, 11, false, anguloTempo);
+        }
+    }
+
+    if (showSun) {
+        let raSol = radians(raSolHoras*15), decSol = radians(decSolGraus);
+        let solX = raioEsferaCeleste * cos(decSol) * sin(raSol);
+        let solY = -raioEsferaCeleste * sin(decSol);
+        let solZ = raioEsferaCeleste * cos(decSol) * cos(raSol);
+        push();
+        translate(solX, solY, solZ);
+        noStroke();
+        fill(255,255,100,60); sphere(22);
+        fill(255,255,0,200); sphere(14);
+        fill(255,255,255,255); sphere(7);
+        pop();
+        drawBillboard("SOL", solX, solY, solZ, 11, false, anguloTempo);
+    }
+
+    pop();
+}
+
+function desenharObservadorRealista() {
+    push();
+    // 1. Adiciona o nome logo acima da cabeça do personagem (Y = -35)
+    // Usamos a função de billboard local para que ele rotacione junto com a câmera
+    if (showPtNames) {
+        drawLocalBillboard("Júlio", 10, -55, 0, null, 10);
+    }
+
+    noStroke();
+    fill(37,99,235);
+    push(); translate(-4,-5,0); cylinder(2,10); pop();
+    push(); translate(4,-5,0); cylinder(2,10); pop();
+    fill(220,38,38);
+    push(); translate(0,-15,0); cylinder(5.5,12); pop();
+    fill(253,186,116);
+    push(); translate(0,-25,0); sphere(4); pop();
+    fill(148,163,184);
+    push(); translate(3,-22,5); rotateX(-QUARTER_PI-0.2); cylinder(1.8,18); pop();
+    stroke(0); strokeWeight(1);
+    line(3,-15,5,8,0,9);
+    line(3,-15,5,-3,0,10);
+    line(3,-15,5,5,0,1);
+    pop();
+}
+
+// Substitua a função mouseDragged antiga por esta:
+function mouseDragged() {
+    if (mouseX < 310 && mouseY < 580) return;
+    ry += (mouseX - pmouseX) * 0.006;
+    rx -= (mouseY - pmouseY) * 0.006;
+    if (viewMode === 'externa') {
+        // Liberado para rotacionar livremente no eixo vertical também
+        rx = constrain(rx, -TWO_PI, TWO_PI); 
+    } else {
+        rx = constrain(rx, -HALF_PI + 0.05, HALF_PI - 0.05);
+    }
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+}
+</script>
+</body>
+</html>

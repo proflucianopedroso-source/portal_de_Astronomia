@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Viagem ao James Webb - L2</title>
+      <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background-color: #000; font-family: 'Segoe UI', Arial, sans-serif; user-select: none; }
+        
+        #info {
+            position: absolute; top: 20px; left: 20px; color: white;
+            background: rgba(10, 10, 15, 0.92); padding: 20px 24px; border-radius: 12px;
+            pointer-events: none; max-width: 360px; line-height: 1.6;
+            border: 1px solid rgba(255, 200, 100, 0.25); z-index: 10; backdrop-filter: blur(12px);
+        }
+        h1 { margin: 0 0 8px 0; font-size: 20px; color: #ffcc66; font-weight: 600; }
+        p { margin: 0 0 12px 0; color: #bbb; font-size: 14px; line-height: 1.55; }
+        .metric { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+        #dist-val { font-size: 22px; color: #fff; font-weight: 700; }
+        
+        .orbit-info { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 200, 100, 0.15); }
+        .orbit-stat { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .orbit-stat-label { font-size: 11px; color: #777; text-transform: uppercase; }
+        .orbit-stat-value { font-size: 13px; color: #ffcc66; font-weight: 600; }
+
+        #controls-panel {
+            position: absolute; bottom: 30px; left: 20px;
+            background: rgba(10, 10, 15, 0.92); padding: 18px 20px; border-radius: 12px;
+            border: 1px solid rgba(255, 200, 100, 0.2); display: flex; flex-direction: column; gap: 12px; z-index: 10;
+        }
+        .panel-label { color: #777; font-size: 10px; text-transform: uppercase; text-align: center; letter-spacing: 2px; }
+        .btn-row { display: flex; gap: 10px; }
+        button {
+            background: rgba(40, 40, 50, 0.9); color: #fff; border: 1px solid rgba(255, 200, 100, 0.3);
+            padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+            transition: all 0.25s ease;
+        }
+        button:hover { background: rgba(255, 200, 100, 0.2); border-color: #ffcc66; transform: translateY(-1px); }
+        
+        #btn-play { background: linear-gradient(135deg, #1a3a5c 0%, #0d2240 100%); min-width: 100px; }
+        #btn-restart { background: linear-gradient(135deg, #3a2a1a 0%, #402d1a 100%); }
+        #btn-orbit { background: linear-gradient(135deg, #1a3a3a 0%, #0d3030 100%); }
+        #btn-orbit.active { background: linear-gradient(135deg, #2a5a5a 0%, #1a4a4a 100%); }
+
+        #instructions {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            color: #ffcc66; background: rgba(10, 10, 15, 0.92); padding: 14px 28px; border-radius: 30px;
+            font-size: 14px; display: none; border: 1px solid rgba(255, 200, 100, 0.3); z-index: 10; white-space: nowrap;
+        }
+
+        .space-label {
+            position: absolute; color: white; font-weight: 600; font-size: 11px;
+            padding: 5px 10px; background: rgba(0, 0, 0, 0.75); border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.12); pointer-events: none;
+            transform: translate(-50%, -50%); z-index: 5; white-space: nowrap; letter-spacing: 1px;
+            transition: opacity 0.3s ease;
+        }
+
+        #progress-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, #ffcc66, #ff9933); width: 0%; z-index: 10; }
+        #orbit-indicator { position: absolute; top: 20px; right: 20px; background: rgba(10, 10, 15, 0.92); padding: 14px 18px; border-radius: 10px; z-index: 10; display: none; }
+        #orbit-indicator h3 { color: #66cccc; font-size: 13px; margin: 0 0 8px 0; text-transform: uppercase; }
+        #orbit-indicator p { color: #999; font-size: 12px; margin: 0; line-height: 1.5; }
+        
+        .speed-indicator { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+        .speed-value { font-size: 12px; color: #ffcc66; font-weight: 600; }
+    </style>
+    
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="progress-bar"></div>
+
+    <div id="label-terra" class="space-label" style="color: #6eb5ff;">TERRA</div>
+    <div id="label-lua" class="space-label" style="color: #cccccc;">LUA</div>
+    <div id="label-orbita" class="space-label" style="color: #666666;">ÓRBITA LUNAR</div>
+    <div id="label-jwst" class="space-label" style="color: #ffcc66;">JAMES WEBB</div>
+    <div id="label-l2" class="space-label" style="color: #66cccc;">PONTO L2</div>
+    <div id="label-halo" class="space-label" style="color: #449999;">ÓRBITA HALO</div>
+
+    <div id="info">
+        <h1 id="stage-title" align="center">EVS - Viagem ao James Webb</h1>
+		<p align="center"><font color="#FFFFFF">Prof. Luciano Soares Pedroso</font></p>
+        <p id="stage-desc">Modelo 3D do James Webb. Inicie a jornada até L2.</p>
+        <div class="metric">Distancia Percorrida</div>
+        <span id="dist-val">0 KM</span>
+        
+        <div class="orbit-info" id="orbit-info-panel" style="display: none;">
+            <div class="orbit-stat"><span class="orbit-stat-label">PERÍODO ORBITAL</span><span class="orbit-stat-value">6 meses</span></div>
+            <div class="orbit-stat"><span class="orbit-stat-label">POSIÇÃO</span><span class="orbit-stat-value" id="orbit-phase">0</span></div>
+        </div>
+    </div>
+    
+    <div id="orbit-indicator"><h3>Modo Orbital</h3><p>Telesc&oacute;pio Orbitando L2</p></div>
+
+    <div id="controls-panel">
+        <div class="panel-label">Controle de MISSÃO</div>
+        <div class="btn-row">
+            <button id="btn-play">INICIAR</button>
+            <button id="btn-restart">REINICIAR</button>
+        </div>
+        <div class="btn-row">
+            <button id="btn-slow">LENTO</button>
+            <button id="btn-fast">ACELERAR</button>
+        </div>
+        <div class="btn-row"><button id="btn-orbit">VER ÓRBITA L2</button></div>
+        <div class="speed-indicator"><span class="speed-value" id="speed-display">1.0x</span></div>
+    </div>
+
+    <div id="instructions">Missão Concluída! Use o mouse para explorar.</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ============================================
+        // SETUP
+        // ============================================
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 20000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.minDistance = 15;
+        controls.maxDistance = 3000;
+
+        // ============================================
+        // ILUMINACAO
+        // ============================================
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const sunLight = new THREE.DirectionalLight(0xfff5e6, 2.5);
+        sunLight.position.set(-500, 300, 400);
+        scene.add(sunLight);
+
+        // ============================================
+        // ESTRELAS
+        // ============================================
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = new Float32Array(5000 * 3);
+        for(let i=0; i<5000*3; i++) starPos[i] = (Math.random() - 0.5) * 8000;
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.5 })));
+
+        // ============================================
+        // TEXTURAS REALISTAS
+        // ============================================
+        const textureLoader = new THREE.TextureLoader();
+        
+        // Textura da Terra (azul com continentes)
+        const earthTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg');
+        earthTexture.colorSpace = THREE.SRGBColorSpace;
+        
+        // Textura da Lua (superfície cinza com crateras)
+        const moonTexture = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg');
+        moonTexture.colorSpace = THREE.SRGBColorSpace;
+
+        // ============================================
+        // TERRA E LUA
+        // ============================================
+        const earth = new THREE.Mesh(
+            new THREE.SphereGeometry(40, 64, 64), 
+            new THREE.MeshStandardMaterial({ 
+                map: earthTexture,
+                roughness: 0.7,
+                metalness: 0.1
+            })
+        );
+        scene.add(earth);
+        
+        const atmos = new THREE.Mesh(
+            new THREE.SphereGeometry(44, 64, 64), 
+            new THREE.MeshBasicMaterial({ 
+                color: 0x88aaff, 
+                transparent: true, 
+                opacity: 0.15, 
+                side: THREE.BackSide 
+            })
+        );
+        scene.add(atmos);
+
+        const moonOrbitRadius = 180;
+        let moonAngle = Math.PI * 0.75;
+        const moon = new THREE.Mesh(
+            new THREE.SphereGeometry(12, 64, 64), 
+            new THREE.MeshStandardMaterial({ 
+                map: moonTexture,
+                roughness: 0.9,
+                metalness: 0.05
+            })
+        );
+        scene.add(moon);
+
+        // Orbita da Lua
+        const moonOrbitPoints = [];
+        for (let i = 0; i <= 128; i++) {
+            const angle = (i / 128) * Math.PI * 2;
+            moonOrbitPoints.push(new THREE.Vector3(
+                Math.cos(angle) * moonOrbitRadius, 
+                12, 
+                Math.sin(angle) * moonOrbitRadius
+            ));
+        }
+        scene.add(new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(moonOrbitPoints), 
+            new THREE.LineBasicMaterial({ color: 0x445566, transparent: true, opacity: 0.35 })
+        ));
+
+        // ============================================
+        // SISTEMA L2
+        // ============================================
+        const l2Position = new THREE.Vector3(0, 0, 1550);
+        const l2System = new THREE.Group();
+        l2System.position.copy(l2Position);
+        
+        const l2Marker = new THREE.Mesh(
+            new THREE.SphereGeometry(4, 16, 16), 
+            new THREE.MeshBasicMaterial({ color: 0x44aaaa, transparent: true, opacity: 0.4 })
+        );
+        l2System.add(l2Marker);
+        scene.add(l2System);
+
+        // Orbita Halo
+        const haloX = 55, haloY = 25, haloZ = 40;
+        const haloPoints = [];
+        for(let i=0; i<=100; i++) {
+            const t = (i/100) * Math.PI * 2;
+            haloPoints.push(new THREE.Vector3(Math.sin(t)*haloX, Math.sin(t*2)*haloY, Math.cos(t)*haloZ));
+        }
+        const haloLine = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(haloPoints), 
+            new THREE.LineBasicMaterial({ color: 0x44aaaa, transparent: true, opacity: 0.5 })
+        );
+        haloLine.visible = false;
+        l2System.add(haloLine);
+
+        // ============================================
+        // JAMES WEBB - MODELO DETALHADO
+        // ============================================
+        function createJWST() {
+            const telescope = new THREE.Group();
+
+            // === MATERIAIS ===
+            // ALTERAÇÃO AQUI: Ajuste para um dourado brilhante e visível
+            const goldMat = new THREE.MeshStandardMaterial({
+                color: 0xffd700,       // Cor Dourada Pura
+                metalness: 0.9,        // Alta reflexão metálica
+                roughness: 0.1,        // Superfície polida
+                emissive: 0xffd700,    // Luz própria dourada (garante visibilidade no espaço escuro)
+                emissiveIntensity: 0.3 // Intensidade do brilho
+            });
+
+            const silverMat = new THREE.MeshStandardMaterial({
+                color: 0xcccccc,
+                metalness: 0.9,
+                roughness: 0.15
+            });
+            
+            const purpleShieldMat = new THREE.MeshStandardMaterial({
+                color: 0x7744aa,
+                metalness: 0.3,
+                roughness: 0.6,
+                side: THREE.DoubleSide
+            });
+            
+            const darkMat = new THREE.MeshStandardMaterial({ 
+                color: 0x333344, 
+                metalness: 0.5, 
+                roughness: 0.5 
+            });
+            
+            const busMat = new THREE.MeshStandardMaterial({
+                color: 0x2a2a35,
+                metalness: 0.6,
+                roughness: 0.5
+            });
+
+            // === 1. ESCUDO SOLAR (5 camadas em losango) ===
+            const shieldGroup = new THREE.Group();
+            const shieldWidth = 15;
+            const shieldLength = 22;
+
+            for (let i = 0; i < 5; i++) {
+                const shieldShape = new THREE.Shape();
+                shieldShape.moveTo(0, shieldLength/2);
+                shieldShape.lineTo(shieldWidth/2, 0);
+                shieldShape.lineTo(0, -shieldLength/2);
+                shieldShape.lineTo(-shieldWidth/2, 0);
+                shieldShape.closePath();
+
+                const shieldGeom = new THREE.ExtrudeGeometry(shieldShape, {
+                    depth: 0.05,
+                    bevelEnabled: false
+                });
+
+                const layer = new THREE.Mesh(shieldGeom, purpleShieldMat);
+                layer.rotation.x = -Math.PI / 2;
+                layer.position.y = -8 - (i * 0.5);
+                layer.receiveShadow = true;
+                shieldGroup.add(layer);
+            }
+            telescope.add(shieldGroup);
+
+            // === 2. BACKPLANE (estrutura de suporte) ===
+            const backplaneGroup = new THREE.Group();
+            backplaneGroup.position.set(0, 2, 0);
+            telescope.add(backplaneGroup);
+
+            const backplaneGeom = new THREE.CylinderGeometry(8, 8, 0.8, 6);
+            const backplane = new THREE.Mesh(backplaneGeom, darkMat);
+            backplane.rotation.x = Math.PI / 2;
+            backplane.position.z = -0.4;
+            backplaneGroup.add(backplane);
+
+            // === 3. ESPELHO PRIMÁRIO (18 segmentos hexagonais) ===
+            const primaryMirrorGroup = new THREE.Group();
+            primaryMirrorGroup.position.set(0, 2, 0.5);
+            backplaneGroup.add(primaryMirrorGroup);
+
+            const hexRadius = 1.6;
+            const hexDepth = 0.4;
+            const spacing = 2.85;
+
+            function createHexagonMesh(radius, depth, material) {
+                const shape = new THREE.Shape();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI) / 3 - Math.PI / 6;
+                    const x = radius * Math.cos(angle);
+                    const y = radius * Math.sin(angle);
+                    if (i === 0) shape.moveTo(x, y);
+                    else shape.lineTo(x, y);
+                }
+                shape.closePath();
+
+                const geom = new THREE.ExtrudeGeometry(shape, {
+                    depth: depth,
+                    bevelEnabled: true,
+                    bevelThickness: 0.05,
+                    bevelSize: 0.05,
+                    bevelSegments: 2
+                });
+
+                return new THREE.Mesh(geom, material);
+            }
+
+            const hexPositions = [
+                [0, 0],
+                [0, spacing],
+                [0, -spacing],
+                [spacing * 0.866, spacing * 0.5],
+                [-spacing * 0.866, spacing * 0.5],
+                [spacing * 0.866, -spacing * 0.5],
+                [-spacing * 0.866, -spacing * 0.5],
+                [0, spacing * 2],
+                [0, -spacing * 2],
+                [spacing * 1.732, 0],
+                [-spacing * 1.732, 0],
+                [spacing * 0.866, spacing * 1.5],
+                [-spacing * 0.866, spacing * 1.5],
+                [spacing * 0.866, -spacing * 1.5],
+                [-spacing * 0.866, -spacing * 1.5],
+                [spacing * 1.732, spacing],
+                [-spacing * 1.732, spacing],
+                [spacing * 1.732, -spacing]
+            ];
+
+            hexPositions.forEach(pos => {
+                const hex = createHexagonMesh(hexRadius, hexDepth, goldMat);
+                hex.position.set(pos[0], pos[1], 0);
+                hex.castShadow = true;
+                hex.receiveShadow = true;
+                primaryMirrorGroup.add(hex);
+            });
+
+            // === 4. HASTES DE SUPORTE DO ESPELHO SECUNDÁRIO ===
+            const secondaryAssemblyGroup = new THREE.Group();
+            secondaryAssemblyGroup.position.set(0, 2, 0);
+            telescope.add(secondaryAssemblyGroup);
+
+            const focalDistance = 11.5;
+            const secondaryPosition = new THREE.Vector3(0, 0, focalDistance);
+
+            const anchorPoints = [
+                new THREE.Vector3(0, 6.5, 0),
+                new THREE.Vector3(-5.6, -3.2, 0),
+                new THREE.Vector3(5.6, -3.2, 0)
+            ];
+
+            anchorPoints.forEach((anchor, idx) => {
+                const direction = new THREE.Vector3().subVectors(secondaryPosition, anchor);
+                const length = direction.length();
+                const midpoint = new THREE.Vector3().addVectors(anchor, secondaryPosition).multiplyScalar(0.5);
+
+                const strutGeom = new THREE.CylinderGeometry(0.09, 0.09, length, 8);
+                const strut = new THREE.Mesh(strutGeom, silverMat);
+
+                strut.position.copy(midpoint);
+
+                const axis = new THREE.Vector3(0, 1, 0);
+                const quaternion = new THREE.Quaternion().setFromUnitVectors(axis, direction.clone().normalize());
+                strut.setRotationFromQuaternion(quaternion);
+
+                strut.castShadow = true;
+                secondaryAssemblyGroup.add(strut);
+
+                // Conectores ao longo das hastes
+                const numBraces = 3;
+                for (let i = 1; i <= numBraces; i++) {
+                    const t = i / (numBraces + 1);
+                    const bracePos = new THREE.Vector3().lerpVectors(anchor, secondaryPosition, t);
+
+                    const connectorGeom = new THREE.SphereGeometry(0.18, 8, 8);
+                    const connector = new THREE.Mesh(connectorGeom, darkMat);
+                    connector.position.copy(bracePos);
+                    secondaryAssemblyGroup.add(connector);
+                }
+            });
+
+            // === 5. CONJUNTO DO PONTO FOCAL ===
+            const focalPointGroup = new THREE.Group();
+            focalPointGroup.position.copy(secondaryPosition);
+            secondaryAssemblyGroup.add(focalPointGroup);
+
+            // Caixa de suporte do espelho secundário
+            const supportBoxGeom = new THREE.BoxGeometry(2.8, 2.8, 1.8);
+            const supportBox = new THREE.Mesh(supportBoxGeom, darkMat);
+            supportBox.position.z = -0.9;
+            supportBox.castShadow = true;
+            focalPointGroup.add(supportBox);
+
+            // Braços de conexão
+            anchorPoints.forEach(anchor => {
+                const direction = new THREE.Vector3().subVectors(anchor, secondaryPosition).normalize();
+                const armGeom = new THREE.CylinderGeometry(0.14, 0.14, 1.2, 8);
+                const arm = new THREE.Mesh(armGeom, darkMat);
+
+                const armPos = direction.clone().multiplyScalar(0.7);
+                arm.position.copy(armPos);
+
+                const axis = new THREE.Vector3(0, 1, 0);
+                const quaternion = new THREE.Quaternion().setFromUnitVectors(axis, direction.clone().normalize());
+                arm.setRotationFromQuaternion(quaternion);
+
+                focalPointGroup.add(arm);
+            });
+
+            // Espelho secundário (hexagonal dourado)
+            const secRadius = 1.0;
+            const secShape = new THREE.Shape();
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3 - Math.PI / 6;
+                const x = secRadius * Math.cos(angle);
+                const y = secRadius * Math.sin(angle);
+                if (i === 0) secShape.moveTo(x, y);
+                else secShape.lineTo(x, y);
+            }
+            secShape.closePath();
+
+            const secGeo = new THREE.ExtrudeGeometry(secShape, {
+                depth: 0.3,
+                bevelEnabled: true,
+                bevelThickness: 0.05,
+                bevelSize: 0.05
+            });
+            const secondaryMirror = new THREE.Mesh(secGeo, goldMat);
+            secondaryMirror.position.z = 0.2;
+            secondaryMirror.castShadow = true;
+            focalPointGroup.add(secondaryMirror);
+
+            // Anel ao redor do espelho secundário
+            const ringGeom = new THREE.TorusGeometry(1.15, 0.12, 8, 6);
+            const ring = new THREE.Mesh(ringGeom, darkMat);
+            ring.position.z = 0.2;
+            focalPointGroup.add(ring);
+
+            // === 6. NAVE/SPACECRAFT BUS ===
+            const busGroup = new THREE.Group();
+            busGroup.position.set(0, -12, -7);
+            telescope.add(busGroup);
+
+            const busGeom = new THREE.BoxGeometry(7, 4.5, 9);
+            const bus = new THREE.Mesh(busGeom, busMat);
+            bus.castShadow = true;
+            busGroup.add(bus);
+
+            // Antena de alto ganho
+            const antennaDishGeom = new THREE.SphereGeometry(1.4, 16, 16, 0, Math.PI * 2, 0, Math.PI/2);
+            const antennaDish = new THREE.Mesh(antennaDishGeom, silverMat);
+            antennaDish.position.set(0, 3.5, -4.5);
+            antennaDish.rotation.x = -Math.PI / 4;
+            busGroup.add(antennaDish);
+
+            const antennaSupportGeom = new THREE.CylinderGeometry(0.12, 0.12, 2.2, 8);
+            const antennaSupport = new THREE.Mesh(antennaSupportGeom, darkMat);
+            antennaSupport.position.set(0, 2.2, -4.5);
+            busGroup.add(antennaSupport);
+
+            // === GIRAR O GRUPO TODO EM 90 GRAUS (EIXO X) ===
+            telescope.rotation.x = -Math.PI / 2;
+
+            // LUZ DE BRILHO
+            const glowLight = new THREE.PointLight(0xffcc66, 0.5, 50);
+            glowLight.position.set(0, 8, 0);
+            telescope.add(glowLight);
+
+            return telescope;
+        }
+
+        const jwst = createJWST();
+        jwst.position.set(0, 0, 1500);
+        scene.add(jwst);
+
+        // ============================================
+        // CONTROLES
+        // ============================================
+        const camStart = new THREE.Vector3(0, 60, 200);
+        camera.position.copy(camStart);
+        controls.target.set(0, 0, 50);
+        
+        let isPlaying = false, missionProgress = 0, missionComplete = false;
+        let baseSpeed = 0.12, currentSpeed = 0, showOrbitMode = false;
+        let haloAngle = 0, haloVisible = false;
+
+        const btnPlay = document.getElementById('btn-play');
+        const btnRestart = document.getElementById('btn-restart');
+        const btnSlow = document.getElementById('btn-slow');
+        const btnFast = document.getElementById('btn-fast');
+        const btnOrbit = document.getElementById('btn-orbit');
+        const titleEl = document.getElementById('stage-title');
+        const descEl = document.getElementById('stage-desc');
+        const distEl = document.getElementById('dist-val');
+        const instEl = document.getElementById('instructions');
+        const progressBar = document.getElementById('progress-bar');
+        const orbitInfoPanel = document.getElementById('orbit-info-panel');
+        const orbitIndicator = document.getElementById('orbit-indicator');
+        const phaseEl = document.getElementById('orbit-phase');
+        const speedEl = document.getElementById('speed-display');
+
+        function updateUI() { 
+            speedEl.textContent = (baseSpeed / 0.12).toFixed(1) + 'x'; 
+        }
+
+        btnPlay.onclick = () => {
+            if (missionComplete) return;
+            isPlaying = !isPlaying;
+            btnPlay.textContent = isPlaying ? 'PAUSAR' : 'RETOMAR';
+            currentSpeed = isPlaying ? baseSpeed : 0;
+        };
+
+        btnRestart.onclick = () => {
+            missionProgress = 0; 
+            isPlaying = false; 
+            missionComplete = false;
+            currentSpeed = 0; 
+            haloAngle = 0; 
+            haloVisible = false; 
+            showOrbitMode = false; 
+            baseSpeed = 0.12;
+            
+            camera.position.copy(camStart); 
+            controls.target.set(0, 0, 50);
+            jwst.position.set(0, 0, 1500);
+            
+            haloLine.visible = false;
+            btnPlay.textContent = 'INICIAR'; 
+            btnPlay.disabled = false;
+            btnOrbit.textContent = 'VER ÓRBITA L2'; 
+            btnOrbit.classList.remove('active');
+            instEl.style.display = 'none'; 
+            orbitInfoPanel.style.display = 'none'; 
+            orbitIndicator.style.display = 'none';
+            
+            titleEl.textContent = 'MISSÃO PRONTA';
+            descEl.textContent = 'Inicie a jornada espacial ate L2.';
+            distEl.textContent = '0 KM'; 
+            progressBar.style.width = '0%';
+            updateUI();
+        };
+
+        btnFast.onclick = () => { 
+            baseSpeed = Math.min(baseSpeed + 0.06, 1.0); 
+            if(isPlaying) currentSpeed = baseSpeed; 
+            updateUI(); 
+        };
+        
+        btnSlow.onclick = () => { 
+            baseSpeed = Math.max(baseSpeed - 0.04, 0.04); 
+            if(isPlaying) currentSpeed = baseSpeed; 
+            updateUI(); 
+        };
+        
+        btnOrbit.onclick = () => {
+            showOrbitMode = !showOrbitMode;
+            if (showOrbitMode) {
+                missionComplete = true; 
+                isPlaying = false; 
+                haloVisible = true;
+                haloLine.visible = true;
+                btnPlay.textContent = 'CONCLUIDO'; 
+                btnPlay.disabled = true;
+                btnOrbit.textContent = 'OCULTAR ÓRBITA'; 
+                btnOrbit.classList.add('active');
+                instEl.style.display = 'block'; 
+                orbitInfoPanel.style.display = 'block'; 
+                orbitIndicator.style.display = 'block';
+                titleEl.textContent = 'ÓRBITA HALO';
+                distEl.textContent = '1.500.000 KM'; 
+                progressBar.style.width = '100%';
+                camera.position.set(100, 80, 1450); 
+                controls.target.copy(l2Position);
+            } else {
+                haloLine.visible = false;
+                btnOrbit.textContent = 'VER ÓRBITA L2'; 
+                btnOrbit.classList.remove('active');
+                orbitIndicator.style.display = 'none';
+            }
+        };
+
+        function updateLabel(id, obj, y = 0) {
+            const el = document.getElementById(id);
+            const v = new THREE.Vector3();
+            obj.getWorldPosition(v); 
+            v.y += y;
+            v.project(camera);
+            if (v.z > 1 || !Number.isFinite(v.x)) { 
+                el.style.opacity = '0'; 
+                return; 
+            }
+            el.style.left = (v.x * 0.5 + 0.5) * window.innerWidth + 'px';
+            el.style.top = (-v.y * 0.5 + 0.5) * window.innerHeight + 'px';
+            el.style.opacity = '1';
+        }
+
+        // ============================================
+        // ANIMACAO
+        // ============================================
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const d = clock.getDelta();
+
+            // Rotação da Terra
+            earth.rotation.y += d * 0.06;
+            
+            // Rotação da Lua (rotação síncrona)
+            moon.rotation.y += d * 0.06;
+            
+            // Animação da órbita lunar
+            moonAngle += 0.00025 * 60 * d;
+            moon.position.set(
+                Math.cos(moonAngle) * moonOrbitRadius, 
+                12, 
+                Math.sin(moonAngle) * moonOrbitRadius
+            );
+
+            // Animação de rotação do telescópio James Webb
+            jwst.rotation.y += d * 0.15;
+
+            if (haloVisible || missionComplete) {
+                haloAngle += 0.0004 * 60 * d;
+                jwst.position.set(
+                    l2Position.x + Math.sin(haloAngle) * haloX, 
+                    l2Position.y + Math.sin(haloAngle * 2) * haloY, 
+                    l2Position.z + Math.cos(haloAngle) * haloZ
+                );
+                phaseEl.textContent = Math.round(((haloAngle % (Math.PI * 2)) / (Math.PI * 2)) * 360) + ' graus';
+            }
+
+            if (isPlaying && !missionComplete) {
+                missionProgress += currentSpeed * d * 0.07;
+                
+                if (missionProgress >= 1) {
+                    missionProgress = 1; 
+                    missionComplete = true; 
+                    haloVisible = true; 
+                    isPlaying = false;
+                    btnPlay.textContent = 'CONCLUIDO'; 
+                    btnPlay.disabled = true;
+                    instEl.style.display = 'block'; 
+                    orbitInfoPanel.style.display = 'block';
+                    titleEl.textContent = 'James Webb em ÓRBITA';
+                    descEl.textContent = 'Clique em VER ÓRBITA L2.';
+                    distEl.textContent = '1.500.000 KM';
+                    controls.target.copy(l2Position);
+                }
+
+                const ep = easeInOutCubic(missionProgress);
+                
+                camera.position.x += (Math.sin(ep * Math.PI * 0.6) * 45 * (1 - ep * 0.7) - camera.position.x) * 0.05;
+                camera.position.y += (60 - ep * 25 + Math.sin(ep * Math.PI * 1.8) * 18 * (1 - ep) - camera.position.y) * 0.05;
+                camera.position.z += (200 + ep * 1150 - camera.position.z) * 0.05;
+
+                controls.target.z += (50 + ep * 1500 - controls.target.z) * 0.03;
+                controls.target.y += (8 + ep * 2 - controls.target.y) * 0.03;
+
+                distEl.textContent = Math.floor(ep * 1500000).toLocaleString('pt-BR') + ' KM';
+                progressBar.style.width = (missionProgress * 100) + '%';
+
+                if (missionProgress < 0.3) { 
+                    titleEl.textContent = 'Saindo da Terra'; 
+                } else if (missionProgress < 0.7) { 
+                    titleEl.textContent = 'Espaco Profundo'; 
+                } else { 
+                    titleEl.textContent = 'Chegando em L2'; 
+                }
+            }
+
+            updateLabel('label-terra', earth, 58);
+            updateLabel('label-lua', moon, 22);
+            updateLabel('label-jwst', jwst, 15);
+            updateLabel('label-l2', l2System, 12);
+            
+            const moonOrbitLabel = new THREE.Object3D();
+            moonOrbitLabel.position.set(moonOrbitRadius * 0.65, 20, moonOrbitRadius * 0.65);
+            updateLabel('label-orbita', moonOrbitLabel, 0);
+
+            document.getElementById('label-halo').style.opacity = haloVisible ? '1' : '0';
+            if(haloVisible) {
+                const h = new THREE.Object3D(); 
+                h.position.set(l2Position.x + haloX, l2Position.y, l2Position.z);
+                updateLabel('label-halo', h, 0);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        window.onresize = () => { 
+            camera.aspect = window.innerWidth / window.innerHeight; 
+            camera.updateProjectionMatrix(); 
+            renderer.setSize(window.innerWidth, window.innerHeight); 
+        };
+        
+        updateUI();
+        animate();
+    </script>
+</body>
+</html>

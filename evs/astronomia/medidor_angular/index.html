@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Medidor Angular Celeste Pro</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <!-- Configuração do MathJax para escala ampliada -->
+    <script>
+        MathJax = {
+            chtml: {
+                scale: 1.3
+            },
+            svg: {
+                scale: 1.3
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #090d16;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            font-size: 16px; /* ligeiro aumento geral */
+        }
+        .container {
+            background-color: #111a2e;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            max-width: 650px;
+            width: 100%;
+            border: 1px solid #1e293b;
+        }
+        h2, h3 { text-align: center; color: #38bdf8; margin-top: 0; }
+        h2 { font-size: 26px; } /* ampliado */
+        h3 { font-size: 20px; margin-top: 25px; text-align: left; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+        .form-group { margin-bottom: 18px; position: relative; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #94a3b8; font-size: 16px; } /* ampliado */
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 15px;
+            transition: border 0.2s;
+        }
+        input:focus { outline: none; border-color: #38bdf8; }
+        
+        .city-search-box { display: flex; gap: 8px; }
+        .btn-search {
+            background-color: #334155;
+            color: white;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 0 15px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+        .btn-search:hover { background-color: #475569; }
+
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .suggestions-list div { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #334155; font-size: 14px; }
+        .suggestions-list div:last-child { border-bottom: none; }
+        .suggestions-list div:hover { background-color: #334155; color: #38bdf8; }
+        
+        .btn-calc {
+            width: 100%; padding: 14px; background-color: #0284c7; color: white;
+            border: none; border-radius: 8px; font-size: 17px; cursor: pointer;
+            font-weight: bold; transition: background 0.2s; margin-top: 10px;
+        }
+        .btn-calc:hover { background-color: #0369a1; }
+        
+        .result-box {
+            margin-top: 25px; padding: 20px; background-color: #070a12;
+            border-left: 4px solid #38bdf8; border-radius: 8px; display: none;
+            font-size: 16px; /* ampliado */
+        }
+        .highlight { color: #34d399; font-weight: bold; font-size: 2em; }
+        .geo-inputs { display: flex; gap: 10px; }
+        .geo-inputs .form-group { flex: 1; }
+        
+        /* Estilo da seção didática */
+        .didactic-section {
+            margin-top: 30px;
+            padding-top: 10px;
+            color: #cbd5e1;
+            font-size: 16px; /* ampliado */
+            line-height: 1.7;
+        }
+        .didactic-section p { margin-bottom: 15px; text-align: justify; }
+        .math-box {
+            background-color: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .nota-tecnica {
+            font-size: 14px;
+            color: #a5b4cb;
+            font-style: italic;
+            margin-top: 20px;
+            border-left: 3px solid #38bdf8;
+            padding-left: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>EVS - Medidor Angular Celeste (Hemisfério Sul)</h2>
+	<p align="center"><b><font size="4">Prof. Luciano Soares Pedroso</font></b></p>
+    
+    <div class="form-group">
+        <label>Digite sua Cidade e Estado/País:</label>
+        <div class="city-search-box">
+            <input type="text" id="cityInput" placeholder="Ex: Alfenas, MG ou São Paulo">
+            <button class="btn-search" type="button" onclick="buscarCoordenadas()">Buscar</button>
+        </div>
+    </div>
+
+    <div class="geo-inputs">
+        <div class="form-group">
+            <label>Latitude carregada (graus):</label>
+            <input type="number" id="lat" value="-23.55" step="any">
+        </div>
+        <div class="form-group">
+            <label>Longitude carregada (graus):</label>
+            <input type="number" id="lon" value="-46.63" step="any">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Estrela 1 (Digite o nome ou constelação):</label>
+        <input type="text" id="starInput1" placeholder="Ex: Sirius, Três Marias, Cruzeiro..." autocomplete="off">
+        <div class="suggestions-list" id="sug1"></div>
+    </div>
+
+    <div class="form-group">
+        <label>Estrela 2 (Digite o nome ou constelação):</label>
+        <input type="text" id="starInput2" placeholder="Ex: Betelgeuse, Escorpião..." autocomplete="off">
+        <div class="suggestions-list" id="sug2"></div>
+    </div>
+
+    <button class="btn-calc" onclick="calcularDistancia()">Calcular Distância Angular</button>
+
+    <div class="result-box" id="resultBox">
+        <p>Distância Angular Real: <span class="highlight" id="distResult">0°</span></p>
+        <p id="detalhesEstrelas" style="font-size: 15px; color: #94a3b8; line-height: 1.4;"></p>
+    </div>
+
+    <div class="didactic-section">
+        <h3>Como a Astronomia explica este cálculo?</h3>
+        <p>
+            Você sabia que não importa se você está em <strong>São Paulo - SP</strong>, em <strong>Alfenas - MG</strong> ou em Tóquio? A distância angular entre duas estrelas fixas na esfera celeste será <strong>exatamente a mesma</strong>! Como as estrelas estão a trilhões de quilômetros de nós, a mudança de posição de uma cidade para outra na Terra é microscopicamente irrelevante para alterar o ângulo entre elas.
+        </p>
+        <p>
+            A sua <strong>Latitude e Longitude</strong> local definem apenas a projeção da malha sob o seu próprio horizonte. Elas ditam a <em>Altitude</em> (altura em relação ao solo) e o <em>Azimute</em> (direção dos pontos cardeais) em que a estrela aparece para você em determinado horário, mas o espaço físico angular que separa uma estrela da outra no tecido cósmico permanece imutável.
+        </p>
+
+        <h3>A Matemática por trás do Sistema</h3>
+        <p>
+            Para encontrar esse valor absoluto, o sistema mapeia a posição das estrelas usando duas coordenadas equatoriais fixas: a <strong>Ascensão Reta (\(\alpha\))</strong> — equivalente à longitude terrestre, medida em horas — e a <strong>Declinação (\(\delta\))</strong> — equivalente à latitude terrestre, medida em graus.
+        </p>
+        <p>Primeiro, convertemos a Ascensão Reta (\(\alpha\)) de horas para graus decimais, sabendo que a Terra rotaciona \(15^\circ\) a cada hora:</p>
+        <div class="math-box">
+            $$\alpha_{\text{graus}} = \alpha_{\text{horas}} \times 15$$
+        </div>
+        <p>Na sequência, o sistema transforma todos os valores de graus para radianos e aplica a famosa <strong>Lei dos Cossenos Esférica</strong> (Trigonometria Esférica) para determinar a distância angular (\(d\)) sobre a superfície da esfera celeste:</p>
+        <div class="math-box">
+            $$\cos(d) = sen(\delta_1)sen(\delta_2) + \cos(\delta_1)\cos(\delta_2)\cos(\alpha_1 - \alpha_2)$$
+        </div>
+        <p>Por fim, isolamos o valor de \(d\) aplicando a função do arco cosseno (\(\arccos\)) e convertemos o resultado de volta para graus decimais:</p>
+        <div class="math-box">
+            $$d = \arccos\big(\cos(d)\big)$$
+        </div>
+        
+        <div class="nota-tecnica">
+            <strong>Nota técnica:</strong> As coordenadas estelares (Ascensão Reta e Declinação) utilizadas neste sistema estão referenciadas ao <strong>equinócio J2000.0</strong>, o padrão atual da astronomia. Embora as estrelas possuam um movimento próprio (pequenas mudanças em sua posição ao longo dos anos), para observações visuais essas variações são muito lentas e desprezíveis na prática, mantendo os valores apresentados precisos para a época atual.
+        </div>
+    </div>
+</div>
+
+<script>
+const estrelas = [
+    { nome: "Sirius", constelacao: "Cão Maior", ra: 6.75, dec: -16.72 },
+    { nome: "Canopus", constelacao: "Quilha (Carina)", ra: 6.40, dec: -52.70 },
+    { nome: "Rigil Kentaurus (Alfa Centauri)", constelacao: "Centauro", ra: 14.66, dec: -60.83 },
+    { nome: "Arcturus", constelacao: "Boieiro", ra: 14.26, dec: 19.18 },
+    { nome: "Vega", constelacao: "Lira", ra: 18.62, dec: 38.78 },
+    { nome: "Capella", constelacao: "Cocheiro", ra: 5.28, dec: 46.00 },
+    { nome: "Rigel", constelacao: "Órion (Pé de Órion)", ra: 5.25, dec: -8.20 },
+    { nome: "Procyon", constelacao: "Cão Menor", ra: 7.66, dec: 5.22 },
+    { nome: "Betelgeuse", constelacao: "Órion (Ombro de Órion)", ra: 5.92, dec: 7.41 },
+    { nome: "Achernar", constelacao: "Eridano", ra: 1.63, dec: -57.24 },
+    { nome: "Estrela de Magalhães (Acrux)", constelacao: "Cruzeiro do Sul (Pé da Cruz)", ra: 12.44, dec: -63.10 },
+    { nome: "Mimosa (Becrux)", constelacao: "Cruzeiro do Sul (Braço esquerdo)", ra: 12.79, dec: -59.69 },
+    { nome: "Rubídea (Gacrux)", constelacao: "Cruzeiro do Sul (Topo da Cruz)", ra: 12.52, dec: -57.11 },
+    { nome: "Intrometida (Épsilon Crucis)", constelacao: "Cruzeiro do Sul", ra: 12.35, dec: -60.40 },
+    { nome: "Antares (O Coração do Escorpião)", constelacao: "Escorpião", ra: 16.49, dec: -26.43 },
+    { nome: "Shaula", constelacao: "Escorpião (Ferrão)", ra: 17.56, dec: -37.10 },
+    { nome: "Mintaka", constelacao: "Órion (Três Marias)", ra: 5.53, dec: -0.30 },
+    { nome: "Alnilam", constelacao: "Órion (Três Marias - Centro)", ra: 5.60, dec: -1.20 },
+    { nome: "Alnitak", constelacao: "Órion (Três Marias)", ra: 5.68, dec: -1.94 },
+    { nome: "Hadar (Agena)", constelacao: "Centauro", ra: 14.06, dec: -60.37 },
+    { nome: "Fomalhaut", constelacao: "Peixe Austral", ra: 22.96, dec: -29.62 },
+    { nome: "Spica (Espiga)", constelacao: "Virgem", ra: 13.42, dec: -11.16 },
+    { nome: "Aldebaran (O Olho do Touro)", constelacao: "Touro", ra: 4.60, dec: 16.51 }
+];
+
+let selectedStar1 = null;
+let selectedStar2 = null;
+
+function buscarCoordenadas() {
+    const cidade = document.getElementById('cityInput').value;
+    if (!cidade) {
+        alert("Por favor, digite o nome de uma cidade antes de buscar!");
+        return;
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cidade)}&limit=1`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lon = parseFloat(data[0].lon);
+                
+                document.getElementById('lat').value = lat.toFixed(4);
+                document.getElementById('lon').value = lon.toFixed(4);
+                
+                const latPt = lat.toFixed(4).replace('.', ',');
+                const lonPt = lon.toFixed(4).replace('.', ',');
+                
+                alert(`Sucesso! Cidade localizada.\nLatitude: ${latPt}\nLongitude: ${lonPt}`);
+            } else {
+                alert("Não conseguimos encontrar essa localização. Verifique a ortografia ou digite os graus manualmente.");
+            }
+        })
+        .catch(error => {
+            console.error("Erro na busca:", error);
+            alert("Houve um problema de conexão ao buscar a cidade. Mas você ainda pode alterar os valores de latitude e longitude manualmente!");
+        });
+}
+
+function setupAutocomplete(inputId, suggestionsId, starNum) {
+    const input = document.getElementById(inputId);
+    const sugBox = document.getElementById(suggestionsId);
+
+    input.addEventListener('input', function() {
+        const text = this.value.toLowerCase();
+        sugBox.innerHTML = '';
+        if (!text) { sugBox.style.display = 'none'; return; }
+
+        const filtradas = estrelas.filter(e => 
+            e.nome.toLowerCase().includes(text) || 
+            e.constelacao.toLowerCase().includes(text)
+        );
+
+        if (filtradas.length > 0) {
+            sugBox.style.display = 'block';
+            filtradas.forEach(est => {
+                const div = document.createElement('div');
+                div.innerHTML = `<strong>${est.nome}</strong> <span style="color:#64748b; font-size:12px;">(${est.constelacao})</span>`;
+                div.addEventListener('click', () => {
+                    input.value = `${est.nome} (${est.constelacao})`;
+                    if (starNum === 1) selectedStar1 = est;
+                    if (starNum === 2) selectedStar2 = est;
+                    sugBox.style.display = 'none';
+                });
+                sugBox.appendChild(div);
+            });
+        } else {
+            sugBox.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target !== input) sugBox.style.display = 'none';
+    });
+}
+
+setupAutocomplete('starInput1', 'sug1', 1);
+setupAutocomplete('starInput2', 'sug2', 2);
+
+selectedStar1 = estrelas[0]; 
+document.getElementById('starInput1').value = `${estrelas[0].nome} (${estrelas[0].constelacao})`;
+selectedStar2 = estrelas[10]; 
+document.getElementById('starInput2').value = `${estrelas[10].nome} (${estrelas[10].constelacao})`;
+
+function degressToRadians(deg) { return deg * Math.PI / 180; }
+function radiansToDegrees(rad) { return rad * 180 / Math.PI; }
+
+function calcularDistancia() {
+    if (!selectedStar1 || !selectedStar2) {
+        alert("Por favor, selecione as duas estrelas clicando nas sugestões que aparecem ao digitar!");
+        return;
+    }
+
+    const ra1_rad = degressToRadians(selectedStar1.ra * 15);
+    const ra2_rad = degressToRadians(selectedStar2.ra * 15);
+    const dec1_rad = degressToRadians(selectedStar1.dec);
+    const dec2_rad = degressToRadians(selectedStar2.dec);
+    
+    let cos_d = Math.sin(dec1_rad) * Math.sin(dec2_rad) + 
+                Math.cos(dec1_rad) * Math.cos(dec2_rad) * Math.cos(ra1_rad - ra2_rad);
+                
+    cos_d = Math.max(-1, Math.min(1, cos_d)); 
+    const d_rad = Math.acos(cos_d);
+    const d_deg = radiansToDegrees(d_rad);
+    
+    const resultadoFormatado = d_deg.toFixed(2).replace('.', ',');
+    
+    document.getElementById('distResult').innerText = resultadoFormatado + "°";
+    document.getElementById('detalhesEstrelas').innerHTML = `
+        <strong>Estrela 1:</strong> ${selectedStar1.nome} (Constelação: ${selectedStar1.constelacao})<br>
+        <strong>Estrela 2:</strong> ${selectedStar2.nome} (Constelação: ${selectedStar2.constelacao})
+    `;
+    document.getElementById('resultBox').style.display = 'block';
+}
+</script>
+
+</body>
+</html>

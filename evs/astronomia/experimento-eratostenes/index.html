@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Experimento de Eratóstenes - 3D</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #020208;
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 10, 20, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            z-index: 100;
+            max-width: 360px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            pointer-events: all;
+        }
+        
+        #info-panel h2 {
+            margin: 0 0 15px 0;
+            color: #ffd700;
+            text-align: center;
+            font-size: 1.4em;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 0.9em;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #333;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+            border: none;
+            border-radius: 6px;
+            color: #000;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 5px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #ffd700;
+            display: none;
+        }
+        
+        #results h3 {
+            margin: 0 0 10px 0;
+            color: #ffd700;
+            font-size: 1.1em;
+        }
+        
+        #results p {
+            margin: 6px 0;
+            color: #eee;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .result-value {
+            color: #fff;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: #ffd700;
+            padding: 20px 40px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            border: 1px solid #ffd700;
+        }
+        
+        .status-badge {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="info-panel">
+        <h2>🌍 EVS - Experimento de Eratóstenes</h2>
+		<p align="center">Prof. Luciano Soares Pedroso</p>
+        
+        <div class="input-group">
+            <label>☀️ Cidade 1 (Sol a pino):</label>
+            <input type="text" id="city1" value="Assuã, Egito">
+            <div id="city1-error" style="color: #ff5555; font-size: 11px;"></div>
+        </div>
+        
+        <div class="input-group">
+            <label>📍 Cidade 2 (Com sombra):</label>
+            <input type="text" id="city2" value="Alexandria, Egito">
+            <div id="city2-error" style="color: #ff5555; font-size: 11px;"></div>
+        </div>
+        
+        <button onclick="calculate()">🔍 Calcular Raio da Terra</button>
+        
+        <div id="results">
+            <h3>📊 Resultados da Simulação</h3>
+            <p>📏 Distância estimada: <span id="distance" class="result-value">-</span></p>
+            <p>📐 Ângulo medido: <span id="angle" class="result-value">-</span></p>
+            <p>🌍 Raio calculado: <span id="radius" class="result-value">-</span></p>
+            <p>🎯 Erro Relativo: <span id="error" class="result-value">-</span></p>
+            <div id="position-status" class="status-badge"></div>
+        </div>
+    </div>
+    
+    <div id="loading">🔄 Buscando coordenadas...</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        
+        const EARTH_RADIUS = 2.0;
+        const REAL_EARTH_RADIUS_KM = 6371;
+        
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 5);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        
+        scene.add(new THREE.AmbientLight(0x404040, 3));
+        const sunLight = new THREE.DirectionalLight(0xffffff, 3);
+        scene.add(sunLight);
+        
+        const textureLoader = new THREE.TextureLoader();
+        const earthGroup = new THREE.Group();
+        scene.add(earthGroup);
+        
+        const earthGeo = new THREE.SphereGeometry(EARTH_RADIUS, 64, 64);
+        const earthMat = new THREE.MeshPhongMaterial({
+            map: textureLoader.load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg'),
+            shininess: 5
+        });
+        const earth = new THREE.Mesh(earthGeo, earthMat);
+        earthGroup.add(earth);
+        
+        const starsGeo = new THREE.BufferGeometry();
+        const starPositions = new Float32Array(2000 * 3);
+        for(let i=0; i<2000*3; i++) starPositions[i] = (Math.random() - 0.5) * 100;
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.05 })));
+
+        function formatBR(num, decimals = 2) {
+            return num.toFixed(decimals).replace('.', ',');
+        }
+
+        function latLonToVector3(lat, lon, radius = EARTH_RADIUS) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+            return new THREE.Vector3(
+                -(radius * Math.sin(phi) * Math.cos(theta)),
+                radius * Math.cos(phi),
+                radius * Math.sin(phi) * Math.sin(theta)
+            );
+        }
+
+        function getDistanceKm(lat1, lon1, lat2, lon2) {
+            const R = REAL_EARTH_RADIUS_KM;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        
+        function getAngleDeg(lat1, lon1, lat2, lon2) {
+            const lat1Rad = lat1 * Math.PI / 180;
+            const lat2Rad = lat2 * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const term = Math.sin(lat1Rad)*Math.sin(lat2Rad) + Math.cos(lat1Rad)*Math.cos(lat2Rad)*Math.cos(dLon);
+            return Math.acos(Math.max(-1, Math.min(1, term))) * (180 / Math.PI);
+        }
+
+        let markers = [];
+        
+        function clearMarkers() {
+            // Remove marcadores e seus labels CSS2D
+            markers.forEach(m => {
+                const labelsToRemove = [];
+                m.traverse(child => {
+                    if (child instanceof CSS2DObject) labelsToRemove.push(child);
+                });
+                labelsToRemove.forEach(label => m.remove(label));
+                earthGroup.remove(m);
+            });
+            markers = [];
+
+            // Remove linhas de sombra
+            const linesToRemove = [];
+            earthGroup.children.forEach(child => {
+                if (child.userData.isLine) linesToRemove.push(child);
+            });
+            linesToRemove.forEach(line => earthGroup.remove(line));
+        }
+
+        function createMarker(lat, lon, name, colorHex) {
+            const pos = latLonToVector3(lat, lon);
+            const group = new THREE.Group();
+            const normal = pos.clone().normalize();
+            
+            const base = new THREE.Mesh(new THREE.SphereGeometry(0.04, 16, 16), new THREE.MeshBasicMaterial({ color: colorHex }));
+            group.add(base);
+            
+            const rodLength = 0.3;
+            const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, rodLength, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            rod.position.y = rodLength / 2;
+            group.add(rod);
+            
+            group.position.copy(pos);
+            const quaternion = new THREE.Quaternion();
+            quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+            group.quaternion.copy(quaternion);
+            
+            earthGroup.add(group);
+            markers.push(group);
+
+            const div = document.createElement('div');
+            div.textContent = name;
+            div.style.cssText = `color: white; background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid ${colorHex}; white-space: nowrap;`;
+            const label = new CSS2DObject(div);
+            label.position.set(0, rodLength + 0.1, 0); 
+            group.add(label);
+            
+            return group;
+        }
+        
+        window.calculate = async function() {
+            const city1Name = document.getElementById('city1').value;
+            const city2Name = document.getElementById('city2').value;
+            const loading = document.getElementById('loading');
+            const resultsDiv = document.getElementById('results');
+            
+            resultsDiv.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                const fetchGeo = async (q) => {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`);
+                    const data = await res.json();
+                    if(!data.length) throw new Error("Não encontrado");
+                    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), name: data[0].display_name.split(',')[0] };
+                };
+                
+                const [c1, c2] = await Promise.all([fetchGeo(city1Name), fetchGeo(city2Name)]);
+                
+                loading.style.display = 'none';
+                clearMarkers();
+                
+                createMarker(c1.lat, c1.lon, c1.name, '#00ff00');
+                createMarker(c2.lat, c2.lon, c2.name, '#ffd700');
+                
+                const distanceKm = getDistanceKm(c1.lat, c1.lon, c2.lat, c2.lon);
+                const angleDeg = getAngleDeg(c1.lat, c1.lon, c2.lat, c2.lon);
+                let calculatedRadius = (distanceKm * 180) / (angleDeg * Math.PI);
+                
+                if (isNaN(calculatedRadius) || !isFinite(calculatedRadius)) calculatedRadius = 0;
+                const errorPct = Math.abs((calculatedRadius - REAL_EARTH_RADIUS_KM) / REAL_EARTH_RADIUS_KM * 100);
+                
+                document.getElementById('distance').textContent = formatBR(distanceKm, 2) + ' km';
+                document.getElementById('angle').textContent = formatBR(angleDeg, 4) + '°';
+                document.getElementById('radius').textContent = formatBR(calculatedRadius, 0) + ' km';
+                
+                const errorEl = document.getElementById('error');
+                errorEl.textContent = formatBR(errorPct, 2) + ' %';
+                errorEl.style.color = errorPct < 2 ? '#55ff55' : (errorPct < 10 ? '#ffaa00' : '#ff5555');
+
+                let status = "";
+                if(Math.abs(c1.lat - c2.lat) < 0.5) status = "✅ Mesma Latitude (Ideal)";
+                else if(Math.abs(c1.lon - c2.lon) < 0.5) status = "⚠️ Mesma Longitude (Bom)";
+                else status = "⚠️ Lat/Lon diferentes (Ângulo ajustado)";
+                
+                document.getElementById('position-status').textContent = status;
+                resultsDiv.style.display = 'block';
+                
+                const sunPos = latLonToVector3(c1.lat, c1.lon, 50);
+                sunLight.position.copy(sunPos);
+                
+                const pos2 = latLonToVector3(c2.lat, c2.lon);
+                const normal2 = pos2.clone().normalize();
+                const rodTop = pos2.clone().add(normal2.clone().multiplyScalar(0.3));
+                const sunDir = sunPos.clone().sub(pos2).normalize();
+                const shadowEnd = rodTop.clone().add(sunDir.clone().negate().multiplyScalar(0.3));
+                
+                const lineGeo = new THREE.BufferGeometry().setFromPoints([rodTop, shadowEnd]);
+                const shadowLine = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+                shadowLine.userData.isLine = true;
+                earthGroup.add(shadowLine);
+
+            } catch (err) {
+                loading.style.display = 'none';
+                alert("Cidade não encontrada.");
+            }
+        };
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        setTimeout(calculate, 500);
+    </script>
+</body>
+</html>

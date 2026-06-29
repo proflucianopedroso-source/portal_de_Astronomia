@@ -1,0 +1,2045 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+  
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- HTML5 -->
+<meta charset="utf-8"/>	
+    <title>EVS - Estações do Ano</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <link rel="stylesheet"  type="text/css" href="./ejss.css" />
+    <script src="./js/common-script.js"></script>
+    <script src="./js/text-resize-detector.js"></script>
+    <script src="./js/ejsS.v1.min.js"></script>
+<script type="text/javascript"><!--//--><![CDATA[//><!--
+/* _inputParameters: an object with different values for the model parameters */
+function solar4(_topFrame,_libraryPath,_codebasePath, _inputParameters) {
+  var _model = EJSS_CORE.createAnimationLMS();
+  var _view;
+  var _isPlaying = false;
+  var _isPaused = true;
+  var _isMobile = (navigator===undefined) ? false : navigator.userAgent.match(/iPhone|iPad|iPod|Android|BlackBerry|Opera Mini|IEMobile/i);
+
+var _stringProperties = {};
+  var _tools = {
+    showInputDialog : EJSS_INTERFACE.BoxPanel.showInputDialog,
+    showOkDialog : EJSS_INTERFACE.BoxPanel.showOkDialog,
+    showOkCancelDialog : EJSS_INTERFACE.BoxPanel.showOkCancelDialog,
+    downloadText: EJSS_TOOLS.File.downloadText,
+    uploadText: function(action) { EJSS_TOOLS.File.uploadText(_model,action); } 
+  };
+
+  function _play()  { _isPaused = false; _isPlaying = true;  _model.play();  }
+  function _pause() { _isPaused = true;  _isPlaying = false; _model.pause(); }
+  function _step()  { _pause();  _model.step(); }
+  function _reset() { _model.reset();  _isPaused = _model.isPaused(); _isPlaying = _model.isPlaying(); }
+  _model._play  = _play;
+  _model._pause = _pause;
+  _model._step  = _step;
+  _model._reset = _reset;
+  function _update() { _model.update(); }
+  function _initialize() { _model.initialize(); }
+  function _setFPS(_fps) { _model.setFPS(_fps); }
+  function _setDelay(_delay) { _model.setDelay(_delay); }
+  function _setStepsPerDisplay(_spd) { _model.setStepsPerDisplay(_spd); }
+  function _setUpdateView(_updateView) { _model.setUpdateView(_updateView); }
+  function _setAutoplay(_auto) { _model.setAutoplay(_auto); }
+  function _println(_message) { console.log(_message); }
+
+  function _breakAfterThisPage() { _model.setShouldBreak(true); }
+
+  function _resetSolvers() { if (_model.resetSolvers) _model.resetSolvers(); }
+
+  function _saveText(name,type,content) { if (_model.saveText) _model.saveText(name,type,content); }
+
+  function _saveState(name) { if (_model.saveState) _model.saveState(name); }
+
+  function _saveImage(name,panelname) { if (_model.saveImage) _model.saveImage(name,panelname); }
+
+  function _readState(url,type) { if (_model.readState) _model.readState(url,type); }
+
+  function _readText(url,type,varname) { if (_model.readText) _model.readText(url,type,varname); }
+
+  function _getStringProperty(propertyName) {
+    var _value = _stringProperties[propertyName];
+    if (_value===undefined) return propertyName;
+    else return _value;
+  }
+  var __pagesEnabled = [];
+  function _setPageEnabled(pageName,enabled) { __pagesEnabled[pageName] = enabled; }
+
+  var l; // EjsS Model.Variables.Var Table.l
+  var rad_day; // EjsS Model.Variables.Var Table.rad_day
+  var dia_do_ano; // EjsS Model.Variables.Var Table.dia_do_ano
+  var solar_day; // EjsS Model.Variables.Var Table.solar_day
+  var mes; // EjsS Model.Variables.Var Table.mes
+  var data; // EjsS Model.Variables.Var Table.data
+  var novacor; // EjsS Model.Variables.Var Table.novacor
+  var noite; // EjsS Model.Variables.Var Table.noite
+  var linhas; // EjsS Model.Variables.Var Table.linhas
+  var eq_celeste; // EjsS Model.Variables.Var Table.eq_celeste
+  var ver_ecliptica; // EjsS Model.Variables.Var Table.ver_ecliptica
+  var spread; // EjsS Model.Variables.Var Table.spread
+  var cor_spread; // EjsS Model.Variables.Var Table.cor_spread
+  var transparencia; // EjsS Model.Variables.Var Table.transparencia
+  var ver_spread; // EjsS Model.Variables.Var Table.ver_spread
+
+  var x_sol; // EjsS Model.Variables.coordenadas.x_sol
+  var y_sol; // EjsS Model.Variables.coordenadas.y_sol
+  var z_sol; // EjsS Model.Variables.coordenadas.z_sol
+  var x_terra; // EjsS Model.Variables.coordenadas.x_terra
+  var y_terra; // EjsS Model.Variables.coordenadas.y_terra
+  var lat1; // EjsS Model.Variables.coordenadas.lat1
+  var latitude; // EjsS Model.Variables.coordenadas.latitude
+  var incli_sombra; // EjsS Model.Variables.coordenadas.incli_sombra
+  var sombra_2d; // EjsS Model.Variables.coordenadas.sombra_2d
+  var R_t; // EjsS Model.Variables.coordenadas.R_t
+  var horizonte_x; // EjsS Model.Variables.coordenadas.horizonte_x
+  var horizonte_y; // EjsS Model.Variables.coordenadas.horizonte_y
+  var horizonte_z; // EjsS Model.Variables.coordenadas.horizonte_z
+  var R; // EjsS Model.Variables.coordenadas.R
+  var vista_sol; // EjsS Model.Variables.coordenadas.vista_sol
+
+  var helio; // EjsS Model.Variables.controle.helio
+  var geo; // EjsS Model.Variables.controle.geo
+
+  _model.getOdes = function() { return []; };
+
+  _model.removeEvents = function(){
+  };
+
+  function _serialize() { return _model.serialize(); }
+
+  _model._userSerialize = function() {
+    return {
+      l : l,
+      rad_day : rad_day,
+      dia_do_ano : dia_do_ano,
+      solar_day : solar_day,
+      mes : mes,
+      data : data,
+      novacor : novacor,
+      noite : noite,
+      linhas : linhas,
+      eq_celeste : eq_celeste,
+      ver_ecliptica : ver_ecliptica,
+      spread : spread,
+      cor_spread : cor_spread,
+      transparencia : transparencia,
+      ver_spread : ver_spread,
+      x_sol : x_sol,
+      y_sol : y_sol,
+      z_sol : z_sol,
+      x_terra : x_terra,
+      y_terra : y_terra,
+      lat1 : lat1,
+      latitude : latitude,
+      incli_sombra : incli_sombra,
+      sombra_2d : sombra_2d,
+      R_t : R_t,
+      horizonte_x : horizonte_x,
+      horizonte_y : horizonte_y,
+      horizonte_z : horizonte_z,
+      R : R,
+      vista_sol : vista_sol,
+      helio : helio,
+      geo : geo
+    };
+  };
+
+  function _serializePublic() { return _model.serializePublic(); }
+
+  _model._userSerializePublic = function() {
+    return {
+      l : l,
+      rad_day : rad_day,
+      dia_do_ano : dia_do_ano,
+      solar_day : solar_day,
+      mes : mes,
+      data : data,
+      novacor : novacor,
+      noite : noite,
+      linhas : linhas,
+      eq_celeste : eq_celeste,
+      ver_ecliptica : ver_ecliptica,
+      spread : spread,
+      cor_spread : cor_spread,
+      transparencia : transparencia,
+      ver_spread : ver_spread,
+      x_sol : x_sol,
+      y_sol : y_sol,
+      z_sol : z_sol,
+      x_terra : x_terra,
+      y_terra : y_terra,
+      lat1 : lat1,
+      latitude : latitude,
+      incli_sombra : incli_sombra,
+      sombra_2d : sombra_2d,
+      R_t : R_t,
+      horizonte_x : horizonte_x,
+      horizonte_y : horizonte_y,
+      horizonte_z : horizonte_z,
+      R : R,
+      vista_sol : vista_sol,
+      helio : helio,
+      geo : geo
+    };
+  };
+
+  _model._readParameters = function(json) {
+    if(typeof json.l != "undefined") l = json.l;
+    if(typeof json.rad_day != "undefined") rad_day = json.rad_day;
+    if(typeof json.dia_do_ano != "undefined") dia_do_ano = json.dia_do_ano;
+    if(typeof json.solar_day != "undefined") solar_day = json.solar_day;
+    if(typeof json.mes != "undefined") mes = json.mes;
+    if(typeof json.data != "undefined") data = json.data;
+    if(typeof json.novacor != "undefined") novacor = json.novacor;
+    if(typeof json.noite != "undefined") noite = json.noite;
+    if(typeof json.linhas != "undefined") linhas = json.linhas;
+    if(typeof json.eq_celeste != "undefined") eq_celeste = json.eq_celeste;
+    if(typeof json.ver_ecliptica != "undefined") ver_ecliptica = json.ver_ecliptica;
+    if(typeof json.spread != "undefined") spread = json.spread;
+    if(typeof json.cor_spread != "undefined") cor_spread = json.cor_spread;
+    if(typeof json.transparencia != "undefined") transparencia = json.transparencia;
+    if(typeof json.ver_spread != "undefined") ver_spread = json.ver_spread;
+    if(typeof json.x_sol != "undefined") x_sol = json.x_sol;
+    if(typeof json.y_sol != "undefined") y_sol = json.y_sol;
+    if(typeof json.z_sol != "undefined") z_sol = json.z_sol;
+    if(typeof json.x_terra != "undefined") x_terra = json.x_terra;
+    if(typeof json.y_terra != "undefined") y_terra = json.y_terra;
+    if(typeof json.lat1 != "undefined") lat1 = json.lat1;
+    if(typeof json.latitude != "undefined") latitude = json.latitude;
+    if(typeof json.incli_sombra != "undefined") incli_sombra = json.incli_sombra;
+    if(typeof json.sombra_2d != "undefined") sombra_2d = json.sombra_2d;
+    if(typeof json.R_t != "undefined") R_t = json.R_t;
+    if(typeof json.horizonte_x != "undefined") horizonte_x = json.horizonte_x;
+    if(typeof json.horizonte_y != "undefined") horizonte_y = json.horizonte_y;
+    if(typeof json.horizonte_z != "undefined") horizonte_z = json.horizonte_z;
+    if(typeof json.R != "undefined") R = json.R;
+    if(typeof json.vista_sol != "undefined") vista_sol = json.vista_sol;
+    if(typeof json.helio != "undefined") helio = json.helio;
+    if(typeof json.geo != "undefined") geo = json.geo;
+  };
+
+  _model._readParametersPublic = function(json) {
+    if(typeof json.l != "undefined") l = json.l;
+    if(typeof json.rad_day != "undefined") rad_day = json.rad_day;
+    if(typeof json.dia_do_ano != "undefined") dia_do_ano = json.dia_do_ano;
+    if(typeof json.solar_day != "undefined") solar_day = json.solar_day;
+    if(typeof json.mes != "undefined") mes = json.mes;
+    if(typeof json.data != "undefined") data = json.data;
+    if(typeof json.novacor != "undefined") novacor = json.novacor;
+    if(typeof json.noite != "undefined") noite = json.noite;
+    if(typeof json.linhas != "undefined") linhas = json.linhas;
+    if(typeof json.eq_celeste != "undefined") eq_celeste = json.eq_celeste;
+    if(typeof json.ver_ecliptica != "undefined") ver_ecliptica = json.ver_ecliptica;
+    if(typeof json.spread != "undefined") spread = json.spread;
+    if(typeof json.cor_spread != "undefined") cor_spread = json.cor_spread;
+    if(typeof json.transparencia != "undefined") transparencia = json.transparencia;
+    if(typeof json.ver_spread != "undefined") ver_spread = json.ver_spread;
+    if(typeof json.x_sol != "undefined") x_sol = json.x_sol;
+    if(typeof json.y_sol != "undefined") y_sol = json.y_sol;
+    if(typeof json.z_sol != "undefined") z_sol = json.z_sol;
+    if(typeof json.x_terra != "undefined") x_terra = json.x_terra;
+    if(typeof json.y_terra != "undefined") y_terra = json.y_terra;
+    if(typeof json.lat1 != "undefined") lat1 = json.lat1;
+    if(typeof json.latitude != "undefined") latitude = json.latitude;
+    if(typeof json.incli_sombra != "undefined") incli_sombra = json.incli_sombra;
+    if(typeof json.sombra_2d != "undefined") sombra_2d = json.sombra_2d;
+    if(typeof json.R_t != "undefined") R_t = json.R_t;
+    if(typeof json.horizonte_x != "undefined") horizonte_x = json.horizonte_x;
+    if(typeof json.horizonte_y != "undefined") horizonte_y = json.horizonte_y;
+    if(typeof json.horizonte_z != "undefined") horizonte_z = json.horizonte_z;
+    if(typeof json.R != "undefined") R = json.R;
+    if(typeof json.vista_sol != "undefined") vista_sol = json.vista_sol;
+    if(typeof json.helio != "undefined") helio = json.helio;
+    if(typeof json.geo != "undefined") geo = json.geo;
+  };
+
+  function _unserializePublic(json) { return _model.unserializePublic(json); }
+
+  _model._userUnserializePublic = function(json) {
+    _model._readParametersPublic(json);
+   _resetSolvers();
+   _model.update();
+  };
+
+  function _unserialize(json) { return _model.unserialize(json); }
+
+  _model._userUnserialize = function(json) {
+    _model._readParameters(json);
+   _resetSolvers();
+   _model.update();
+  };
+
+  _model.addToReset(function() {
+    __pagesEnabled["Init Page"] = true;
+    __pagesEnabled["Evol Page"] = true;
+    __pagesEnabled["FixRel Page"] = true;
+    __pagesEnabled["latitude"] = true;
+    __pagesEnabled["coordenadas sol"] = true;
+  });
+
+  _model.addToReset(function() {
+    l = 23.5; // EjsS Model.Variables.Var Table.l
+    rad_day = 0; // EjsS Model.Variables.Var Table.rad_day
+    dia_do_ano = 21; // EjsS Model.Variables.Var Table.dia_do_ano
+    solar_day = 0; // EjsS Model.Variables.Var Table.solar_day
+    novacor = "rgba(64,255,64,0.5)"; // EjsS Model.Variables.Var Table.novacor
+    noite = false; // EjsS Model.Variables.Var Table.noite
+    linhas = true; // EjsS Model.Variables.Var Table.linhas
+    eq_celeste = false; // EjsS Model.Variables.Var Table.eq_celeste
+    ver_ecliptica = false; // EjsS Model.Variables.Var Table.ver_ecliptica
+    ver_spread = false; // EjsS Model.Variables.Var Table.ver_spread
+  });
+
+  _model.addToReset(function() {
+    latitude = 0; // EjsS Model.Variables.coordenadas.latitude
+    R_t = 1; // EjsS Model.Variables.coordenadas.R_t
+    R = 0.15; // EjsS Model.Variables.coordenadas.R
+  });
+
+  _model.addToReset(function() {
+    helio = false; // EjsS Model.Variables.controle.helio
+    geo = true; // EjsS Model.Variables.controle.geo
+  });
+
+  if (_inputParameters) {
+    _inputParameters = _model.parseInputParameters(_inputParameters);
+    if (_inputParameters) _model.addToReset(function() { _model._readParameters(_inputParameters); });
+  }
+
+  _model.addToReset(function() {
+    _model.setAutoplay(true);
+    _model.setPauseOnPageExit(true);
+    _model.setFPS(20);
+    _model.setStepsPerDisplay(1);
+  });
+
+
+  _model.addToInitialization(function() {
+    if (!__pagesEnabled["Init Page"]) return;
+  });
+
+  _model.addToEvolution(function() {
+    if (!__pagesEnabled["Evol Page"]) return;
+  });
+
+  _model.addToFixedRelations(function() { _isPaused = _model.isPaused(); _isPlaying = _model.isPlaying(); });
+
+  _model.addToFixedRelations(function() {
+    if (!__pagesEnabled["FixRel Page"]) return;
+    rad_day=-(solar_day/365)*2*Math.PI-3*Math.PI/2;  // > FixedRelations.FixRel Page:1
+    dia_do_ano=solar_day-21;  // > FixedRelations.FixRel Page:2
+    if (solar_day<11) {  // > FixedRelations.FixRel Page:3
+        mes="março"   // > FixedRelations.FixRel Page:4
+        dia_do_ano=solar_day+21;  // > FixedRelations.FixRel Page:5
+      }  // > FixedRelations.FixRel Page:6
+    else if (solar_day<41){  // > FixedRelations.FixRel Page:7
+        mes="abril"  // > FixedRelations.FixRel Page:8
+        dia_do_ano=solar_day-10;  // > FixedRelations.FixRel Page:9
+      }  // > FixedRelations.FixRel Page:10
+    else if (solar_day<72){  // > FixedRelations.FixRel Page:11
+        mes="maio";  // > FixedRelations.FixRel Page:12
+        dia_do_ano=solar_day-40;  // > FixedRelations.FixRel Page:13
+      }  // > FixedRelations.FixRel Page:14
+      else if (solar_day<102){  // > FixedRelations.FixRel Page:15
+        mes="junho"  // > FixedRelations.FixRel Page:16
+        dia_do_ano=solar_day-71;  // > FixedRelations.FixRel Page:17
+      }  // > FixedRelations.FixRel Page:18
+    else if (solar_day<133){  // > FixedRelations.FixRel Page:19
+        mes="julho"  // > FixedRelations.FixRel Page:20
+        dia_do_ano=solar_day-101;  // > FixedRelations.FixRel Page:21
+        }  // > FixedRelations.FixRel Page:22
+    else if (solar_day<164){  // > FixedRelations.FixRel Page:23
+        mes="agosto"  // > FixedRelations.FixRel Page:24
+        dia_do_ano=solar_day-132;  // > FixedRelations.FixRel Page:25
+        }  // > FixedRelations.FixRel Page:26
+    else if (solar_day<194){  // > FixedRelations.FixRel Page:27
+        mes="setembro"  // > FixedRelations.FixRel Page:28
+         dia_do_ano=solar_day-163;  // > FixedRelations.FixRel Page:29
+        }  // > FixedRelations.FixRel Page:30
+    else if (solar_day<225){    // > FixedRelations.FixRel Page:31
+        mes="outubro"  // > FixedRelations.FixRel Page:32
+         dia_do_ano=solar_day-193;  // > FixedRelations.FixRel Page:33
+       }  // > FixedRelations.FixRel Page:34
+    else if (solar_day<255){  // > FixedRelations.FixRel Page:35
+        mes="novembro"  // > FixedRelations.FixRel Page:36
+         dia_do_ano=solar_day-224;  // > FixedRelations.FixRel Page:37
+        }  // > FixedRelations.FixRel Page:38
+    else if (solar_day<286){  // > FixedRelations.FixRel Page:39
+        mes="dezembro"  // > FixedRelations.FixRel Page:40
+         dia_do_ano=solar_day-254;  // > FixedRelations.FixRel Page:41
+        }  // > FixedRelations.FixRel Page:42
+    else if (solar_day<317){  // > FixedRelations.FixRel Page:43
+        mes="janeiro"  // > FixedRelations.FixRel Page:44
+         dia_do_ano=solar_day-285;  // > FixedRelations.FixRel Page:45
+        }  // > FixedRelations.FixRel Page:46
+    else if (solar_day<345){  // > FixedRelations.FixRel Page:47
+        mes="fevereiro"  // > FixedRelations.FixRel Page:48
+         dia_do_ano=solar_day-316;  // > FixedRelations.FixRel Page:49
+        }  // > FixedRelations.FixRel Page:50
+    else if (solar_day<365){  // > FixedRelations.FixRel Page:51
+        mes="março"  // > FixedRelations.FixRel Page:52
+         dia_do_ano=solar_day-344;  // > FixedRelations.FixRel Page:53
+        }  // > FixedRelations.FixRel Page:54
+          // > FixedRelations.FixRel Page:55
+    data=dia_do_ano+" de "+mes;  // > FixedRelations.FixRel Page:56
+  });
+
+  _model.addToFixedRelations(function() {
+    if (!__pagesEnabled["latitude"]) return;
+    lat1 = Math.PI/180*latitude;  // > FixedRelations.latitude:1
+    horizonte_x=R*Math.cos(-rad_day+Math.PI/2)*Math.sin(Math.PI/2-lat1);    // > FixedRelations.latitude:2
+    horizonte_y=R*Math.sin(-rad_day+Math.PI/2)*Math.sin(Math.PI/2-lat1);  // > FixedRelations.latitude:3
+    horizonte_z=R*Math.cos(Math.PI/2-lat1);  // > FixedRelations.latitude:4
+  });
+
+  _model.addToFixedRelations(function() {
+    if (!__pagesEnabled["coordenadas sol"]) return;
+    x_sol=Math.sin(rad_day);  // > FixedRelations.coordenadas sol:1
+    y_sol=Math.cos(rad_day)*Math.cos(l*Math.PI/180);  // > FixedRelations.coordenadas sol:2
+    z_sol=Math.cos(rad_day)*Math.sin(l*Math.PI/180);  // > FixedRelations.coordenadas sol:3
+    x_terra=R_t*Math.sin(rad_day-Math.PI/2);  // > FixedRelations.coordenadas sol:4
+    y_terra=R_t*Math.cos(rad_day-Math.PI/2);  // > FixedRelations.coordenadas sol:5
+    sombra_2d=l*Math.PI/180*Math.cos(rad_day);  // > FixedRelations.coordenadas sol:6
+    incli_sombra=sombra_2d-lat1;  // > FixedRelations.coordenadas sol:7
+    novacor ="rgba(0,64,255,"+Math.abs(Math.cos(incli_sombra))+")";  // > FixedRelations.coordenadas sol:8
+    if (Math.abs(23.5*Math.PI*Math.cos(rad_day)/180-lat1)<Math.PI/2) {  // > FixedRelations.coordenadas sol:9
+        spread = 0.3*(1+Math.abs(Math.tan(23.5*Math.PI*Math.cos(rad_day)/180-lat1)));  // > FixedRelations.coordenadas sol:10
+        transparencia = Math.cos(Math.abs(23.5*Math.PI*Math.cos(rad_day)/180-lat1));  // > FixedRelations.coordenadas sol:11
+        cor_spread =  "rgba(255,255,0,"+transparencia+")"  // > FixedRelations.coordenadas sol:12
+    }  // > FixedRelations.coordenadas sol:13
+    else {spread = 0};  // > FixedRelations.coordenadas sol:14
+    if (Math.round(1800/Math.PI*Math.abs(23.5*Math.PI*Math.cos(rad_day)/180-lat1))/10 < 90) {  // > FixedRelations.coordenadas sol:15
+    sol_inclination = "Altitude do Sol: "+Math.round(900-1800/Math.PI*Math.abs(23.5*Math.PI*Math.cos(rad_day)/180-lat1))/10+" °"  // > FixedRelations.coordenadas sol:16
+       // > FixedRelations.coordenadas sol:17
+    }  // > FixedRelations.coordenadas sol:18
+    else {sol_inclination = "Sol abaixo do horizonte"}  // > FixedRelations.coordenadas sol:19
+  });
+
+  _model.addToFixedRelations(function() { _isPaused = _model.isPaused(); _isPlaying = _model.isPlaying(); });
+
+    _model._fontResized = function(iBase,iSize,iDelta) {
+      _view._fontResized(iBase,iSize,iDelta);
+  }; // end of _fontResized
+
+  function _getViews() {
+    var _viewsInfo = [];
+    var _counter = 0;
+    _viewsInfo[_counter++] = { name : "HtmlView Page", width : 700, height : 1600 };
+    return _viewsInfo;
+  } // end of _getViews
+
+  function _selectView(_viewNumber) {
+    _view = null;
+    _view = new solar4_View(_topFrame,_viewNumber,_libraryPath,_codebasePath);
+    var _view_super_reset = _view._reset;
+    _view._reset = function() {
+      _view_super_reset();
+      switch(_viewNumber) {
+        case -10 : break; // make Lint happy
+        default :
+        case 0:
+          _view.panel2.linkProperty("CSS",  function() { return {"z-index":"2", "position":"absolute", }; } ); // HtmlView Page linking property 'CSS' for element 'panel2'
+          _view.panel2.linkProperty("Visibility",  function() { return helio; }, function(_v) { helio = _v; } ); // HtmlView Page linking property 'Visibility' for element 'panel2'
+          _view.sombra2.linkProperty("Transformation",  function() { return [[-rad_day,0,0,1]]; } ); // HtmlView Page linking property 'Transformation' for element 'sombra2'
+          _view.sombra2.linkProperty("X",  function() { return x_terra; }, function(_v) { x_terra = _v; } ); // HtmlView Page linking property 'X' for element 'sombra2'
+          _view.sombra2.linkProperty("Y",  function() { return y_terra; }, function(_v) { y_terra = _v; } ); // HtmlView Page linking property 'Y' for element 'sombra2'
+          _view.Terra.linkProperty("Transformation",  function() { return [[23.5*Math.PI/180,0,1,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'Terra'
+          _view.Terra.linkProperty("X",  function() { return x_terra; }, function(_v) { x_terra = _v; } ); // HtmlView Page linking property 'X' for element 'Terra'
+          _view.Terra.linkProperty("Y",  function() { return y_terra; }, function(_v) { y_terra = _v; } ); // HtmlView Page linking property 'Y' for element 'Terra'
+          _view.observador2.linkProperty("Transformation",  function() { return [[-Math.PI/2,0,0,1]]; } ); // HtmlView Page linking property 'Transformation' for element 'observador2'
+          _view.horizonte2.linkProperty("Transformation",  function() { return [[-rad_day+Math.PI/2,0,0,1]]; } ); // HtmlView Page linking property 'Transformation' for element 'horizonte2'
+          _view.horizonte2.linkProperty("X",  function() { return horizonte_x; }, function(_v) { horizonte_x = _v; } ); // HtmlView Page linking property 'X' for element 'horizonte2'
+          _view.horizonte2.linkProperty("Y",  function() { return horizonte_y; }, function(_v) { horizonte_y = _v; } ); // HtmlView Page linking property 'Y' for element 'horizonte2'
+          _view.horizonte2.linkProperty("Z",  function() { return horizonte_z; }, function(_v) { horizonte_z = _v; } ); // HtmlView Page linking property 'Z' for element 'horizonte2'
+          _view.ang_latitude3.linkProperty("Origin",  function() { return [horizonte_x,horizonte_y,horizonte_z]; } ); // HtmlView Page linking property 'Origin' for element 'ang_latitude3'
+          _view.ang_latitude3.linkProperty("Angle",  function() { return Math.PI/2-lat1; } ); // HtmlView Page linking property 'Angle' for element 'ang_latitude3'
+          _view.pessoa222.linkProperty("Transformation",  function() { return [[-rad_day+Math.PI/2,0,0,1]]; } ); // HtmlView Page linking property 'Transformation' for element 'pessoa222'
+          _view.pessoa222.linkProperty("X",  function() { return R*Math.cos(-rad_day+Math.PI/2)*Math.sin(Math.PI/2-lat1); } ); // HtmlView Page linking property 'X' for element 'pessoa222'
+          _view.pessoa222.linkProperty("Y",  function() { return R*Math.sin(-rad_day+Math.PI/2)*Math.sin(Math.PI/2-lat1); } ); // HtmlView Page linking property 'Y' for element 'pessoa222'
+          _view.pessoa222.linkProperty("Z",  function() { return R*Math.cos(Math.PI/2-lat1); } ); // HtmlView Page linking property 'Z' for element 'pessoa222'
+          _view.arms222.linkProperty("Transformation",  function() { return [[Math.PI/2,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'arms222'
+          _view.perna1322.linkProperty("Transformation",  function() { return [[Math.PI/6,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'perna1322'
+          _view.perna12222.linkProperty("Transformation",  function() { return [[-Math.PI/6,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'perna12222'
+          _view.ang_latitude32.linkProperty("Origin",  function() { return [horizonte_x,horizonte_y,horizonte_z]; } ); // HtmlView Page linking property 'Origin' for element 'ang_latitude32'
+          _view.ang_latitude32.linkProperty("Angle",  function() { return Math.PI/2-lat1; } ); // HtmlView Page linking property 'Angle' for element 'ang_latitude32'
+          _view.sol_perp.linkProperty("X",  function() { return 0.15*Math.sin(Math.PI/2-23*Math.PI/180*Math.cos(rad_day)); } ); // HtmlView Page linking property 'X' for element 'sol_perp'
+          _view.sol_perp.linkProperty("Z",  function() { return 0.15*Math.cos(Math.PI/2-23*Math.PI/180*Math.cos(rad_day)); } ); // HtmlView Page linking property 'Z' for element 'sol_perp'
+          _view.rotationZ3D.linkProperty("Angle",  function() { return -rad_day; } ); // HtmlView Page linking property 'Angle' for element 'rotationZ3D'
+          _view.equador3.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'equador3'
+          _view.cylinder3D3.linkProperty("Visibility",  function() { return eq_celeste; }, function(_v) { eq_celeste = _v; } ); // HtmlView Page linking property 'Visibility' for element 'cylinder3D3'
+          _view.arrow3D.linkProperty("SizeX",  function() { return 0.7*Math.sin(rad_day-Math.PI/2); } ); // HtmlView Page linking property 'SizeX' for element 'arrow3D'
+          _view.arrow3D.linkProperty("SizeY",  function() { return 0.7*Math.cos(rad_day-Math.PI/2); } ); // HtmlView Page linking property 'SizeY' for element 'arrow3D'
+          _view.cylinder3D2.linkProperty("Visibility",  function() { return ver_ecliptica; }, function(_v) { ver_ecliptica = _v; } ); // HtmlView Page linking property 'Visibility' for element 'cylinder3D2'
+          _view.ecliptica2.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'ecliptica2'
+          _view.panel3.linkProperty("CSS",  function() { return {"z-index":"1", "position":"absolute", }; } ); // HtmlView Page linking property 'CSS' for element 'panel3'
+          _view.panel3.linkProperty("Visibility",  function() { return geo; }, function(_v) { geo = _v; } ); // HtmlView Page linking property 'Visibility' for element 'panel3'
+          _view.eqCeleste.linkProperty("Visibility",  function() { return eq_celeste; }, function(_v) { eq_celeste = _v; } ); // HtmlView Page linking property 'Visibility' for element 'eqCeleste'
+          _view.pessoa22.linkProperty("Transformation",  function() { return [[-rad_day+Math.PI/2,0,0,1]]; } ); // HtmlView Page linking property 'Transformation' for element 'pessoa22'
+          _view.pessoa22.linkProperty("X",  function() { return horizonte_x; }, function(_v) { horizonte_x = _v; } ); // HtmlView Page linking property 'X' for element 'pessoa22'
+          _view.pessoa22.linkProperty("Y",  function() { return horizonte_y; }, function(_v) { horizonte_y = _v; } ); // HtmlView Page linking property 'Y' for element 'pessoa22'
+          _view.pessoa22.linkProperty("Z",  function() { return horizonte_z; }, function(_v) { horizonte_z = _v; } ); // HtmlView Page linking property 'Z' for element 'pessoa22'
+          _view.arms22.linkProperty("Transformation",  function() { return [[Math.PI/2,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'arms22'
+          _view.perna132.linkProperty("Transformation",  function() { return [[Math.PI/6,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'perna132'
+          _view.perna1222.linkProperty("Transformation",  function() { return [[-Math.PI/6,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'perna1222'
+          _view.ang_latitude2.linkProperty("Origin",  function() { return [horizonte_x,horizonte_y,horizonte_z]; } ); // HtmlView Page linking property 'Origin' for element 'ang_latitude2'
+          _view.ang_latitude2.linkProperty("Angle",  function() { return Math.PI/2-lat1; } ); // HtmlView Page linking property 'Angle' for element 'ang_latitude2'
+          _view.horizonte.linkProperty("Transformation",  function() { return [[-rad_day+Math.PI/2,0,0,1]]; } ); // HtmlView Page linking property 'Transformation' for element 'horizonte'
+          _view.horizonte.linkProperty("X",  function() { return horizonte_x; }, function(_v) { horizonte_x = _v; } ); // HtmlView Page linking property 'X' for element 'horizonte'
+          _view.horizonte.linkProperty("Y",  function() { return horizonte_y; }, function(_v) { horizonte_y = _v; } ); // HtmlView Page linking property 'Y' for element 'horizonte'
+          _view.horizonte.linkProperty("Z",  function() { return horizonte_z; }, function(_v) { horizonte_z = _v; } ); // HtmlView Page linking property 'Z' for element 'horizonte'
+          _view.ang_latitude.linkProperty("Origin",  function() { return [horizonte_x,horizonte_y,horizonte_z]; } ); // HtmlView Page linking property 'Origin' for element 'ang_latitude'
+          _view.ang_latitude.linkProperty("Angle",  function() { return Math.PI/2-lat1; } ); // HtmlView Page linking property 'Angle' for element 'ang_latitude'
+          _view.sombra.linkProperty("Transformation",  function() { return [[-rad_day+Math.PI/2,0,0,1]]; } ); // HtmlView Page linking property 'Transformation' for element 'sombra'
+          _view.rotationY3D4.linkProperty("Angle",  function() { return (-23.5*Math.PI/180)*Math.cos(rad_day); } ); // HtmlView Page linking property 'Angle' for element 'rotationY3D4'
+          _view.analyticCurve3D.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'analyticCurve3D'
+          _view.sol3.linkProperty("X",  function() { return x_sol; }, function(_v) { x_sol = _v; } ); // HtmlView Page linking property 'X' for element 'sol3'
+          _view.sol3.linkProperty("Y",  function() { return y_sol; }, function(_v) { y_sol = _v; } ); // HtmlView Page linking property 'Y' for element 'sol3'
+          _view.sol3.linkProperty("Z",  function() { return z_sol; }, function(_v) { z_sol = _v; } ); // HtmlView Page linking property 'Z' for element 'sol3'
+          _view.cylinder3D4.linkProperty("Transformation",  function() { return [[l*Math.PI/180,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'cylinder3D4'
+          _view.cylinder3D4.linkProperty("Visibility",  function() { return ver_ecliptica; }, function(_v) { ver_ecliptica = _v; } ); // HtmlView Page linking property 'Visibility' for element 'cylinder3D4'
+          _view.arrow3D2.linkProperty("SizeX",  function() { return -0.7*Math.sin(rad_day); } ); // HtmlView Page linking property 'SizeX' for element 'arrow3D2'
+          _view.arrow3D2.linkProperty("X",  function() { return x_sol; }, function(_v) { x_sol = _v; } ); // HtmlView Page linking property 'X' for element 'arrow3D2'
+          _view.arrow3D2.linkProperty("Y",  function() { return y_sol; }, function(_v) { y_sol = _v; } ); // HtmlView Page linking property 'Y' for element 'arrow3D2'
+          _view.arrow3D2.linkProperty("Z",  function() { return z_sol; }, function(_v) { z_sol = _v; } ); // HtmlView Page linking property 'Z' for element 'arrow3D2'
+          _view.arrow3D2.linkProperty("SizeZ",  function() { return -0.7*Math.cos(rad_day)*Math.sin(l*Math.PI/180); } ); // HtmlView Page linking property 'SizeZ' for element 'arrow3D2'
+          _view.arrow3D2.linkProperty("SizeY",  function() { return -0.7*Math.cos(rad_day)*Math.cos(l*Math.PI/180); } ); // HtmlView Page linking property 'SizeY' for element 'arrow3D2'
+          _view.ecliptica.linkProperty("Transformation",  function() { return [[l*Math.PI/180,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'ecliptica'
+          _view.ecliptica.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'ecliptica'
+          _view.obs22.linkProperty("X",  function() { return .15*x_sol; } ); // HtmlView Page linking property 'X' for element 'obs22'
+          _view.obs22.linkProperty("Y",  function() { return .15*y_sol; } ); // HtmlView Page linking property 'Y' for element 'obs22'
+          _view.obs22.linkProperty("Z",  function() { return .15*z_sol; } ); // HtmlView Page linking property 'Z' for element 'obs22'
+          _view.vista_sol.linkProperty("CSS",  function() { return {"z-index":"1", "position":"absolute", }; } ); // HtmlView Page linking property 'CSS' for element 'vista_sol'
+          _view.drawingPanel3D3.linkProperty("Visibility",  function() { return vista_sol; }, function(_v) { vista_sol = _v; } ); // HtmlView Page linking property 'Visibility' for element 'drawingPanel3D3'
+          _view.arms223.linkProperty("Transformation",  function() { return [[Math.PI/2,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'arms223'
+          _view.perna1323.linkProperty("Transformation",  function() { return [[Math.PI/6,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'perna1323'
+          _view.perna12223.linkProperty("Transformation",  function() { return [[-Math.PI/6,1,0,0]]; } ); // HtmlView Page linking property 'Transformation' for element 'perna12223'
+          _view.horizonte3.linkProperty("Transformation",  function() { return [[Math.PI/2,0,0,1]]; } ); // HtmlView Page linking property 'Transformation' for element 'horizonte3'
+          _view.rotationY3D2.linkProperty("Angle",  function() { return Math.PI/2-lat1; } ); // HtmlView Page linking property 'Angle' for element 'rotationY3D2'
+          _view.linhas3.linkProperty("Visibility",  function() { return linhas; }, function(_v) { linhas = _v; } ); // HtmlView Page linking property 'Visibility' for element 'linhas3'
+          _view.equador32.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'equador32'
+          _view.equador32232.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'equador32232'
+          _view.equador3223.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'equador3223'
+          _view.equador322.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'equador322'
+          _view.equador3222.linkProperty("MaxValue",  function() { return 2*Math.PI; } ); // HtmlView Page linking property 'MaxValue' for element 'equador3222'
+          _view.rotationY3D.linkProperty("Angle",  function() { return 23.5*Math.PI/180*Math.sin(rad_day+Math.PI/2); } ); // HtmlView Page linking property 'Angle' for element 'rotationY3D'
+          _view.visao_sd.linkProperty("CSS",  function() { return {"z-index":"2", "position":"absolute", }; } ); // HtmlView Page linking property 'CSS' for element 'visao_sd'
+          _view.visao_sd.linkProperty("Visibility",  function() { return !vista_sol; } ); // HtmlView Page linking property 'Visibility' for element 'visao_sd'
+          _view.drawingPanel.linkProperty("Visibility",  function() { return !vista_sol; } ); // HtmlView Page linking property 'Visibility' for element 'drawingPanel'
+          _view.raios_solares.linkProperty("Rotate",  function() { return Math.PI+sombra_2d; } ); // HtmlView Page linking property 'Rotate' for element 'raios_solares'
+          _view.raios_solares.linkProperty("Visibility",  function() { return !vista_sol; } ); // HtmlView Page linking property 'Visibility' for element 'raios_solares'
+          _view.planeta.linkProperty("Visibility",  function() { return !vista_sol; } ); // HtmlView Page linking property 'Visibility' for element 'planeta'
+          _view.image2.linkProperty("Rotate",  function() { return sombra_2d; }, function(_v) { sombra_2d = _v; } ); // HtmlView Page linking property 'Rotate' for element 'image2'
+          _view.polar_artico.linkProperty("Y",  function() { return .585*Math.sin(66.5*Math.PI/180); } ); // HtmlView Page linking property 'Y' for element 'polar_artico'
+          _view.capricornio.linkProperty("Y",  function() { return -.59*Math.sin(23.5*Math.PI/180); } ); // HtmlView Page linking property 'Y' for element 'capricornio'
+          _view.cancer.linkProperty("Y",  function() { return .59*Math.sin(23.5*Math.PI/180); } ); // HtmlView Page linking property 'Y' for element 'cancer'
+          _view.polar_antartico.linkProperty("Y",  function() { return -.585*Math.sin(66.5*Math.PI/180); } ); // HtmlView Page linking property 'Y' for element 'polar_antartico'
+          _view.shape.linkProperty("Rotate",  function() { return sombra_2d; }, function(_v) { sombra_2d = _v; } ); // HtmlView Page linking property 'Rotate' for element 'shape'
+          _view.shape.linkProperty("X",  function() { return 0.58*Math.cos(sombra_2d); } ); // HtmlView Page linking property 'X' for element 'shape'
+          _view.shape.linkProperty("Y",  function() { return 0.58*Math.sin(sombra_2d); } ); // HtmlView Page linking property 'Y' for element 'shape'
+          _view.observador.linkProperty("Rotate",  function() { return lat1-Math.PI/2; } ); // HtmlView Page linking property 'Rotate' for element 'observador'
+          _view.observador.linkProperty("X",  function() { return .58*Math.cos(lat1); } ); // HtmlView Page linking property 'X' for element 'observador'
+          _view.observador.linkProperty("Y",  function() { return .58*Math.sin(lat1); } ); // HtmlView Page linking property 'Y' for element 'observador'
+          _view.linhas.linkProperty("Visibility",  function() { return linhas && !vista_sol; } ); // HtmlView Page linking property 'Visibility' for element 'linhas'
+          _view.drawingPanel2.linkProperty("TRMessage",  function() { return "Latitude "+ latitude + " °"; } ); // HtmlView Page linking property 'TRMessage' for element 'drawingPanel2'
+          _view.drawingPanel2.linkProperty("CSS",  function() { return {"z-index":"1", "position":"absolute", }; } ); // HtmlView Page linking property 'CSS' for element 'drawingPanel2'
+          _view.drawingPanel2.linkProperty("Visibility",  function() { return !ver_spread; } ); // HtmlView Page linking property 'Visibility' for element 'drawingPanel2'
+          _view.drawingPanel2.linkProperty("BRMessage",  function() { return sol_inclination; }, function(_v) { sol_inclination = _v; } ); // HtmlView Page linking property 'BRMessage' for element 'drawingPanel2'
+          _view.shape2.linkProperty("FillColor",  function() { return novacor; }, function(_v) { novacor = _v; } ); // HtmlView Page linking property 'FillColor' for element 'shape2'
+          _view.arrow64.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow64'
+          _view.arrow65.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow65'
+          _view.arrow66.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow66'
+          _view.arrow68.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow68'
+          _view.arrow67.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow67'
+          _view.arrow63.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow63'
+          _view.arrow612.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow612'
+          _view.arrow611.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow611'
+          _view.arrow610.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow610'
+          _view.arrow69.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow69'
+          _view.arrow622.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow622'
+          _view.arrow623.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow623'
+          _view.arrow624.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow624'
+          _view.arrow625.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow625'
+          _view.arrow629.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow629'
+          _view.arrow628.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow628'
+          _view.arrow627.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow627'
+          _view.arrow6210.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow6210'
+          _view.arrow626.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow626'
+          _view.arrow62.linkProperty("Rotate",  function() { return incli_sombra-Math.PI; } ); // HtmlView Page linking property 'Rotate' for element 'arrow62'
+          _view.shape22.linkProperty("Visibility",  function() { return noite; }, function(_v) { noite = _v; } ); // HtmlView Page linking property 'Visibility' for element 'shape22'
+          _view.plottingPanel.linkProperty("CSS",  function() { return {"z-index":"2", "position":"absolute", }; } ); // HtmlView Page linking property 'CSS' for element 'plottingPanel'
+          _view.plottingPanel.linkProperty("TRMessage",  function() { return "Latitude "+ latitude + " °"; } ); // HtmlView Page linking property 'TRMessage' for element 'plottingPanel'
+          _view.plottingPanel.linkProperty("Visibility",  function() { return ver_spread; }, function(_v) { ver_spread = _v; } ); // HtmlView Page linking property 'Visibility' for element 'plottingPanel'
+          _view.plottingPanel.linkProperty("BRMessage",  function() { return sol_inclination; }, function(_v) { sol_inclination = _v; } ); // HtmlView Page linking property 'BRMessage' for element 'plottingPanel'
+          _view.shape3.linkProperty("FillColor",  function() { return cor_spread; }, function(_v) { cor_spread = _v; } ); // HtmlView Page linking property 'FillColor' for element 'shape3'
+          _view.shape3.linkProperty("SizeY",  function() { return spread; }, function(_v) { spread = _v; } ); // HtmlView Page linking property 'SizeY' for element 'shape3'
+          _view.helio.linkProperty("Checked",  function() { return helio; }, function(_v) { helio = _v; } ); // HtmlView Page linking property 'Checked' for element 'helio'
+          _view.helio.setAction("OnCheckOn", function(_data,_info) {
+  geo =false;
+
+}); // HtmlView Page setting action 'OnCheckOn' for element 'helio'
+          _view.geo.linkProperty("Checked",  function() { return geo; }, function(_v) { geo = _v; } ); // HtmlView Page linking property 'Checked' for element 'geo'
+          _view.geo.setAction("OnCheckOn", function(_data,_info) {
+  helio = false;
+
+}); // HtmlView Page setting action 'OnCheckOn' for element 'geo'
+          _view.checkBox.linkProperty("Checked",  function() { return vista_sol; }, function(_v) { vista_sol = _v; } ); // HtmlView Page linking property 'Checked' for element 'checkBox'
+          _view.checkBox2.linkProperty("Checked",  function() { return ver_spread; }, function(_v) { ver_spread = _v; } ); // HtmlView Page linking property 'Checked' for element 'checkBox2'
+          _view.data.linkProperty("Text",  function() { return data; }, function(_v) { data = _v; } ); // HtmlView Page linking property 'Text' for element 'data'
+          _view.dia32.linkProperty("Value",  function() { return solar_day; }, function(_v) { solar_day = _v; } ); // HtmlView Page linking property 'Value' for element 'dia32'
+          _view.latitude.linkProperty("Text",  function() { return "Latitude "+ latitude + " °"; } ); // HtmlView Page linking property 'Text' for element 'latitude'
+          _view.latitude2.linkProperty("Value",  function() { return latitude; }, function(_v) { latitude = _v; } ); // HtmlView Page linking property 'Value' for element 'latitude2'
+          _view.ecliptica3.linkProperty("Checked",  function() { return ver_ecliptica; }, function(_v) { ver_ecliptica = _v; } ); // HtmlView Page linking property 'Checked' for element 'ecliptica3'
+          _view.eqCeleste2.linkProperty("Checked",  function() { return eq_celeste; }, function(_v) { eq_celeste = _v; } ); // HtmlView Page linking property 'Checked' for element 'eqCeleste2'
+          _view.linhas2.linkProperty("Checked",  function() { return linhas; }, function(_v) { linhas = _v; } ); // HtmlView Page linking property 'Checked' for element 'linhas2'
+          break;
+      } // end of switch
+    }; // end of new reset
+
+    _model.setView(_view);
+    _model.reset();
+    _view._enableEPub();
+  } // end of _selectView
+
+  _model.setAutoplay(true);
+  _model.setFPS(20);
+  _model.setStepsPerDisplay(1);
+  _selectView(_model._autoSelectView(_getViews())); // this includes _model.reset()
+  return _model;
+}
+
+function solar4_View (_topFrame,_viewNumber,_libraryPath,_codebasePath) {
+  var _view;
+  switch(_viewNumber) {
+    case -10 : break; // make Lint happy
+    default :
+    case 0: _view = solar4_View_0 (_topFrame); break;
+  } // end of switch
+
+  if (_codebasePath) _view._setResourcePath(_codebasePath);
+
+  if (_libraryPath) _view._setLibraryPath(_libraryPath);
+
+
+  return _view;
+} // end of main function
+
+function solar4_View_0 (_topFrame) {
+  var _view = EJSS_CORE.createView(_topFrame);
+
+  _view._reset = function() {
+    _view._clearAll();
+    _view._addElement(EJSS_INTERFACE.panel,"panel4", _view._topFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'panel4'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'panel4'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'panel4'
+      ;
+
+   _view._addElement(EJSS_INTERFACE.imageAndTextButton,"label5", _view.panel4) 
+      .setProperty("TextAlign","center") 
+      .setProperty("Text","<h3 style='font-size: 30px;'>EVS - Estações do Ano</h3><br><h3 style='font-size: 15px;'>Prof. Luciano Soares Pedroso</h3>") 
+      ;      
+    _view._addElement(EJSS_INTERFACE.panel,"mainPanel", _view._topFrame) // EJsS HtmlView.HtmlView Page: declaration of element 'mainPanel'
+      .setProperty("Height","520px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'mainPanel'
+      .setProperty("Width","1300px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'mainPanel'
+      .setProperty("BorderColor","rgba(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'BorderColor' for element 'mainPanel'
+      .setProperty("BorderWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'BorderWidth' for element 'mainPanel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"esferas", _view.mainPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'esferas'
+      .setProperty("Height","100%") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'esferas'
+      .setProperty("Width","40%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'esferas'
+      .setProperty("CSS",{"float":"left"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'esferas'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'esferas'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"panel2", _view.esferas) // EJsS HtmlView.HtmlView Page: declaration of element 'panel2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.drawingPanel,"drawingPanel3D2", _view.panel2) // EJsS HtmlView.HtmlView Page: declaration of element 'drawingPanel3D2'
+      .setProperty("Height","520px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'drawingPanel3D2'
+      .setProperty("Width","520px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'drawingPanel3D2'
+      .setProperty("Draggable","ANY") // EJsS HtmlView.HtmlView Page: setting property 'Draggable' for element 'drawingPanel3D2'
+      .setProperty("FillColor","Black") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'drawingPanel3D2'
+      .setProperty("Background","rgba(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'Background' for element 'drawingPanel3D2'
+      .setProperty("CameraAltitude",180) // EJsS HtmlView.HtmlView Page: setting property 'CameraAltitude' for element 'drawingPanel3D2'
+      .setProperty("Enabled",true) // EJsS HtmlView.HtmlView Page: setting property 'Enabled' for element 'drawingPanel3D2'
+      .setProperty("Projection","PERSPECTIVE_OFF") // EJsS HtmlView.HtmlView Page: setting property 'Projection' for element 'drawingPanel3D2'
+      .setProperty("CameraAzimuth",280) // EJsS HtmlView.HtmlView Page: setting property 'CameraAzimuth' for element 'drawingPanel3D2'
+      .setProperty("DecorationType","NONE") // EJsS HtmlView.HtmlView Page: setting property 'DecorationType' for element 'drawingPanel3D2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"ceu2", _view.drawingPanel3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'ceu2'
+      .setProperty("Radius",1) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'ceu2'
+      .setProperty("Transparency",220) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'ceu2'
+      .setProperty("FillColor","rgb(0,128,192,1)") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'ceu2'
+      .setProperty("LineColor","White") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'ceu2'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'ceu2'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'ceu2'
+      .setProperty("Visibility",false) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'ceu2'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'ceu2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"sombra2", _view.drawingPanel3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'sombra2'
+      .setProperty("Radius",0.155) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'sombra2'
+      .setProperty("TextureUrl","./img/sombra.png") // EJsS HtmlView.HtmlView Page: setting property 'TextureUrl' for element 'sombra2'
+      .setProperty("Transparency",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'sombra2'
+      .setProperty("SpecularColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'sombra2'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'sombra2'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'sombra2'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'sombra2'
+      .setProperty("AmbientColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'sombra2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"Terra", _view.drawingPanel3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'Terra'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'Terra'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"observador2", _view.Terra) // EJsS HtmlView.HtmlView Page: declaration of element 'observador2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"horizonte2", _view.observador2) // EJsS HtmlView.HtmlView Page: declaration of element 'horizonte2'
+      .setProperty("BottomRadius",0.15) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'horizonte2'
+      .setProperty("FillColor","rgb(0,128,0,1)") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'horizonte2'
+      .setProperty("TopRadius",0.15) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'horizonte2'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'horizonte2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.transformation,"ang_latitude3", _view.horizonte2) // EJsS HtmlView.HtmlView Page: declaration of element 'ang_latitude3'
+      .setProperty("Axis",[0,1,0]) // EJsS HtmlView.HtmlView Page: setting property 'Axis' for element 'ang_latitude3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"pessoa222", _view.observador2) // EJsS HtmlView.HtmlView Page: declaration of element 'pessoa222'
+      .setProperty("Size",[0.05,0.05,0.05]) // EJsS HtmlView.HtmlView Page: setting property 'Size' for element 'pessoa222'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"head222", _view.pessoa222) // EJsS HtmlView.HtmlView Page: declaration of element 'head222'
+      .setProperty("Radius",0.2) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'head222'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'head222'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'head222'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'head222'
+      .setProperty("Z",1) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'head222'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"arms222", _view.pessoa222) // EJsS HtmlView.HtmlView Page: declaration of element 'arms222'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'arms222'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'arms222'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'arms222'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arms222'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arms222'
+      .setProperty("Z",0.7) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'arms222'
+      .setProperty("SizeZ",0.6) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'arms222'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"perna1322", _view.pessoa222) // EJsS HtmlView.HtmlView Page: declaration of element 'perna1322'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'perna1322'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'perna1322'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'perna1322'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'perna1322'
+      .setProperty("Y",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'perna1322'
+      .setProperty("Z",0.23) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'perna1322'
+      .setProperty("SizeZ",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'perna1322'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"perna12222", _view.pessoa222) // EJsS HtmlView.HtmlView Page: declaration of element 'perna12222'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'perna12222'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'perna12222'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'perna12222'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'perna12222'
+      .setProperty("Y",-0.1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'perna12222'
+      .setProperty("Z",0.23) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'perna12222'
+      .setProperty("SizeZ",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'perna12222'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"tronco222", _view.pessoa222) // EJsS HtmlView.HtmlView Page: declaration of element 'tronco222'
+      .setProperty("BottomRadius",0.07) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'tronco222'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'tronco222'
+      .setProperty("TopRadius",0.07) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'tronco222'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'tronco222'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'tronco222'
+      .setProperty("Z",0.6) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'tronco222'
+      .setProperty("SizeZ",.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'tronco222'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.transformation,"ang_latitude32", _view.pessoa222) // EJsS HtmlView.HtmlView Page: declaration of element 'ang_latitude32'
+      .setProperty("Axis",[0,1,0]) // EJsS HtmlView.HtmlView Page: setting property 'Axis' for element 'ang_latitude32'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"eixo_polar", _view.Terra) // EJsS HtmlView.HtmlView Page: declaration of element 'eixo_polar'
+      .setProperty("BottomRadius",.02) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'eixo_polar'
+      .setProperty("FillColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'eixo_polar'
+      .setProperty("TopRadius",.02) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'eixo_polar'
+      .setProperty("SpecularColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'eixo_polar'
+      .setProperty("AmbientColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'eixo_polar'
+      .setProperty("SizeX",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'eixo_polar'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'eixo_polar'
+      .setProperty("LineColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'eixo_polar'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'eixo_polar'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'eixo_polar'
+      .setProperty("SizeZ",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'eixo_polar'
+      .setProperty("SizeY",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'eixo_polar'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'eixo_polar'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"sol_perp", _view.Terra) // EJsS HtmlView.HtmlView Page: declaration of element 'sol_perp'
+      .setProperty("Radius",0.02) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'sol_perp'
+      .setProperty("FillColor","Magenta") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'sol_perp'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'sol_perp'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationZ,"rotationZ3D", _view.sol_perp) // EJsS HtmlView.HtmlView Page: declaration of element 'rotationZ3D'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"equador3", _view.Terra) // EJsS HtmlView.HtmlView Page: declaration of element 'equador3'
+      .setProperty("FunctionY","0.31*cos(t)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'equador3'
+      .setProperty("FunctionX","0.31*sin(t)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'equador3'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'equador3'
+      .setProperty("Variable","t") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'equador3'
+      .setProperty("FunctionZ","0") // EJsS HtmlView.HtmlView Page: setting property 'FunctionZ' for element 'equador3'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'equador3'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'equador3'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'equador3'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'equador3'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'equador3'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'equador3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"cylinder3D3", _view.Terra) // EJsS HtmlView.HtmlView Page: declaration of element 'cylinder3D3'
+      .setProperty("BottomRadius",1) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'cylinder3D3'
+      .setProperty("FillColor","Pink") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'cylinder3D3'
+      .setProperty("TopRadius",1) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'cylinder3D3'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'cylinder3D3'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'cylinder3D3'
+      .setProperty("SizeZ",0.01) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'cylinder3D3'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'cylinder3D3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"terra", _view.Terra) // EJsS HtmlView.HtmlView Page: declaration of element 'terra'
+      .setProperty("Radius",0.15) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'terra'
+      .setProperty("TextureUrl","img/textura-terra.png") // EJsS HtmlView.HtmlView Page: setting property 'TextureUrl' for element 'terra'
+      .setProperty("FillColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'terra'
+      .setProperty("SpecularColor","White") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'terra'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'terra'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'terra'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'terra'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'terra'
+      .setProperty("AmbientColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'terra'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"sol", _view.drawingPanel3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'sol'
+      .setProperty("Radius",0.15) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'sol'
+      .setProperty("TextureUrl","./img/sol.jpg") // EJsS HtmlView.HtmlView Page: setting property 'TextureUrl' for element 'sol'
+      .setProperty("SpecularColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'sol'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'sol'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'sol'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'sol'
+      .setProperty("AmbientColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'sol'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"arrow3D", _view.drawingPanel3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow3D'
+      .setProperty("FillColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'arrow3D'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow3D'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow3D'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow3D'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'arrow3D'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'arrow3D'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow3D'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'arrow3D'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"cylinder3D2", _view.drawingPanel3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'cylinder3D2'
+      .setProperty("BottomRadius",2) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'cylinder3D2'
+      .setProperty("FillColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'cylinder3D2'
+      .setProperty("Transparency",130) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'cylinder3D2'
+      .setProperty("TopRadius",2) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'cylinder3D2'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'cylinder3D2'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'cylinder3D2'
+      .setProperty("SizeZ",0.01) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'cylinder3D2'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'cylinder3D2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"ecliptica2", _view.drawingPanel3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'ecliptica2'
+      .setProperty("FunctionY","2*cos(t)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'ecliptica2'
+      .setProperty("FunctionX","2*sin(t)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'ecliptica2'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'ecliptica2'
+      .setProperty("Variable","t") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'ecliptica2'
+      .setProperty("FunctionZ","0") // EJsS HtmlView.HtmlView Page: setting property 'FunctionZ' for element 'ecliptica2'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'ecliptica2'
+      .setProperty("LineColor","Red") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'ecliptica2'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'ecliptica2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"panel3", _view.esferas) // EJsS HtmlView.HtmlView Page: declaration of element 'panel3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.drawingPanel,"drawingPanel3D", _view.panel3) // EJsS HtmlView.HtmlView Page: declaration of element 'drawingPanel3D'
+      .setProperty("Height","520px") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'drawingPanel3D'
+      .setProperty("Width","520px") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'drawingPanel3D'
+      .setProperty("Draggable","ANY") // EJsS HtmlView.HtmlView Page: setting property 'Draggable' for element 'drawingPanel3D'
+      .setProperty("CameraTilt",0) // EJsS HtmlView.HtmlView Page: setting property 'CameraTilt' for element 'drawingPanel3D'
+      .setProperty("CameraZ",0) // EJsS HtmlView.HtmlView Page: setting property 'CameraZ' for element 'drawingPanel3D'
+      .setProperty("FillColor","Black") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'drawingPanel3D'
+      .setProperty("CameraY",1.5) // EJsS HtmlView.HtmlView Page: setting property 'CameraY' for element 'drawingPanel3D'
+      .setProperty("CameraX",1.5) // EJsS HtmlView.HtmlView Page: setting property 'CameraX' for element 'drawingPanel3D'
+      .setProperty("Background","rgba(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'Background' for element 'drawingPanel3D'
+      .setProperty("CameraAltitude",0) // EJsS HtmlView.HtmlView Page: setting property 'CameraAltitude' for element 'drawingPanel3D'
+      .setProperty("Enabled",true) // EJsS HtmlView.HtmlView Page: setting property 'Enabled' for element 'drawingPanel3D'
+      .setProperty("Projection","PERSPECTIVE_OFF") // EJsS HtmlView.HtmlView Page: setting property 'Projection' for element 'drawingPanel3D'
+      .setProperty("CameraAzimuth",280) // EJsS HtmlView.HtmlView Page: setting property 'CameraAzimuth' for element 'drawingPanel3D'
+      .setProperty("DecorationType","NONE") // EJsS HtmlView.HtmlView Page: setting property 'DecorationType' for element 'drawingPanel3D'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"ceu", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'ceu'
+      .setProperty("Radius",1) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'ceu'
+      .setProperty("Transparency",200) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'ceu'
+      .setProperty("FillColor","rgb(0,128,192,1)") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'ceu'
+      .setProperty("LineColor","rgb(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'ceu'
+      .setProperty("Visibility",false) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'ceu'
+      .setProperty("Resolution",200) // EJsS HtmlView.HtmlView Page: setting property 'Resolution' for element 'ceu'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.disk,"eqCeleste", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'eqCeleste'
+      .setProperty("FillColor","rgb(0,128,192,1)") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'eqCeleste'
+      .setProperty("SizeX",2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'eqCeleste'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'eqCeleste'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'eqCeleste'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'eqCeleste'
+      .setProperty("SizeY",2) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'eqCeleste'
+      .setProperty("Resolution",50) // EJsS HtmlView.HtmlView Page: setting property 'Resolution' for element 'eqCeleste'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"pessoa22", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'pessoa22'
+      .setProperty("Size",[0.05,0.05,0.05]) // EJsS HtmlView.HtmlView Page: setting property 'Size' for element 'pessoa22'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"head22", _view.pessoa22) // EJsS HtmlView.HtmlView Page: declaration of element 'head22'
+      .setProperty("Radius",0.2) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'head22'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'head22'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'head22'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'head22'
+      .setProperty("Z",1) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'head22'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"arms22", _view.pessoa22) // EJsS HtmlView.HtmlView Page: declaration of element 'arms22'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'arms22'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'arms22'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'arms22'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arms22'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arms22'
+      .setProperty("Z",0.7) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'arms22'
+      .setProperty("SizeZ",0.6) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'arms22'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"perna132", _view.pessoa22) // EJsS HtmlView.HtmlView Page: declaration of element 'perna132'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'perna132'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'perna132'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'perna132'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'perna132'
+      .setProperty("Y",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'perna132'
+      .setProperty("Z",0.23) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'perna132'
+      .setProperty("SizeZ",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'perna132'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"perna1222", _view.pessoa22) // EJsS HtmlView.HtmlView Page: declaration of element 'perna1222'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'perna1222'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'perna1222'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'perna1222'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'perna1222'
+      .setProperty("Y",-0.1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'perna1222'
+      .setProperty("Z",0.23) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'perna1222'
+      .setProperty("SizeZ",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'perna1222'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"tronco22", _view.pessoa22) // EJsS HtmlView.HtmlView Page: declaration of element 'tronco22'
+      .setProperty("BottomRadius",0.07) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'tronco22'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'tronco22'
+      .setProperty("TopRadius",0.07) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'tronco22'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'tronco22'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'tronco22'
+      .setProperty("Z",0.6) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'tronco22'
+      .setProperty("SizeZ",.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'tronco22'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.transformation,"ang_latitude2", _view.pessoa22) // EJsS HtmlView.HtmlView Page: declaration of element 'ang_latitude2'
+      .setProperty("Axis",[0,1,0]) // EJsS HtmlView.HtmlView Page: setting property 'Axis' for element 'ang_latitude2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"horizonte", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'horizonte'
+      .setProperty("BottomRadius",0.15) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'horizonte'
+      .setProperty("FillColor","rgb(0,128,0,1)") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'horizonte'
+      .setProperty("TopRadius",0.15) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'horizonte'
+      .setProperty("SizeZ",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'horizonte'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.transformation,"ang_latitude", _view.horizonte) // EJsS HtmlView.HtmlView Page: declaration of element 'ang_latitude'
+      .setProperty("Axis",[0,1,0]) // EJsS HtmlView.HtmlView Page: setting property 'Axis' for element 'ang_latitude'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.disk,"disk3D", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'disk3D'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'disk3D'
+      .setProperty("SizeX",0.05) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'disk3D'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'disk3D'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'disk3D'
+      .setProperty("Z",1) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'disk3D'
+      .setProperty("Visibility",false) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'disk3D'
+      .setProperty("SizeY",0.05) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'disk3D'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"cylinder3D", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'cylinder3D'
+      .setProperty("BottomRadius",.02) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'cylinder3D'
+      .setProperty("FillColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'cylinder3D'
+      .setProperty("TopRadius",.02) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'cylinder3D'
+      .setProperty("SpecularColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'cylinder3D'
+      .setProperty("SizeX",.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'cylinder3D'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'cylinder3D'
+      .setProperty("LineColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'cylinder3D'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'cylinder3D'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'cylinder3D'
+      .setProperty("SizeZ",.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'cylinder3D'
+      .setProperty("SizeY",.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'cylinder3D'
+      .setProperty("AmbientColor","Cyan") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'cylinder3D'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"sombra", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'sombra'
+      .setProperty("Radius",.152) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'sombra'
+      .setProperty("TextureUrl","./img/sombra.png") // EJsS HtmlView.HtmlView Page: setting property 'TextureUrl' for element 'sombra'
+      .setProperty("Transparency",0.5) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'sombra'
+      .setProperty("SpecularColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'sombra'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'sombra'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'sombra'
+      .setProperty("AmbientColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'sombra'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationY,"rotationY3D4", _view.sombra) // EJsS HtmlView.HtmlView Page: declaration of element 'rotationY3D4'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"analyticCurve3D", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'analyticCurve3D'
+      .setProperty("FunctionY","0.31*sin(a)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'analyticCurve3D'
+      .setProperty("FunctionX","0.31*cos(a)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'analyticCurve3D'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'analyticCurve3D'
+      .setProperty("Variable","a") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'analyticCurve3D'
+      .setProperty("FunctionZ","0") // EJsS HtmlView.HtmlView Page: setting property 'FunctionZ' for element 'analyticCurve3D'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'analyticCurve3D'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'analyticCurve3D'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'analyticCurve3D'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"terra2", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'terra2'
+      .setProperty("Radius",.15) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'terra2'
+      .setProperty("TextureUrl","./img/textura-terra.png") // EJsS HtmlView.HtmlView Page: setting property 'TextureUrl' for element 'terra2'
+      .setProperty("SpecularColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'terra2'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'terra2'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'terra2'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'terra2'
+      .setProperty("AmbientColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'terra2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"sol3", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'sol3'
+      .setProperty("Radius",0.15) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'sol3'
+      .setProperty("TextureUrl","./img/sol.jpg") // EJsS HtmlView.HtmlView Page: setting property 'TextureUrl' for element 'sol3'
+      .setProperty("FillColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'sol3'
+      .setProperty("SpecularColor","White") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'sol3'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'sol3'
+      .setProperty("AmbientColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'sol3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"cylinder3D4", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'cylinder3D4'
+      .setProperty("BottomRadius",2) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'cylinder3D4'
+      .setProperty("Transparency",130) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'cylinder3D4'
+      .setProperty("TopRadius",2) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'cylinder3D4'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'cylinder3D4'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'cylinder3D4'
+      .setProperty("SizeZ",0.01) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'cylinder3D4'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'cylinder3D4'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.arrow,"arrow3D2", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow3D2'
+      .setProperty("FillColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'arrow3D2'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow3D2'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow3D2'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'arrow3D2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"ecliptica", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'ecliptica'
+      .setProperty("FunctionY","-2*cos(t)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'ecliptica'
+      .setProperty("FunctionX","-2*sin(t)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'ecliptica'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'ecliptica'
+      .setProperty("Variable","t") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'ecliptica'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'ecliptica'
+      .setProperty("LineColor","Red") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'ecliptica'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'ecliptica'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"obs22", _view.drawingPanel3D) // EJsS HtmlView.HtmlView Page: declaration of element 'obs22'
+      .setProperty("SizeX",.6) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'obs22'
+      .setProperty("SizeZ",.6) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'obs22'
+      .setProperty("SizeY",.6) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'obs22'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"sphere3D2", _view.obs22) // EJsS HtmlView.HtmlView Page: declaration of element 'sphere3D2'
+      .setProperty("Radius",.03) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'sphere3D2'
+      .setProperty("FillColor","Magenta") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'sphere3D2'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'sphere3D2'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'sphere3D2'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'sphere3D2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"panel", _view.mainPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'panel'
+      .setProperty("Height","100%") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'panel'
+      .setProperty("Width","30%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'panel'
+      .setProperty("CSS",{"float":"left"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'panel'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'panel'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"panel5", _view.panel) // EJsS HtmlView.HtmlView Page: declaration of element 'panel5'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'panel5'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'panel5'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"vista_sol", _view.panel5) // EJsS HtmlView.HtmlView Page: declaration of element 'vista_sol'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.drawingPanel,"drawingPanel3D3", _view.vista_sol) // EJsS HtmlView.HtmlView Page: declaration of element 'drawingPanel3D3'
+      .setProperty("Height",258) // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'drawingPanel3D3'
+      .setProperty("Width",380) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'drawingPanel3D3'
+      .setProperty("CameraTilt",0) // EJsS HtmlView.HtmlView Page: setting property 'CameraTilt' for element 'drawingPanel3D3'
+      .setProperty("CameraZ",0) // EJsS HtmlView.HtmlView Page: setting property 'CameraZ' for element 'drawingPanel3D3'
+      .setProperty("FillColor","rgb(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'drawingPanel3D3'
+      .setProperty("CameraY",0.1) // EJsS HtmlView.HtmlView Page: setting property 'CameraY' for element 'drawingPanel3D3'
+      .setProperty("CameraX",0) // EJsS HtmlView.HtmlView Page: setting property 'CameraX' for element 'drawingPanel3D3'
+      .setProperty("Background","rgba(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'Background' for element 'drawingPanel3D3'
+      .setProperty("CameraAltitude",0) // EJsS HtmlView.HtmlView Page: setting property 'CameraAltitude' for element 'drawingPanel3D3'
+      .setProperty("Enabled",false) // EJsS HtmlView.HtmlView Page: setting property 'Enabled' for element 'drawingPanel3D3'
+      .setProperty("Projection","PERSPECTIVE_OFF") // EJsS HtmlView.HtmlView Page: setting property 'Projection' for element 'drawingPanel3D3'
+      .setProperty("MaximumZ",1) // EJsS HtmlView.HtmlView Page: setting property 'MaximumZ' for element 'drawingPanel3D3'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'drawingPanel3D3'
+      .setProperty("MaximumY",1) // EJsS HtmlView.HtmlView Page: setting property 'MaximumY' for element 'drawingPanel3D3'
+      .setProperty("MaximumX",1) // EJsS HtmlView.HtmlView Page: setting property 'MaximumX' for element 'drawingPanel3D3'
+      .setProperty("MinimumX",0.5) // EJsS HtmlView.HtmlView Page: setting property 'MinimumX' for element 'drawingPanel3D3'
+      .setProperty("MinimumY",0.5) // EJsS HtmlView.HtmlView Page: setting property 'MinimumY' for element 'drawingPanel3D3'
+      .setProperty("MinimumZ",0.5) // EJsS HtmlView.HtmlView Page: setting property 'MinimumZ' for element 'drawingPanel3D3'
+      .setProperty("CameraAzimuth",90) // EJsS HtmlView.HtmlView Page: setting property 'CameraAzimuth' for element 'drawingPanel3D3'
+      .setProperty("DecorationType","NONE") // EJsS HtmlView.HtmlView Page: setting property 'DecorationType' for element 'drawingPanel3D3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"sphere3D22", _view.drawingPanel3D3) // EJsS HtmlView.HtmlView Page: declaration of element 'sphere3D22'
+      .setProperty("Radius",.015) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'sphere3D22'
+      .setProperty("FillColor","Magenta") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'sphere3D22'
+      .setProperty("X",0.15) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'sphere3D22'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'sphere3D22'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'sphere3D22'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"sombra3", _view.drawingPanel3D3) // EJsS HtmlView.HtmlView Page: declaration of element 'sombra3'
+      .setProperty("Radius",.152) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'sombra3'
+      .setProperty("TextureUrl","./img/sombra.png") // EJsS HtmlView.HtmlView Page: setting property 'TextureUrl' for element 'sombra3'
+      .setProperty("Transparency",0.5) // EJsS HtmlView.HtmlView Page: setting property 'Transparency' for element 'sombra3'
+      .setProperty("SpecularColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'sombra3'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'sombra3'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'sombra3'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'sombra3'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'sombra3'
+      .setProperty("DrawFill",true) // EJsS HtmlView.HtmlView Page: setting property 'DrawFill' for element 'sombra3'
+      .setProperty("AmbientColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'sombra3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"group3D2", _view.drawingPanel3D3) // EJsS HtmlView.HtmlView Page: declaration of element 'group3D2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"pessoa223", _view.group3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'pessoa223'
+      .setProperty("Size",[0.05,0.05,0.05]) // EJsS HtmlView.HtmlView Page: setting property 'Size' for element 'pessoa223'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'pessoa223'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'pessoa223'
+      .setProperty("Z",0.15) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'pessoa223'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"head223", _view.pessoa223) // EJsS HtmlView.HtmlView Page: declaration of element 'head223'
+      .setProperty("Radius",0.2) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'head223'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'head223'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'head223'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'head223'
+      .setProperty("Z",1) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'head223'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"arms223", _view.pessoa223) // EJsS HtmlView.HtmlView Page: declaration of element 'arms223'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'arms223'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'arms223'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'arms223'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arms223'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arms223'
+      .setProperty("Z",0.7) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'arms223'
+      .setProperty("SizeZ",0.6) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'arms223'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"perna1323", _view.pessoa223) // EJsS HtmlView.HtmlView Page: declaration of element 'perna1323'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'perna1323'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'perna1323'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'perna1323'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'perna1323'
+      .setProperty("Y",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'perna1323'
+      .setProperty("Z",0.23) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'perna1323'
+      .setProperty("SizeZ",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'perna1323'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"perna12223", _view.pessoa223) // EJsS HtmlView.HtmlView Page: declaration of element 'perna12223'
+      .setProperty("BottomRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'perna12223'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'perna12223'
+      .setProperty("TopRadius",0.08) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'perna12223'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'perna12223'
+      .setProperty("Y",-0.1) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'perna12223'
+      .setProperty("Z",0.23) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'perna12223'
+      .setProperty("SizeZ",0.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'perna12223'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"tronco223", _view.pessoa223) // EJsS HtmlView.HtmlView Page: declaration of element 'tronco223'
+      .setProperty("BottomRadius",0.07) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'tronco223'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'tronco223'
+      .setProperty("TopRadius",0.07) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'tronco223'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'tronco223'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'tronco223'
+      .setProperty("Z",0.6) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'tronco223'
+      .setProperty("SizeZ",.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'tronco223'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"horizonte3", _view.pessoa223) // EJsS HtmlView.HtmlView Page: declaration of element 'horizonte3'
+      .setProperty("BottomRadius",2) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'horizonte3'
+      .setProperty("FillColor","rgb(0,128,0,1)") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'horizonte3'
+      .setProperty("TopRadius",2) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'horizonte3'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'horizonte3'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'horizonte3'
+      .setProperty("SizeZ",0.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'horizonte3'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'horizonte3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationY,"rotationY3D2", _view.pessoa223) // EJsS HtmlView.HtmlView Page: declaration of element 'rotationY3D2'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.cylinder,"cylinder3D5", _view.group3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'cylinder3D5'
+      .setProperty("BottomRadius",.02) // EJsS HtmlView.HtmlView Page: setting property 'BottomRadius' for element 'cylinder3D5'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'cylinder3D5'
+      .setProperty("TopRadius",.02) // EJsS HtmlView.HtmlView Page: setting property 'TopRadius' for element 'cylinder3D5'
+      .setProperty("SizeX",.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'cylinder3D5'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'cylinder3D5'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'cylinder3D5'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'cylinder3D5'
+      .setProperty("SizeZ",.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeZ' for element 'cylinder3D5'
+      .setProperty("SizeY",.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'cylinder3D5'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.group,"linhas3", _view.group3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'linhas3'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"equador32", _view.linhas3) // EJsS HtmlView.HtmlView Page: declaration of element 'equador32'
+      .setProperty("FunctionY","0.305*cos(t)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'equador32'
+      .setProperty("FunctionX","0.305*sin(t)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'equador32'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'equador32'
+      .setProperty("Variable","t") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'equador32'
+      .setProperty("FunctionZ","0") // EJsS HtmlView.HtmlView Page: setting property 'FunctionZ' for element 'equador32'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'equador32'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'equador32'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'equador32'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'equador32'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'equador32'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'equador32'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"equador32232", _view.linhas3) // EJsS HtmlView.HtmlView Page: declaration of element 'equador32232'
+      .setProperty("FunctionY","0.305*cos(t)*sin(PI/2+66.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'equador32232'
+      .setProperty("FunctionX","0.305*sin(t)*sin(PI/2+66.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'equador32232'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'equador32232'
+      .setProperty("Variable","t") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'equador32232'
+      .setProperty("FunctionZ","0.305*cos(PI/2+63.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionZ' for element 'equador32232'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'equador32232'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'equador32232'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'equador32232'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'equador32232'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'equador32232'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'equador32232'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"equador3223", _view.linhas3) // EJsS HtmlView.HtmlView Page: declaration of element 'equador3223'
+      .setProperty("FunctionY","0.305*cos(t)*sin(PI/2-66.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'equador3223'
+      .setProperty("FunctionX","0.305*sin(t)*sin(PI/2-66.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'equador3223'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'equador3223'
+      .setProperty("Variable","t") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'equador3223'
+      .setProperty("FunctionZ","0.305*cos(PI/2-63.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionZ' for element 'equador3223'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'equador3223'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'equador3223'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'equador3223'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'equador3223'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'equador3223'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'equador3223'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"equador322", _view.linhas3) // EJsS HtmlView.HtmlView Page: declaration of element 'equador322'
+      .setProperty("FunctionY","0.305*cos(t)*sin(PI/2-23.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'equador322'
+      .setProperty("FunctionX","0.305*sin(t)*sin(PI/2-23.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'equador322'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'equador322'
+      .setProperty("Variable","t") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'equador322'
+      .setProperty("FunctionZ","0.305*cos(PI/2-23.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionZ' for element 'equador322'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'equador322'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'equador322'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'equador322'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'equador322'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'equador322'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'equador322'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.analyticCurve,"equador3222", _view.linhas3) // EJsS HtmlView.HtmlView Page: declaration of element 'equador3222'
+      .setProperty("FunctionY","0.305*cos(t)*sin(PI/2+23.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionY' for element 'equador3222'
+      .setProperty("FunctionX","0.305*sin(t)*sin(PI/2+23.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionX' for element 'equador3222'
+      .setProperty("NumPoints",100) // EJsS HtmlView.HtmlView Page: setting property 'NumPoints' for element 'equador3222'
+      .setProperty("Variable","t") // EJsS HtmlView.HtmlView Page: setting property 'Variable' for element 'equador3222'
+      .setProperty("FunctionZ","0.305*cos(PI/2+23.5*PI/180)") // EJsS HtmlView.HtmlView Page: setting property 'FunctionZ' for element 'equador3222'
+      .setProperty("MinValue",0) // EJsS HtmlView.HtmlView Page: setting property 'MinValue' for element 'equador3222'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'equador3222'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'equador3222'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'equador3222'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'equador3222'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'equador3222'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.sphere,"terra22", _view.group3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'terra22'
+      .setProperty("Radius",.15) // EJsS HtmlView.HtmlView Page: setting property 'Radius' for element 'terra22'
+      .setProperty("TextureUrl","./img/textura-terra.png") // EJsS HtmlView.HtmlView Page: setting property 'TextureUrl' for element 'terra22'
+      .setProperty("SpecularColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'SpecularColor' for element 'terra22'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'terra22'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'terra22'
+      .setProperty("Z",0) // EJsS HtmlView.HtmlView Page: setting property 'Z' for element 'terra22'
+      .setProperty("AmbientColor","rgb(0,128,255,1)") // EJsS HtmlView.HtmlView Page: setting property 'AmbientColor' for element 'terra22'
+      ;
+
+    _view._addElement(EJSS_DRAWING3D.rotationY,"rotationY3D", _view.group3D2) // EJsS HtmlView.HtmlView Page: declaration of element 'rotationY3D'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"visao_sd", _view.panel5) // EJsS HtmlView.HtmlView Page: declaration of element 'visao_sd'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.drawingPanel,"drawingPanel", _view.visao_sd,"GRAPHICS2D_CANVAS") // EJsS HtmlView.HtmlView Page: declaration of element 'drawingPanel'
+      .setProperty("Height",258) // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'drawingPanel'
+      .setProperty("Width",380) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'drawingPanel'
+      .setProperty("Background","rgba(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'Background' for element 'drawingPanel'
+      .setProperty("GraphicsMode","Canvas") // EJsS HtmlView.HtmlView Page: setting property 'GraphicsMode' for element 'drawingPanel'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.group,"raios_solares", _view.drawingPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'raios_solares'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'raios_solares'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'raios_solares'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow5", _view.raios_solares) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow5'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow5'
+      .setProperty("SizeX",.7) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow5'
+      .setProperty("X",-.5) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow5'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow5'
+      .setProperty("Y",.2) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow5'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow5'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow5'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow5'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow4", _view.raios_solares) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow4'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow4'
+      .setProperty("SizeX",.7) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow4'
+      .setProperty("X",-.5) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow4'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow4'
+      .setProperty("Y",0.4) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow4'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow4'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow4'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow4'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow3", _view.raios_solares) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow3'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow3'
+      .setProperty("SizeX",.7) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow3'
+      .setProperty("X",-.5) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow3'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow3'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow3'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow3'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow3'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow3'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow2", _view.raios_solares) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow2'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow2'
+      .setProperty("SizeX",.7) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow2'
+      .setProperty("X",-.5) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow2'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow2'
+      .setProperty("Y",-.2) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow2'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow2'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow2'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow2'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow", _view.raios_solares) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow'
+      .setProperty("SizeX",.7) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow'
+      .setProperty("X",-.5) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow'
+      .setProperty("Y",-.4) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.group,"planeta", _view.drawingPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'planeta'
+      .setProperty("SizeX",0.68) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'planeta'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'planeta'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.image,"image", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'image'
+      .setProperty("SizeX",1.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'image'
+      .setProperty("ImageUrl","./img/terra.png") // EJsS HtmlView.HtmlView Page: setting property 'ImageUrl' for element 'image'
+      .setProperty("SizeY",1.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'image'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.image,"image2", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'image2'
+      .setProperty("SizeX",.59) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'image2'
+      .setProperty("RelativePosition","EAST") // EJsS HtmlView.HtmlView Page: setting property 'RelativePosition' for element 'image2'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'image2'
+      .setProperty("ImageUrl","./img/sombra-terra.png") // EJsS HtmlView.HtmlView Page: setting property 'ImageUrl' for element 'image2'
+      .setProperty("SizeY",1.18) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'image2'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.segment,"segment", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'segment'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'segment'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'segment'
+      .setProperty("LineColor","rgba(200,220,208,1)") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'segment'
+      .setProperty("Y",-.75) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'segment'
+      .setProperty("SizeY",1.5) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'segment'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'segment'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.segment,"polar_artico", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'polar_artico'
+      .setProperty("SizeX",.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'polar_artico'
+      .setProperty("X",-0.2) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'polar_artico'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'polar_artico'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'polar_artico'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'polar_artico'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.segment,"capricornio", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'capricornio'
+      .setProperty("SizeX",1.07) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'capricornio'
+      .setProperty("X",-0.54) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'capricornio'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'capricornio'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'capricornio'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'capricornio'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.segment,"cancer", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'cancer'
+      .setProperty("SizeX",1.07) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'cancer'
+      .setProperty("X",-0.54) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'cancer'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'cancer'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'cancer'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'cancer'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.segment,"equador", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'equador'
+      .setProperty("SizeX",1.18) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'equador'
+      .setProperty("X",-0.59) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'equador'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'equador'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'equador'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'equador'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'equador'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.segment,"polar_antartico", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'polar_antartico'
+      .setProperty("SizeX",.4) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'polar_antartico'
+      .setProperty("X",-0.2) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'polar_antartico'
+      .setProperty("LineColor","Yellow") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'polar_antartico'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'polar_antartico'
+      .setProperty("LineWidth",2) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'polar_antartico'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.shape,"shape", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'shape'
+      .setProperty("FillColor","Magenta") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'shape'
+      .setProperty("SizeX",.05) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'shape'
+      .setProperty("SizeY",.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'shape'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.image,"observador", _view.planeta) // EJsS HtmlView.HtmlView Page: declaration of element 'observador'
+      .setProperty("SizeX",.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'observador'
+      .setProperty("RelativePosition","SOUTH") // EJsS HtmlView.HtmlView Page: setting property 'RelativePosition' for element 'observador'
+      .setProperty("ImageUrl","./img/observador.png") // EJsS HtmlView.HtmlView Page: setting property 'ImageUrl' for element 'observador'
+      .setProperty("SizeY",.17) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'observador'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.group,"linhas", _view.drawingPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'linhas'
+      .setProperty("X",-0.3) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'linhas'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"circ_antartico", _view.linhas) // EJsS HtmlView.HtmlView Page: declaration of element 'circ_antartico'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'circ_antartico'
+      .setProperty("X",-0.3) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'circ_antartico'
+      .setProperty("Y",-0.55) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'circ_antartico'
+      .setProperty("Text","Círculo Polar Antártico") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'circ_antartico'
+      .setProperty("Font","normal normal 10px \"Comic Sans MS\", cursive, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'circ_antartico'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"circ_artico", _view.linhas) // EJsS HtmlView.HtmlView Page: declaration of element 'circ_artico'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'circ_artico'
+      .setProperty("X",-0.3) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'circ_artico'
+      .setProperty("Y",0.55) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'circ_artico'
+      .setProperty("Text","Círculo Polar Ártico") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'circ_artico'
+      .setProperty("Font","normal normal 10px \"Comic Sans MS\", cursive, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'circ_artico'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"equador2", _view.linhas) // EJsS HtmlView.HtmlView Page: declaration of element 'equador2'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'equador2'
+      .setProperty("X",-0.3) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'equador2'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'equador2'
+      .setProperty("Text","Equador") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'equador2'
+      .setProperty("Font","normal normal 10px \"Comic Sans MS\", cursive, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'equador2'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"trop_capricornio", _view.linhas) // EJsS HtmlView.HtmlView Page: declaration of element 'trop_capricornio'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'trop_capricornio'
+      .setProperty("X",-0.3) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'trop_capricornio'
+      .setProperty("Y",-0.25) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'trop_capricornio'
+      .setProperty("Text","Trópico de Capricórnio") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'trop_capricornio'
+      .setProperty("Font","normal normal 10px \"Comic Sans MS\", cursive, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'trop_capricornio'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"trop_cancer", _view.linhas) // EJsS HtmlView.HtmlView Page: declaration of element 'trop_cancer'
+      .setProperty("FillColor","White") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'trop_cancer'
+      .setProperty("X",-0.3) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'trop_cancer'
+      .setProperty("Y",0.25) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'trop_cancer'
+      .setProperty("Text","Trópico de Câncer") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'trop_cancer'
+      .setProperty("Font","normal normal 10px \"Comic Sans MS\", cursive, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'trop_cancer'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"visao_terra", _view.panel) // EJsS HtmlView.HtmlView Page: declaration of element 'visao_terra'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'visao_terra'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'visao_terra'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.drawingPanel,"drawingPanel222", _view.visao_terra) // EJsS HtmlView.HtmlView Page: declaration of element 'drawingPanel222'
+      .setProperty("Height",258) // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'drawingPanel222'
+      .setProperty("Width",380) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'drawingPanel222'
+      .setProperty("Background","rgba(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'Background' for element 'drawingPanel222'
+      .setProperty("Visibility",false) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'drawingPanel222'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'drawingPanel222'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.drawingPanel,"drawingPanel2", _view.visao_terra,"GRAPHICS2D_CANVAS") // EJsS HtmlView.HtmlView Page: declaration of element 'drawingPanel2'
+      .setProperty("Height",262) // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'drawingPanel2'
+      .setProperty("Width",380) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'drawingPanel2'
+      .setProperty("ShowCoordinates",false) // EJsS HtmlView.HtmlView Page: setting property 'ShowCoordinates' for element 'drawingPanel2'
+      .setProperty("Background","Black") // EJsS HtmlView.HtmlView Page: setting property 'Background' for element 'drawingPanel2'
+      .setProperty("GraphicsMode","Canvas") // EJsS HtmlView.HtmlView Page: setting property 'GraphicsMode' for element 'drawingPanel2'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'drawingPanel2'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.shape,"shape2", _view.drawingPanel2) // EJsS HtmlView.HtmlView Page: declaration of element 'shape2'
+      .setProperty("SizeX",2.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'shape2'
+      .setProperty("ShapeType","RECTANGLE") // EJsS HtmlView.HtmlView Page: setting property 'ShapeType' for element 'shape2'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'shape2'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'shape2'
+      .setProperty("SizeY",2.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'shape2'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.group,"group", _view.drawingPanel2) // EJsS HtmlView.HtmlView Page: declaration of element 'group'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow64", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow64'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow64'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow64'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow64'
+      .setProperty("X",0.2) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow64'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow64'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow64'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow64'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow64'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow64'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow65", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow65'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow65'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow65'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow65'
+      .setProperty("X",0.4) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow65'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow65'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow65'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow65'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow65'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow65'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow66", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow66'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow66'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow66'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow66'
+      .setProperty("X",0.6) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow66'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow66'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow66'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow66'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow66'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow66'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow68", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow68'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow68'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow68'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow68'
+      .setProperty("X",0.8) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow68'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow68'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow68'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow68'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow68'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow68'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow67", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow67'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow67'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow67'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow67'
+      .setProperty("X",1) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow67'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow67'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow67'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow67'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow67'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow67'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow63", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow63'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow63'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow63'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow63'
+      .setProperty("X",-0.2) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow63'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow63'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow63'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow63'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow63'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow63'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow612", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow612'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow612'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow612'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow612'
+      .setProperty("X",-0.6) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow612'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow612'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow612'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow612'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow612'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow612'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow611", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow611'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow611'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow611'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow611'
+      .setProperty("X",-0.8) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow611'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow611'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow611'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow611'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow611'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow611'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow610", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow610'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow610'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow610'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow610'
+      .setProperty("X",-1) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow610'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow610'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow610'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow610'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow610'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow610'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow69", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow69'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow69'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow69'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow69'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow69'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow69'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow69'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow69'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow69'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow69'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow622", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow622'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow622'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow622'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow622'
+      .setProperty("X",-1.2) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow622'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow622'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow622'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow622'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow622'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow622'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow623", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow623'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow623'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow623'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow623'
+      .setProperty("X",-1.4) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow623'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow623'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow623'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow623'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow623'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow623'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow624", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow624'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow624'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow624'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow624'
+      .setProperty("X",-1.6) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow624'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow624'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow624'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow624'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow624'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow624'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow625", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow625'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow625'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow625'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow625'
+      .setProperty("X",-1.8) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow625'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow625'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow625'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow625'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow625'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow625'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow629", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow629'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow629'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow629'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow629'
+      .setProperty("X",1.4) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow629'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow629'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow629'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow629'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow629'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow629'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow628", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow628'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow628'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow628'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow628'
+      .setProperty("X",1.6) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow628'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow628'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow628'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow628'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow628'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow628'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow627", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow627'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow627'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow627'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow627'
+      .setProperty("X",1.8) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow627'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow627'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow627'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow627'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow627'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow627'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow6210", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow6210'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow6210'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow6210'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow6210'
+      .setProperty("X",1.2) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow6210'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow6210'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow6210'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow6210'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow6210'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow6210'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow626", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow626'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow626'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow626'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow626'
+      .setProperty("X",2) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow626'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow626'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow626'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow626'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow626'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow626'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow62", _view.group) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow62'
+      .setProperty("MarkEnd","POINTED") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow62'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow62'
+      .setProperty("LineColor","Orange") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow62'
+      .setProperty("X",-0.4) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow62'
+      .setProperty("Y",-0.5) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow62'
+      .setProperty("Visibility",true) // EJsS HtmlView.HtmlView Page: setting property 'Visibility' for element 'arrow62'
+      .setProperty("SizeY",3) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow62'
+      .setProperty("LineWidth",3) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow62'
+      .setProperty("Offset","NORTH_EAST") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow62'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.shape,"shape22", _view.drawingPanel2) // EJsS HtmlView.HtmlView Page: declaration of element 'shape22'
+      .setProperty("FillColor","rgba(0,0,0,1)") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'shape22'
+      .setProperty("SizeX",2.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'shape22'
+      .setProperty("ShapeType","RECTANGLE") // EJsS HtmlView.HtmlView Page: setting property 'ShapeType' for element 'shape22'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'shape22'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'shape22'
+      .setProperty("SizeY",2.1) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'shape22'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.image,"image3", _view.drawingPanel2) // EJsS HtmlView.HtmlView Page: declaration of element 'image3'
+      .setProperty("SizeX",2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'image3'
+      .setProperty("ImageUrl","./img/horizonte.png") // EJsS HtmlView.HtmlView Page: setting property 'ImageUrl' for element 'image3'
+      .setProperty("SizeY",2) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'image3'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow613", _view.drawingPanel2) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow613'
+      .setProperty("SizeX",-0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow613'
+      .setProperty("X",-0.75) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow613'
+      .setProperty("LineColor","Black") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow613'
+      .setProperty("Y",-0.7) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow613'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow613'
+      .setProperty("LineWidth",4) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow613'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow6", _view.drawingPanel2) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow6'
+      .setProperty("SizeX",0.2) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow6'
+      .setProperty("X",0.75) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow6'
+      .setProperty("LineColor","Black") // EJsS HtmlView.HtmlView Page: setting property 'LineColor' for element 'arrow6'
+      .setProperty("Y",-0.7) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow6'
+      .setProperty("SizeY",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow6'
+      .setProperty("LineWidth",4) // EJsS HtmlView.HtmlView Page: setting property 'LineWidth' for element 'arrow6'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"norte2", _view.drawingPanel2) // EJsS HtmlView.HtmlView Page: declaration of element 'norte2'
+      .setProperty("FillColor","Black") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'norte2'
+      .setProperty("X",0.6) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'norte2'
+      .setProperty("Y",-0.7) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'norte2'
+      .setProperty("Text","Sul") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'norte2'
+      .setProperty("Font","normal bold 20px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'norte2'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"norte", _view.drawingPanel2) // EJsS HtmlView.HtmlView Page: declaration of element 'norte'
+      .setProperty("FillColor","Black") // EJsS HtmlView.HtmlView Page: setting property 'FillColor' for element 'norte'
+      .setProperty("X",-0.6) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'norte'
+      .setProperty("Y",-0.7) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'norte'
+      .setProperty("Text","Norte") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'norte'
+      .setProperty("Font","normal bold 20px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'norte'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.plottingPanel,"plottingPanel", _view.visao_terra,"GRAPHICS2D_CANVAS") // EJsS HtmlView.HtmlView Page: declaration of element 'plottingPanel'
+      .setProperty("Height",262) // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'plottingPanel'
+      .setProperty("Width",380) // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'plottingPanel'
+      .setProperty("Gutters",[0,0,0,0]) // EJsS HtmlView.HtmlView Page: setting property 'Gutters' for element 'plottingPanel'
+      .setProperty("ShowCoordinates",false) // EJsS HtmlView.HtmlView Page: setting property 'ShowCoordinates' for element 'plottingPanel'
+      .setProperty("Background","white") // EJsS HtmlView.HtmlView Page: setting property 'Background' for element 'plottingPanel'
+      .setProperty("SquareAspect",true) // EJsS HtmlView.HtmlView Page: setting property 'SquareAspect' for element 'plottingPanel'
+      .setProperty("AutoScaleY",false) // EJsS HtmlView.HtmlView Page: setting property 'AutoScaleY' for element 'plottingPanel'
+      .setProperty("AutoScaleX",false) // EJsS HtmlView.HtmlView Page: setting property 'AutoScaleX' for element 'plottingPanel'
+      .setProperty("MarginX",0) // EJsS HtmlView.HtmlView Page: setting property 'MarginX' for element 'plottingPanel'
+      .setProperty("MarginY",0) // EJsS HtmlView.HtmlView Page: setting property 'MarginY' for element 'plottingPanel'
+      .setProperty("GraphicsMode","Canvas") // EJsS HtmlView.HtmlView Page: setting property 'GraphicsMode' for element 'plottingPanel'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'plottingPanel'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.shape,"shape3", _view.plottingPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'shape3'
+      .setProperty("SizeX",0.3) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'shape3'
+      .setProperty("RelativePosition","CENTERED") // EJsS HtmlView.HtmlView Page: setting property 'RelativePosition' for element 'shape3'
+      .setProperty("X",0) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'shape3'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'shape3'
+      .setProperty("DrawLines",false) // EJsS HtmlView.HtmlView Page: setting property 'DrawLines' for element 'shape3'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"text", _view.plottingPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'text'
+      .setProperty("RelativePosition","SOUTH") // EJsS HtmlView.HtmlView Page: setting property 'RelativePosition' for element 'text'
+      .setProperty("X",-0.8) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'text'
+      .setProperty("Y",0.4) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'text'
+      .setProperty("Text","Norte") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'text'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.text,"text2", _view.plottingPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'text2'
+      .setProperty("RelativePosition","NORTH") // EJsS HtmlView.HtmlView Page: setting property 'RelativePosition' for element 'text2'
+      .setProperty("X",-0.8) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'text2'
+      .setProperty("Y",-0.4) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'text2'
+      .setProperty("Text","Sul") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'text2'
+      ;
+
+    _view._addElement(EJSS_DRAWING2D.arrow,"arrow7", _view.plottingPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'arrow7'
+      .setProperty("MarkEnd","INVTRIANGLE") // EJsS HtmlView.HtmlView Page: setting property 'MarkEnd' for element 'arrow7'
+      .setProperty("SizeX",0) // EJsS HtmlView.HtmlView Page: setting property 'SizeX' for element 'arrow7'
+      .setProperty("X",-0.8) // EJsS HtmlView.HtmlView Page: setting property 'X' for element 'arrow7'
+      .setProperty("Y",0) // EJsS HtmlView.HtmlView Page: setting property 'Y' for element 'arrow7'
+      .setProperty("MarkStart","TRIANGLE") // EJsS HtmlView.HtmlView Page: setting property 'MarkStart' for element 'arrow7'
+      .setProperty("SizeY",0.7) // EJsS HtmlView.HtmlView Page: setting property 'SizeY' for element 'arrow7'
+      .setProperty("Offset","CENTERED") // EJsS HtmlView.HtmlView Page: setting property 'Offset' for element 'arrow7'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.panel,"controles", _view.mainPanel) // EJsS HtmlView.HtmlView Page: declaration of element 'controles'
+      .setProperty("Height","100%") // EJsS HtmlView.HtmlView Page: setting property 'Height' for element 'controles'
+      .setProperty("Width","25%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'controles'
+      .setProperty("CSS",{"float":"right"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'controles'
+      .setProperty("BorderColor","rgba(0,0,64,1)") // EJsS HtmlView.HtmlView Page: setting property 'BorderColor' for element 'controles'
+      .setProperty("BorderWidth",1) // EJsS HtmlView.HtmlView Page: setting property 'BorderWidth' for element 'controles'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'controles'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"label", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'label'
+      .setProperty("Text","Pontos de vista") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'label'
+      .setProperty("Font","normal bold 16px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'label'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'label'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.radioButton,"helio", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'helio'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'helio'
+      .setProperty("Text","Visão Heliocêntrica") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'helio'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'helio'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'helio'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.radioButton,"geo", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'geo'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'geo'
+      .setProperty("Text","Visão Geocêntrica") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'geo'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'geo'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'geo'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.checkBox,"checkBox", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'checkBox'
+      .setProperty("CSS",{"float":"left"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'checkBox'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'checkBox'
+      .setProperty("Text","Vista do Sol") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'checkBox'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'checkBox'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.checkBox,"checkBox2", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'checkBox2'
+      .setProperty("CSS",{"float":"left"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'checkBox2'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'checkBox2'
+      .setProperty("Text","Ver dispersão da luz solar") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'checkBox2'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'checkBox2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.separator,"separator", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'separator'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"label2", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'label2'
+      .setProperty("Text","Data") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'label2'
+      .setProperty("Font","normal bold 16px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'label2'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'label2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"data", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'data'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'data'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'data'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'data'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.slider,"dia32", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'dia32'
+      .setProperty("Maximum",364) // EJsS HtmlView.HtmlView Page: setting property 'Maximum' for element 'dia32'
+      .setProperty("Minimum",0) // EJsS HtmlView.HtmlView Page: setting property 'Minimum' for element 'dia32'
+      .setProperty("Step",1) // EJsS HtmlView.HtmlView Page: setting property 'Step' for element 'dia32'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'dia32'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.separator,"separator2", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'separator2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"label3", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'label3'
+      .setProperty("Text","Posição") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'label3'
+      .setProperty("Font","normal bold 16px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'label3'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'label3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"latitude", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'latitude'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'latitude'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'latitude'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'latitude'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.slider,"latitude2", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'latitude2'
+      .setProperty("Minimum",-90) // EJsS HtmlView.HtmlView Page: setting property 'Minimum' for element 'latitude2'
+      .setProperty("Maximum",90) // EJsS HtmlView.HtmlView Page: setting property 'Maximum' for element 'latitude2'
+      .setProperty("CSS",{"float":"left"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'latitude2'
+      .setProperty("Step",0.1) // EJsS HtmlView.HtmlView Page: setting property 'Step' for element 'latitude2'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'latitude2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.separator,"separator3", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'separator3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.imageAndTextButton,"label4", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'label4'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'label4'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'label4'
+      .setProperty("Text","Linhas auxiliares") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'label4'
+      .setProperty("Font","normal bold 16px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'label4'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'label4'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.checkBox,"ecliptica3", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'ecliptica3'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'ecliptica3'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'ecliptica3'
+      .setProperty("Text","Plano da Eclíptica") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'ecliptica3'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'ecliptica3'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'ecliptica3'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.checkBox,"eqCeleste2", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'eqCeleste2'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'eqCeleste2'
+      .setProperty("CSS",{"float":"left"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'eqCeleste2'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'eqCeleste2'
+      .setProperty("Text","Plano do Equador Celeste") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'eqCeleste2'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'eqCeleste2'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'eqCeleste2'
+      ;
+
+    _view._addElement(EJSS_INTERFACE.checkBox,"linhas2", _view.controles) // EJsS HtmlView.HtmlView Page: declaration of element 'linhas2'
+      .setProperty("Width","100%") // EJsS HtmlView.HtmlView Page: setting property 'Width' for element 'linhas2'
+      .setProperty("CSS",{"float":"left"}) // EJsS HtmlView.HtmlView Page: setting property 'CSS' for element 'linhas2'
+      .setProperty("TextAlign","left") // EJsS HtmlView.HtmlView Page: setting property 'TextAlign' for element 'linhas2'
+      .setProperty("Text","Paralelos") // EJsS HtmlView.HtmlView Page: setting property 'Text' for element 'linhas2'
+      .setProperty("Font","normal normal 14px Tahoma, Geneva, sans-serif") // EJsS HtmlView.HtmlView Page: setting property 'Font' for element 'linhas2'
+      .setProperty("Display","block") // EJsS HtmlView.HtmlView Page: setting property 'Display' for element 'linhas2'
+      ;
+
+  };
+
+  return _view;
+}
+
+
+//--><!]]></script>
+  </head>
+  <body>
+    <div role="button" id="_topFrame" style="text-align:center"></div>
+  <div id="metadata" class="metadata">
+    <font size="6">
+    <br />
+    </font>
+    <div id="title_author">
+      <hr />
+    </div>
+  </div>
+	<p>
+    <script type="text/javascript"><!--//--><![CDATA[//><!--
+      var _model;
+      var _scorm;
+      window.addEventListener('load',
+        function () { 
+          _model =  new solar4("_topFrame","_ejs_library/index.html",null);
+          if (typeof _isApp !== "undefined" && _isApp) _model.setRunAlways(true);
+          TextResizeDetector.TARGET_ELEMENT_ID = '_topFrame';
+          TextResizeDetector.USER_INIT_FUNC = function () {
+            var iBase = TextResizeDetector.addEventListener(function(e,args) {
+              _model._fontResized(args[0].iBase,args[0].iSize,args[0].iDelta);
+              },null);
+            _model._fontResized(iBase);
+          };
+          _model.onload();
+        }, false);
+    //--><!]]></script>
+  	</p>
+  </body>
+
+</html>

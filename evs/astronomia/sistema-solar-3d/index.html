@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta charset="utf-8"/>	
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EVS - Sistema Solar</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:Inter,Arial,Helvetica,sans-serif;background:radial-gradient(ellipse at bottom,#000011 0%,#000000 70%);color:#e6f7ff;overflow:hidden}
+
+    #canvas-container{position:fixed;inset:0;z-index:1}
+    #labels-container{position:fixed;inset:0;pointer-events:none;z-index:60}
+    .planet-label{position:absolute;font-size:12px;padding:4px 8px;border-radius:8px;background:linear-gradient(90deg,rgba(7,16,25,0.6),rgba(7,30,40,0.35));backdrop-filter:blur(4px);color:#e6f7ff;text-shadow:0 1px 2px #000;white-space:nowrap;transform:translate(12px,-50%);display:none}
+
+    #control-panel{position:fixed;right:18px;top:18px;width:320px;max-height:86vh;padding:14px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));backdrop-filter:blur(6px);box-shadow:0 6px 30px rgba(2,6,23,0.6);z-index:120;overflow:auto}
+    .section{margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(125,200,255,0.04)}
+    .section-title{font-size:13px;color:#7dd3fc;font-weight:700;margin-bottom:8px}
+    select,input[type=range],button,input[type=checkbox]{width:100%}
+    select,input[type=range]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.3);color:#e6f7ff}
+    button{padding:10px;border-radius:8px;border:none;background:#7dd3fc;color:#032;cursor:pointer;font-weight:600}
+    button:hover{filter:brightness(.95)}
+    .button-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .checkbox-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+
+    #info-panel{position:fixed;left:18px;bottom:18px;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));backdrop-filter:blur(4px);z-index:120;max-width:34vw}
+    ul{margin-left:16px;font-size:13px}
+
+    #credit {
+      position: fixed;
+      right: 18px;
+      bottom: 6px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    /* small helper to keep mass text selectable but subtle */
+    .mass-text{font-family:inherit}
+
+    @media(max-width:700px){#control-panel{width:calc(100% - 32px);left:16px;right:16px;top:auto;bottom:16px}#info-panel{max-width:calc(100% - 32px);left:16px;right:16px}}
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div id="labels-container"></div>
+
+  <div id="control-panel">
+    <div class="section">
+      <div class="section-title">Visualização Centralizada</div>
+      <select id="planetSelect">
+        <option value="0">🌞 Sol</option>
+        <option value="1">☿ Mercúrio</option>
+        <option value="2">♀ Vênus</option>
+        <option value="3">🌍 Terra</option>
+        <option value="4">♂ Marte</option>
+        <option value="5">♃ Júpiter</option>
+        <option value="6">♄ Saturno</option>
+        <option value="7">♅ Urano</option>
+        <option value="8">♆ Netuno</option>
+        <option value="9">♇ Plutão - planeta anão</option>
+        <option value="10">☄ Halley</option>
+        <option value="11">Eris - planeta anão</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Velocidade</div>
+      <input id="speedSlider" type="range" min="0" max="10" value="5">
+      <div style="text-align:center;font-size:12px"><span id="speedValue">1x</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Controles</div>
+      <div class="button-grid">
+        <button id="zoomIn">🔍 +</button>
+        <button id="zoomOut">🔍 -</button>
+        <button id="resetView">🔄 Reset</button>
+        <button id="toggleStars">⭐ Estrelas</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Órbitas</div>
+      <div class="checkbox-grid" id="orbits-container"></div>
+      <div class="button-grid" style="margin-top:8px">
+        <button id="orbitsAll">Todas</button>
+        <button id="orbitsNone">Nenhuma</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Simulação</div>
+      <button id="togglePause">⏸️ Parar</button>
+    </div>
+  </div>
+
+  <div id="info-panel">
+    <div id="planet-info"><h3>🌞 Sol</h3><p>Estrela central do Sistema Solar</p></div>
+    <p style="font-size:11px; color:#aaa; margin-top:6px;">
+      *As escalas de volume do Sol e dos planetas, além da velocidade orbital, não correspondem à realidade física, sendo ajustadas aqui para fins didáticos.
+    </p>
+  </div>
+
+  <div id="credit">Desenvolvido por: Luciano Soares Pedroso</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    // utilitário: formata números com vírgula segundo padrão brasileiro
+    function formatNumber(num, decimals = 3) {
+      if (typeof num !== 'number' || isNaN(num)) return String(num);
+      return num.toFixed(decimals).replace('.', ',');
+    }
+
+    // utilitário: formata números com controle de casas e sem casas decimais se solicitado
+    function fmt(num, decimals = 3) {
+      return formatNumber(Number(num), decimals);
+    }
+
+    // Classe principal (baseada no seu código original, mantendo todas as funcionalidades)
+    const deg2rad = d => d * Math.PI / 180.0;
+
+    class SimpleSolarSystem {
+      constructor(){
+        this.scene = null; this.camera = null; this.renderer = null;
+        this.planets = []; this.planetData = []; this.orbits = []; this.orbitPlanes = [];
+        this.labels = []; this.labelsContainer = document.getElementById('labels-container');
+        this.focusedPlanetIndex = 0; this.simulationSpeed = 1; this.time = 0; this.isPaused = false;
+        this.UNIT_PER_AU = 35; // escala visual
+        this.init();
+      }
+
+      init(){
+        this.setupScene(); this.setupCamera(); this.setupRenderer(); this.setupLights();
+        this.setupControls(); this.createStars(); this.loadPlanetData(); this.createSolarSystem();
+        this.setupEventListeners(); this.animate();
+      }
+
+      setupScene(){ this.scene = new THREE.Scene(); this.scene.background = new THREE.Color(0x000015); }
+      setupCamera(){ this.camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 10000); this.camera.position.set(0, 50, 160); }
+      setupRenderer(){ this.renderer = new THREE.WebGLRenderer({antialias:true}); this.renderer.setSize(window.innerWidth, window.innerHeight); this.renderer.setPixelRatio(window.devicePixelRatio); document.getElementById('canvas-container').appendChild(this.renderer.domElement); }
+
+      setupLights(){
+        const hemi = new THREE.HemisphereLight(0x91b4ff, 0x101019, 0.4); this.scene.add(hemi);
+        const sunLight = new THREE.PointLight(0xffffff, 1.8, 4000); sunLight.position.set(0,0,0); this.scene.add(sunLight);
+      }
+
+      setupControls(){
+        this.controls = {
+          target: new THREE.Vector3(0,0,0),
+          rotation: new THREE.Vector2(0, Math.PI/2),
+          distance: 150,
+          update: ()=>{
+            const phi = this.controls.rotation.y;
+            const theta = this.controls.rotation.x;
+            this.camera.position.x = this.controls.target.x + this.controls.distance * Math.sin(phi) * Math.cos(theta);
+            this.camera.position.y = this.controls.target.y + this.controls.distance * Math.cos(phi);
+            this.camera.position.z = this.controls.target.z + this.controls.distance * Math.sin(phi) * Math.sin(theta);
+            this.camera.lookAt(this.controls.target);
+          }
+        };
+        this.setupMouseControls();
+      }
+
+      setupMouseControls(){
+        let isMouseDown = false, lastX = 0, lastY = 0;
+        const dom = this.renderer.domElement;
+        dom.addEventListener('mousedown', e => { isMouseDown = true; lastX = e.clientX; lastY = e.clientY; });
+        dom.addEventListener('mousemove', e => { if(!isMouseDown) return; const dx = e.clientX - lastX, dy = e.clientY - lastY; this.controls.rotation.x += dx * 0.008; this.controls.rotation.y += dy * 0.008; this.controls.rotation.y = Math.max(0.1, Math.min(Math.PI - 0.1, this.controls.rotation.y)); lastX = e.clientX; lastY = e.clientY; });
+        dom.addEventListener('mouseup', ()=> isMouseDown = false);
+        dom.addEventListener('mouseleave', ()=> isMouseDown = false);
+        dom.addEventListener('wheel', e => { e.preventDefault(); this.controls.distance *= e.deltaY>0 ? 1.08 : 0.92; this.controls.distance = Math.max(10, Math.min(3000, this.controls.distance)); });
+        document.addEventListener('keydown', e => { if(e.key==='w' || e.key==='ArrowUp') this.controls.distance *= 0.9; if(e.key==='s' || e.key==='ArrowDown') this.controls.distance *= 1.1; });
+      }
+
+      createStars(){
+        const g = new THREE.BufferGeometry(); const vertices = [];
+        for(let i=0;i<1200;i++) vertices.push((Math.random()-0.5)*3000, (Math.random()-0.5)*3000, (Math.random()-0.5)*3000);
+        g.setAttribute('position', new THREE.Float32BufferAttribute(vertices,3));
+        const p = new THREE.Points(g, new THREE.PointsMaterial({size:1})); this.scene.add(p); this.stars = p;
+      }
+
+      loadPlanetData(){
+        // dados didáticos: massas já formatadas com vírgula e expoente em <sup>
+        this.planetData = [
+          {name:'Sol', radius:2, color:0xffff66, semimajor:0, ecc:0, speed:0, inclination:0, link:'https://solarsystem.nasa.gov/solar-system/sun/overview/', mass:'1,989×10<sup>30</sup> kg', radiusReal:'696.340 km', periodo:'-', temp:'≈5500°C', satelites:'0'},
+          {name:'Mercúrio', radius:0.8, color:0x8c7853, semimajor:15, ecc:0.206, speed:0.02, inclination:7.0, link:'https://solarsystem.nasa.gov/planets/mercury/overview/', mass:'3,30×10<sup>23</sup> kg', radiusReal:'2.439 km', periodo:'88 dias', temp:'≈167°C (dia)', satelites:'0'},
+          {name:'Vênus', radius:1.2, color:0xe39e1c, semimajor:25, ecc:0.007, speed:0.015, inclination:3.39, link:'https://solarsystem.nasa.gov/planets/venus/overview/', mass:'4,87×10<sup>24</sup> kg', radiusReal:'6.052 km', periodo:'225 dias', temp:'≈464°C', satelites:'0'},
+          {name:'Terra', radius:1.3, color:0x2b57ff, semimajor:35, ecc:0.017, speed:0.01, inclination:0.0, link:'https://solarsystem.nasa.gov/planets/earth/overview/', mass:'5,97×10<sup>24</sup> kg', radiusReal:'6.371 km', periodo:'365 dias', temp:'≈15°C', satelites:'1'},
+          {name:'Marte', radius:0.9, color:0xff5533, semimajor:45, ecc:0.093, speed:0.008, inclination:1.85, link:'https://solarsystem.nasa.gov/planets/mars/overview/', mass:'6,42×10<sup>23</sup> kg', radiusReal:'3.390 km', periodo:'687 dias', temp:'≈-63°C', satelites:'2'},
+          {name:'Júpiter', radius:3.0, color:0xffaa33, semimajor:65, ecc:0.048, speed:0.004, inclination:1.3, link:'https://solarsystem.nasa.gov/planets/jupiter/overview/', mass:'1,90×10<sup>27</sup> kg', radiusReal:'69.911 km', periodo:'11,86 anos', temp:'≈-108°C', satelites:'92'},
+          {name:'Saturno', radius:2.5, color:0xffdd99, semimajor:85, ecc:0.054, speed:0.003, inclination:2.49, link:'https://solarsystem.nasa.gov/planets/saturn/overview/', mass:'5,68×10<sup>26</sup> kg', radiusReal:'58.232 km', periodo:'29,45 anos', temp:'≈-138°C', satelites:'274'},
+          {name:'Urano', radius:2.0, color:0x99ddff, semimajor:105, ecc:0.047, speed:0.002, inclination:0.77, link:'https://solarsystem.nasa.gov/planets/uranus/overview/', mass:'8,68×10<sup>25</sup> kg', radiusReal:'25.362 km', periodo:'84 anos', temp:'≈-195°C', satelites:'27'},
+          {name:'Netuno', radius:1.9, color:0x3366ff, semimajor:125, ecc:0.009, speed:0.001, inclination:1.77, link:'https://solarsystem.nasa.gov/planets/neptune/overview/', mass:'1,02×10<sup>26</sup> kg', radiusReal:'24.622 km', periodo:'164,8 anos', temp:'≈-200°C', satelites:'14'},
+          {name:'Plutão - planeta anão', radius:0.5, color:0xddbb99, semimajor:145, ecc:0.249, speed:0.0007, inclination:17.14, link:'https://science.nasa.gov/dwarf-planets/pluto/', mass:'1,31×10<sup>22</sup> kg', radiusReal:'1.188 km', periodo:'248 anos', temp:'≈-225°C', satelites:'5'},
+          {name:'Halley', radius:0.22, color:0xffffff, semimajor:100, ecc:0.967, speed:-0.0005, inclination:162.3, link:'https://solarsystem.nasa.gov/asteroids-comets-and-meteors/comets/1p-halley/in-depth/', mass:'~2,2×10<sup>14</sup> kg', radiusReal:'~11 km', periodo:'75,3 anos', temp:'-', satelites:'0'},
+          {name:'Eris - planeta anão', radius:0.6, color:0xcccccc, semimajor:165, ecc:0.442, speed:0.0003, inclination:44.0, link:'https://science.nasa.gov/dwarf-planets/eris/', mass:'1,66×10<sup>22</sup> kg', radiusReal:'1.163 km', periodo:'557 anos', temp:'≈-231°C', satelites:'1'}
+        ];
+      }
+
+      createSolarSystem(){
+        // Sol
+        const sunG = new THREE.SphereGeometry(this.planetData[0].radius, 32, 32);
+        const sunM = new THREE.MeshBasicMaterial({color:this.planetData[0].color});
+        const sun = new THREE.Mesh(sunG, sunM); this.scene.add(sun); this.planets.push(sun);
+
+        // Planetas
+        for(let i=1;i<this.planetData.length;i++){
+          const data = this.planetData[i];
+          const g = new THREE.SphereGeometry(data.radius, 20, 20);
+          const mat = new THREE.MeshStandardMaterial({color:data.color, metalness:0.1, roughness:0.7});
+          const planet = new THREE.Mesh(g, mat);
+
+          // posição inicial elíptica
+          const a = data.semimajor; const e = data.ecc; const b = a * Math.sqrt(1 - e*e); const focalShift = a * e;
+          const theta0 = Math.random() * Math.PI * 2;
+          const x0 = a * Math.cos(theta0) - focalShift;
+          const z0 = b * Math.sin(theta0);
+          const inc = deg2rad(data.inclination);
+          planet.position.x = x0; planet.position.y = z0 * Math.sin(inc); planet.position.z = z0 * Math.cos(inc);
+
+          this.scene.add(planet); this.planets.push(planet);
+
+          // órbita e plano
+          this.createOrbit(data, i);
+
+          // anéis de Saturno (mantido)
+          if(i===6){
+            const ring = new THREE.Mesh(new THREE.RingGeometry(data.radius*1.2, data.radius*2.2, 64), new THREE.MeshBasicMaterial({color:0x9b8b6a, side:THREE.DoubleSide, transparent:true, opacity:0.5}));
+            ring.rotation.x = Math.PI/2.7; planet.add(ring);
+          }
+
+          // label 2D
+          this.createPlanetLabel(data.name, planet, i);
+        }
+
+        // Gerar checkboxes de órbitas após criar as órbitas
+        this.generateOrbitCheckboxes();
+      }
+
+      createOrbit(data, index){
+        const points = []; const segments = 256;
+        const a = data.semimajor; const e = data.ecc; const b = a * Math.sqrt(1 - e*e); const focalShift = a * e; const inc = deg2rad(data.inclination);
+        for(let i=0;i<=segments;i++){
+          const ang = (i/segments) * Math.PI * 2;
+          let x = a * Math.cos(ang) - focalShift;
+          let z = b * Math.sin(ang);
+          const y = z * Math.sin(inc);
+          const z2 = z * Math.cos(inc);
+          points.push(new THREE.Vector3(x, y, z2));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineBasicMaterial({color:0x77a8c9, transparent:true, opacity:0.35});
+        const line = new THREE.Line(geo, mat); this.scene.add(line); this.orbits.push(line);
+
+        // plano orbital sutil
+        const planeGeo = new THREE.PlaneGeometry(a*2.2, a*2.2, 1, 1);
+        planeGeo.rotateX(Math.PI/2);
+        planeGeo.rotateX(inc - Math.PI/2);
+        const planeMat = new THREE.MeshBasicMaterial({color:0x447799, transparent:true, opacity:0.03, side:THREE.DoubleSide});
+        const plane = new THREE.Mesh(planeGeo, planeMat);
+        plane.position.set(-focalShift, 0, 0);
+        plane.visible = false; this.scene.add(plane); this.orbitPlanes.push(plane);
+      }
+
+      createPlanetLabel(name, object, index){
+        const div = document.createElement('div'); div.className = 'planet-label'; div.innerText = name;
+        this.labelsContainer.appendChild(div);
+        this.labels.push({div, object});
+      }
+
+      updatePlanets(){
+        if(this.isPaused) return;
+        this.time += 0.016 * this.simulationSpeed;
+
+        // rotação do sol
+        if(this.planets[0]) this.planets[0].rotation.y += 0.003 * this.simulationSpeed;
+
+        for(let i=1;i<this.planetData.length;i++){
+          const data = this.planetData[i]; const planet = this.planets[i];
+          const angle = this.time * data.speed;
+          const a = data.semimajor; const e = data.ecc; const b = a * Math.sqrt(1 - e*e); const focalShift = a * e; const inc = deg2rad(data.inclination);
+          const x = a * Math.cos(angle) - focalShift;
+          const z = b * Math.sin(angle);
+          planet.position.x = x;
+          planet.position.y = z * Math.sin(inc);
+          planet.position.z = z * Math.cos(inc);
+        }
+      }
+
+      updateLabels(){
+        if(!this.camera) return;
+        for(const l of this.labels){
+          const {div, object} = l;
+          const pos = new THREE.Vector3(); object.getWorldPosition(pos);
+          pos.project(this.camera);
+          if(pos.z > 1){ div.style.display = 'none'; continue; }
+          div.style.display = 'block';
+          const x = (pos.x * 0.5 + 0.5) * this.renderer.domElement.clientWidth;
+          const y = (pos.y * -0.5 + 0.5) * this.renderer.domElement.clientHeight;
+          div.style.left = `${x}px`; div.style.top = `${y}px`;
+        }
+      }
+
+      setupEventListeners(){
+        window.addEventListener('resize', ()=>this.onWindowResize());
+        this.setupUIControls();
+
+        // Raycaster para clique em planetas
+        this.raycaster = new THREE.Raycaster(); this.mouse = new THREE.Vector2();
+        this.renderer.domElement.addEventListener('click', e => {
+          this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+          this.mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
+          this.raycaster.setFromCamera(this.mouse, this.camera);
+          const intersects = this.raycaster.intersectObjects(this.planets.slice(1));
+          if(intersects.length > 0){
+            const clicked = intersects[0].object;
+            const idx = this.planets.indexOf(clicked);
+            // mostramos detalhes independentemente de estar pausado — professor pode escolher
+            this.focusOnPlanet(idx);
+            this.showPlanetDetails(idx);
+          }
+        });
+      }
+
+      setupUIControls(){
+        document.getElementById('planetSelect').addEventListener('change', e => { const idx = parseInt(e.target.value); this.focusOnPlanet(idx); this.showPlanetDetails(idx); });
+        const speedSlider = document.getElementById('speedSlider'); const speedValue = document.getElementById('speedValue');
+        speedSlider.addEventListener('input', e => { this.simulationSpeed = Math.pow(2, e.target.value - 5); // mantemos escala expoencial
+          // exibir com vírgula
+          speedValue.textContent = this.simulationSpeed.toFixed(1).replace('.', ',') + 'x';
+        });
+        document.getElementById('zoomIn').addEventListener('click', ()=>{ this.controls.distance *= 0.82; });
+        document.getElementById('zoomOut').addEventListener('click', ()=>{ this.controls.distance *= 1.18; });
+        document.getElementById('resetView').addEventListener('click', ()=>{ this.focusedPlanetIndex = 0; this.controls.target.set(0,0,0); this.controls.rotation.set(0, Math.PI/2); this.controls.distance = 150; });
+        document.getElementById('toggleStars').addEventListener('click', ()=>{ if(this.stars) this.stars.visible = !this.stars.visible; });
+
+        // Pause / resume
+        document.getElementById('togglePause').addEventListener('click', e => {
+            this.isPaused = !this.isPaused;
+            e.target.textContent = this.isPaused ? '▶️ Retomar' : '⏸️ Parar';
+        });
+
+        // checkboxes de órbitas
+        // generateOrbitCheckboxes é chamado no final de createSolarSystem, mas definimos aqui a função completa
+      }
+
+      generateOrbitCheckboxes(){
+        const container = document.getElementById('orbits-container'); container.innerHTML = '';
+        // note: this.orbits indices correspond to planets 1..N (orbits[0] = Mercury...)
+        for(let i=1;i<this.planetData.length;i++){
+          const p = this.planetData[i];
+          const item = document.createElement('div'); item.className = 'checkbox-item';
+          // mostrar inclinação formatada com vírgula
+          const inclText = `${fmt(p.inclination, 2)}°`;
+          item.innerHTML = `<input type="checkbox" id="orbit-${i}" checked> <label for="orbit-${i}">${p.name} (${inclText})</label>`;
+          container.appendChild(item);
+          // adicionar listener
+          const cb = document.getElementById(`orbit-${i}`);
+          if(cb){
+            cb.addEventListener('change', e => {
+              // this.orbits index is i-1 because orbits array was filled only with planet orbits (first planet is at index 1)
+              if(this.orbits[i-1]) this.orbits[i-1].visible = e.target.checked;
+            });
+          }
+        }
+        document.getElementById('orbitsAll').addEventListener('click', ()=>{ this.orbits.forEach(o=>o.visible=true); document.querySelectorAll('#orbits-container input').forEach(cb=>cb.checked=true); });
+        document.getElementById('orbitsNone').addEventListener('click', ()=>{ this.orbits.forEach(o=>o.visible=false); document.querySelectorAll('#orbits-container input').forEach(cb=>cb.checked=false); });
+      }
+
+      focusOnPlanet(idx){
+        if(!this.planets[idx]) return;
+        this.focusedPlanetIndex = idx;
+        if(idx === 0){ this.controls.target.set(0,0,0); this.controls.distance = 100; }
+        else { const d = this.planetData[idx]; this.controls.target.copy(this.planets[idx].position); this.controls.distance = Math.max(15, d.semimajor * 0.5 + d.radius * 10); }
+      }
+
+      updatePlanetInfo(idx){
+        const info = document.getElementById('planet-info'); const d = this.planetData[idx];
+        // formatar semieixo, excentricidade e inclinação com vírgula
+        const sem = (d.semimajor || 0);
+        const ecc = (d.ecc || 0);
+        const inc = (d.inclination || 0);
+        info.innerHTML = `<h3>${this.getPlanetEmoji(idx)} ${d.name}</h3><p>Semieixo: ${fmt(sem,0)} — Excentricidade: ${fmt(ecc,3)} — Inclinação: ${fmt(inc,2)}°</p>`;
+      }
+
+      getPlanetEmoji(i){ const emojis=['&#127774;','&#9791;','&#9792;','&#127757;','&#9794;','&#9795;','&#9796;','&#9797;','&#9798;','&#9799;','&#9732;','&#11255;']; return emojis[i]||'&#129680;'; }
+
+      showPlanetDetails(idx){
+        if(idx < 0 || idx >= this.planetData.length) return;
+        const d = this.planetData[idx];
+        const pos = this.planets[idx].position;
+        const distAU = (Math.sqrt(pos.x*pos.x + pos.y*pos.y + pos.z*pos.z) / this.UNIT_PER_AU);
+        const info = document.getElementById('planet-info');
+        // massa já contém HTML (<sup>) e vírgula; inserimos como HTML seguro
+        info.innerHTML = `\
+          <h3>${this.getPlanetEmoji(idx)} ${d.name}</h3>\
+          <ul>\
+            <li><b>Raio (modelo):</b> ${d.radius}</li>\
+            <li><b>Raio médio real:</b> ${d.radiusReal}</li>\
+            <li><b>Massa:</b> <span class="mass-text">${d.mass}</span></li>\
+            <li><b>Distância atual do Sol:</b> ${fmt(distAU,3)} UA (escala)</li>\
+            <li><b>Período orbital:</b> ${d.periodo}</li>\
+            <li><b>Satélites naturais:</b> ${d.satelites}</li>\
+            <li><b>Temperatura (média):</b> ${d.temp}</li>\
+            <li><a href='${d.link}' target='_blank' rel='noreferrer'>Saiba mais &#128279;</a></li>\
+          </ul>`;
+      }
+
+      onWindowResize(){ this.camera.aspect = window.innerWidth/window.innerHeight; this.camera.updateProjectionMatrix(); this.renderer.setSize(window.innerWidth, window.innerHeight); }
+
+      animate(){ requestAnimationFrame(()=>this.animate()); this.updatePlanets(); if(this.focusedPlanetIndex>0) this.controls.target.copy(this.planets[this.focusedPlanetIndex].position); this.controls.update(); this.updateLabels(); this.renderer.render(this.scene,this.camera); }
+    }
+
+    window.addEventListener('load', ()=>{
+      if(typeof THREE === 'undefined'){ alert('Three.js não carregou'); return; }
+      try{ window.solar = new SimpleSolarSystem(); } catch(err){ console.error(err); alert('Falha ao iniciar simulação: ' + err.message); }
+    });
+  </script>
+</body>
+</html>

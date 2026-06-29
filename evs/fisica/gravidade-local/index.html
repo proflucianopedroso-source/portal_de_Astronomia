@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="utf-8"/>	
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aceleração Gravitacional Local</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .result {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .info {
+            background-color: #fffaf0;
+            padding: 15px;
+            border-left: 4px solid #ffa500;
+            margin: 20px 0;
+        }
+        .warning {
+            background-color: #ffebee;
+            padding: 15px;
+            border-left: 4px solid #f44336;
+            margin: 20px 0;
+        }
+        #gravMap {
+            width: 100%;
+            height: 500px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+        }
+        .map-container {
+            position: relative;
+        }
+        .map-legend {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+</head>
+<body>
+    <h1 align="center">Aceleração Gravitacional Local</h1>
+    <p align="center">Prof. Luciano Soares Pedroso</p>
+    
+    <p align="center">Esta página calcula a aceleração gravitacional aproximada 
+    em sua localização.</p>
+    
+    <p align="center">
+    <button id="calculateBtn">Calcular Aceleração Gravitacional</button>
+    </p>
+    
+    <div id="result" class="result" style="display: none;">
+        <!-- Resultados serão inseridos aqui -->
+    </div>
+    
+    <div class="warning">
+        <h2>Importante sobre o cálculo</h2>
+        <p>O cálculo apresentado é uma aproximação baseada em modelos teóricos. 
+        Valores reais podem variar significativamente devido a:</p>
+        <ul>
+            <li>Variações na densidade local da crosta terrestre</li>
+            <li>Presença de montanhas ou bacias oceânicas</li>
+            <li>Estruturas geológicas subterrâneas</li>
+            <li>Precisão limitada dos dados de altitude</li>
+        </ul>
+        <p>Para medições precisas, são necessários instrumentos específicos como 
+        gravímetros.</p>
+    </div>
+    
+    <div class="info">
+        <h2>O que afeta a aceleração gravitacional?</h2>
+        <p>A aceleração gravitacional na superfície de um planeta depende de:</p>
+        <ul>
+            <li><strong>Massa do planeta:</strong> Quanto maior a massa, maior a 
+            aceleração gravitacional.</li>
+            <li><strong>Raio do planeta:</strong> Quanto maior o raio, menor a 
+            aceleração na superfície.</li>
+            <li><strong>Altitude:</strong> Locais mais altos têm aceleração 
+            ligeiramente menor.</li>
+            <li><strong>Latitude:</strong> A força centrípeta da rotação do 
+            planeta reduz a aceleração efetiva no equador.</li>
+            <li><strong>Composição do solo:</strong> Densidades locais de rochas 
+            podem causar variações pequenas.</li>
+        </ul>
+        <p>Na Terra, o valor padrão é 9,80665 m/s², mas pode variar de 
+        aproximadamente 9,78 m/s² no equador a 9,83 m/s² nos polos.</p>
+        <p>Em unidades de N/kg, o valor é numericamente igual porque 1 N/kg = 1 
+        m/s².</p>
+    </div>
+
+    <h2>Variações Globais da Aceleração Gravitacional</h2>
+    <p>O mapa abaixo mostra as anomalias gravitacionais na superfície da Terra 
+    (dados simulados para fins educacionais):</p>
+    
+    <div class="map-container">
+        <div id="gravMap"></div>
+        <div class="map-legend">
+            <h4>Legenda (m/s²)</h4>
+            <div><span class="legend-color" style="background: #0000FF;"></span> 
+                9,76 - 9,78 (baixa)</div>
+            <div><span class="legend-color" style="background: #00AAFF;"></span> 
+                9,78 - 9,80</div>
+            <div><span class="legend-color" style="background: #00FF00;"></span> 
+                9,80 - 9,82 (média)</div>
+            <div><span class="legend-color" style="background: #FFAA00;"></span> 
+                9,82 - 9,84</div>
+            <div><span class="legend-color" style="background: #FF0000;"></span> 
+                9,84 - 9,86 (alta)</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Função para formatar números com vírgula decimal
+        function formatarNumero(num, casasDecimais) {
+            return num.toFixed(casasDecimais).toString().replace('.', ',');
+        }
+
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            const resultDiv = document.getElementById('result');
+            
+            // Valor padrão (será ajustado pela localização se disponível)
+            let g = 9.80665; // valor padrão em m/s²
+            
+            // Tentar obter localização para ajuste de altitude
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        // Fórmula simplificada para ajuste por altitude
+                        const altitude = position.coords.altitude || 0;
+                        // A Terra tem raio médio de ~6,371 km
+                        const earthRadius = 6371000; // em metros
+                        // Ajuste por altitude: g = g0 * (r/(r+h))²
+                        g = 9.80665 * Math.pow(earthRadius / (earthRadius + altitude), 2);
+                        
+                        // Pequeno ajuste por latitude (simplificado)
+                        const lat = position.coords.latitude;
+                        const latFactor = 0.0053024 * Math.pow(Math.sin(lat * Math.PI/180), 2) - 0.0000058 * Math.pow(Math.sin(2*lat * Math.PI/180), 2);
+                        g = g * (1 + latFactor);
+                        
+                        displayResult(g);
+                    },
+                    function(error) {
+                        // Se não conseguir localização, usar valor padrão
+                        console.error("Erro ao obter localização:", error);
+                        displayResult(g);
+                    }
+                );
+            } else {
+                // Geolocalização não suportada
+                displayResult(g);
+            }
+        });
+        
+        function displayResult(g) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <p>Aceleração gravitacional em sua localização aproximada:</p>
+                <p>${formatarNumero(g, 4)} m/s²</p>
+                <p>${formatarNumero(g, 4)} N/kg</p>
+                <p><small>Obs: Este é um cálculo aproximado. Valores reais podem variar devido a fatores geológicos locais não considerados neste modelo simples.</small></p>
+            `;
+        }
+
+        // Inicializar o mapa
+        const map = L.map('gravMap').setView([0, 0], 2);
+        
+        // Adicionar mapa base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Dados simulados de anomalias gravitacionais (para fins educacionais)
+        function getSimulatedGravity(lat, lng) {
+            // Valor base
+            let g = 9.780327 * (1 + 0.0053024 * Math.pow(Math.sin(lat * Math.PI/180), 2) - 0.0000058 * Math.pow(Math.sin(2*lat * Math.PI/180), 2));
+            
+            // Simular variações regionais
+            // Oceano (valores mais baixos)
+            if (Math.abs(lng) > 150 || (lat > -60 && lat < 60 && Math.abs(lng) < 30)) {
+                g -= 0.01 + Math.random() * 0.02;
+            }
+            // Cordilheiras (valores mais altos)
+            if ((lat > -30 && lat < 30 && Math.abs(lng) > 60 && Math.abs(lng) < 120) || 
+                (lat > 30 && lat < 60 && lng > -130 && lng < -60)) {
+                g += 0.01 + Math.random() * 0.03;
+            }
+            
+            return g;
+        }
+        
+        // Criar grid de calor simulado
+        const heatmapData = [];
+        for (let lat = -85; lat <= 85; lat += 5) {
+            for (let lng = -180; lng <= 180; lng += 5) {
+                const g = getSimulatedGravity(lat, lng);
+                heatmapData.push([lat, lng, g]);
+            }
+        }
+        
+        // Adicionar calor gradiente manualmente
+        heatmapData.forEach(point => {
+            const g = point[2];
+            let color;
+            if (g < 9.78) color = '#0000FF';
+            else if (g < 9.80) color = '#00AAFF';
+            else if (g < 9.82) color = '#00FF00';
+            else if (g < 9.84) color = '#FFAA00';
+            else color = '#FF0000';
+            
+            L.circleMarker([point[0], point[1]], {
+                radius: 3,
+                fillColor: color,
+                color: color,
+                weight: 1,
+                opacity: 0.8,
+                fillOpacity: 0.6
+            }).addTo(map).bindPopup(`g ≈ ${formatarNumero(g, 4)} m/s²`);
+        });
+        
+        // Adicionar linha do equador e polos
+        L.polyline([[-85,0], [85,0]], {color: '#000000', weight: 1, dashArray: '5,5'}).addTo(map)
+            .bindPopup('Linha do Equador (g ≈ 9,78 m/s²)');
+            
+        L.circleMarker([90,0], {radius: 5, color: '#FF0000', fillColor: '#FF0000'}).addTo(map)
+            .bindPopup('Polo Norte (g ≈ 9,83 m/s²)');
+            
+        L.circleMarker([-90,0], {radius: 5, color: '#FF0000', fillColor: '#FF0000'}).addTo(map)
+            .bindPopup('Polo Sul (g ≈ 9,83 m/s²)');
+    </script>
+</body>
+</html>

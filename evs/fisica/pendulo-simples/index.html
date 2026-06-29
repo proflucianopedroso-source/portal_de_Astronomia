@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- HTML5 -->
+<meta charset="utf-8"/>	
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Período do Pêndulo — Fórmula de pequeno ângulo e fórmula completa</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <!-- MathJax para renderização das equações (requer internet). Se estiver offline, as equações aparecerão como LaTeX. -->
+  <script>
+    (function() {
+      var script = document.createElement('script');
+      script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js";
+      script.async = true;
+      document.head.appendChild(script);
+    })();
+  </script>
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --card:#111827;        /* gray-900 */
+      --muted:#94a3b8;       /* slate-400 */
+      --text:#e5e7eb;        /* gray-200 */
+      --accent:#22d3ee;      /* cyan-400 */
+      --ok:#10b981;          /* emerald-500 */
+      --warn:#f59e0b;        /* amber-500 */
+      --err:#ef4444;         /* red-500 */
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+      background:linear-gradient(120deg,#0b1023,#0f172a 40%,#0b132b 100%);
+      color:var(--text);
+    }
+    header{padding:24px 16px 8px; text-align:center}
+    header h1{margin:0 0 6px; font-size:clamp(1.3rem,2.8vw,2rem); letter-spacing:.2px}
+    header p{margin:0; color:var(--muted)}
+    .container{max-width:1100px; margin:0 auto; padding:16px}
+    .grid{display:grid; gap:16px; grid-template-columns:1fr;}
+    @media(min-width:920px){.grid{grid-template-columns:380px 1fr}}
+    .card{
+      background:rgba(17,24,39,.6);
+      backdrop-filter: blur(6px);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:16px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .card h2{margin:0 0 12px; font-size:1.05rem; color:#e2e8f0}
+    .field{display:flex; flex-direction:column; gap:6px; margin:12px 0}
+    .field label{font-size:.95rem; color:#cbd5e1}
+    .inline{display:flex; align-items:center; gap:10px}
+    input[type="number"], input[type="text"], input[type="range"]{
+      width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(2,6,23,.35); color:#e5e7eb; outline:none;
+    }
+    input[type="range"]{padding:0}
+    .hint{font-size:.82rem; color:var(--muted)}
+    .btn{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:none; border-radius:12px;
+      background:linear-gradient(135deg,#06b6d4,#22d3ee); color:#001018; font-weight:700; cursor:pointer;
+      box-shadow:0 6px 20px rgba(34,211,238,.35);
+    }
+    .out{
+      display:grid; gap:12px; grid-template-columns:1fr; margin-top:8px
+    }
+    @media(min-width:620px){.out{grid-template-columns:repeat(2,1fr)}}
+    .tile{background:rgba(2,6,23,.35); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:14px}
+    .tile h3{margin:0 0 6px; font-size:1rem; color:#c7d2fe}
+    .big{font-size:clamp(1.1rem,3.2vw,1.6rem); font-variant-numeric:tabular-nums}
+    .ok{color:var(--ok)}
+    .warn{color:var(--warn)}
+    .err{color:var(--err)}
+    kbd{background:#0b132b; border:1px solid rgba(255,255,255,.15); border-radius:6px; padding:2px 6px; font-size:.8rem}
+    details summary{cursor:pointer; color:#cbd5e1}
+    footer{padding:30px 16px; text-align:center; color:var(--muted); font-size:.9rem}
+    .eq{background:rgba(15,23,42,.55); border:1px dashed rgba(255,255,255,.18); border-radius:12px; padding:12px; margin:10px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Período do Pêndulo Simples: \(\theta_0 \le 11^\circ\) vs. ângulos 
+	maiores</h1>
+    <p align="center">Prof. Luciano Soares Pedroso</p>
+	<p>Preencha os campos e compare a fórmula de pequeno ângulo com a fórmula 
+	completa (elíptica).</p>
+  </header>
+
+  <div class="container grid">
+    <!-- Entrada -->
+    <section class="card" aria-labelledby="titulo-entradas">
+      <h2 id="titulo-entradas">Entradas</h2>
+
+      <div class="field">
+        <label for="L">Comprimento do fio \(L\) (em metros)</label>
+        <input id="L" type="text" inputmode="decimal" placeholder="ex.: 0,75" value="1,00" />
+        <div class="hint">Use vírgula como separador decimal. Ex.: <kbd>0,40</kbd></div>
+      </div>
+
+      <div class="field">
+        <label for="g">Aceleração gravitacional \(g\) (em m/s²)</label>
+        <input id="g" type="text" inputmode="decimal" placeholder="ex.: 9,81" value="9,81" />
+      </div>
+
+      <div class="field">
+        <label for="theta">Ângulo inicial \(\theta_0\) (em graus)</label>
+        <div class="inline">
+          <input id="theta" type="text" inputmode="decimal" placeholder="ex.: 5" value="10" style="max-width:120px"/>
+          <input id="thetaRange" type="range" min="0" max="90" value="10" step="0.1" aria-label="controle de ângulo" />
+        </div>
+        <div class="hint">Até ~\(11^\circ\), a fórmula de pequeno ângulo é 
+			excelente.</div>
+      </div>
+
+      <button class="btn" id="btnCalc">Calcular</button>
+    </section>
+
+    <!-- Saídas e Equações -->
+    <section class="card" aria-labelledby="titulo-resultados">
+      <h2 id="titulo-resultados">Resultados</h2>
+
+      <div class="out">
+        <div class="tile">
+          <h3>Período (pequeno ângulo)</h3>
+          <div class="big" id="Tsmall">—</div>
+          <div class="hint">\(T_0 = 2\pi\sqrt{\tfrac{L}{g}}\)</div>
+        </div>
+        <div class="tile">
+          <h3>Período (fórmula completa)</h3>
+          <div class="big" id="Tfull">—</div>
+          <div class="hint">\(T(\theta_0) = 
+			4\,\sqrt{\tfrac{L}{g}}\;K\!\left(sen\tfrac{\theta_0}{2}\right)\)</div>
+        </div>
+        <div class="tile">
+          <h3>Diferença relativa</h3>
+          <div class="big" id="diff">—</div>
+          <div class="hint">Erro de pequeno ângulo vs. completo.</div>
+        </div>
+        <div class="tile">
+          <h3>Frequência (completa)</h3>
+          <div class="big" id="freq">—</div>
+          <div class="hint">\(f = 1/T\)</div>
+        </div>
+      </div>
+
+      <details style="margin-top:12px">
+        <summary>Ver equações e observações</summary>
+        <div class="eq">
+          <p><strong>1) Aproximação de pequeno ângulo</strong> (válida 
+			tipicamente até \(\theta_0\lesssim 11^\circ\)):</p>
+          <p>\[ T_0 = 2\pi \sqrt{\frac{L}{g}}\,. \]</p>
+        </div>
+        <div class="eq">
+          <p><strong>2) Fórmula completa</strong> (sem amortecimento), usando a <em>
+			integral elíptica completa de primeira espécie</em> \(K(m)\) com 
+			parâmetro \(m=\sin(\theta_0/2)\):</p>
+          <p>\[ T(\theta_0) = 
+			4\,\sqrt{\frac{L}{g}}\;K\!\left(sen\frac{\theta_0}{2}\right), \quad 
+			\text{onde}\quad 
+			K(k)=\int_0^{\pi/2}\!\frac{d\phi}{\sqrt{1-k^2sen^2\!\phi}}\,. \]</p>
+          <p>Computamos \(K(k)\) numericamente via método AGM 
+			(aritmético-geométrico), garantindo alta precisão.</p>
+        </div>
+        <div class="eq">
+          <p><strong>2a) Equivalência prática para o cálculo de \(K(k)\)</strong>:</p>
+          <p>
+            \[ K(k) = \frac{\pi}{2 \, \text{AGM}\bigl(1,\sqrt{1-k^2}\bigr)} \]
+          </p>
+          <p>onde \(\text{AGM}(a,b)\) é a <em>média aritmético-geométrica</em>, 
+			obtida iterando \(a_{n+1} = \tfrac{a_n+b_n}{2}\), \(b_{n+1} = 
+			\sqrt{a_n b_n}\), até convergência.</p>
+        </div>
+        <div class="eq">
+          <p><strong>3) Série de correção</strong> (opcional, para comparação), 
+			com \(\theta_0\) em <em>radianos</em>:</p>
+          <p>\[ T(\theta_0) \approx T_0 \left(1 + \frac{1}{16}\,\theta_0^2 + 
+			\frac{11}{3072}\,\theta_0^4 + \cdots\right). \]</p>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <footer>
+    Dica: resultados exibidos com vírgula decimal. Os cálculos usam precisão de 
+	dupla-precisão.
+  </footer>
+
+  <script>
+    // Utilidades para aceitar vírgula e exibir com vírgula
+    function parseBR(str){
+      if(typeof str !== 'string') str = String(str ?? '');
+      str = str.trim().replace(/\s+/g,'').replace(',','.')
+      const val = Number(str);
+      return (isFinite(val)?val:NaN);
+    }
+    function fmtBR(x, digits=5){
+      if(!isFinite(x)) return '—';
+      return x.toLocaleString('pt-BR', {maximumFractionDigits: digits});
+    }
+
+    // Integral elíptica completa de primeira espécie via AGM
+    // K(k) = pi / (2 * AGM(1, sqrt(1-k^2)))
+    function K_complete(k){
+      if(!(k>=0 && k<1)){
+        if(k === 1) return Infinity; // período diverge ao aproximar 180°
+        k = Math.abs(k);
+        if(k>1) return NaN;
+      }
+      let a = 1.0;
+      let b = Math.sqrt(1 - k*k);
+      let it = 0;
+      while(Math.abs(a-b) > 1e-15 && it < 50){
+        const an = (a+b)/2;
+        const bn = Math.sqrt(a*b);
+        a = an; b = bn; it++;
+      }
+      return Math.PI/(2*a);
+    }
+
+    function toRad(deg){return deg*Math.PI/180}
+
+    function compute(){
+      const L = parseBR(document.getElementById('L').value);
+      const g = parseBR(document.getElementById('g').value);
+      const thDeg = parseBR(document.getElementById('theta').value);
+
+      const outSmall = document.getElementById('Tsmall');
+      const outFull  = document.getElementById('Tfull');
+      const outDiff  = document.getElementById('diff');
+      const outFreq  = document.getElementById('freq');
+
+      // validações básicas
+      let msgClass='';
+      function setOut(el, val, cls){ el.textContent = val; el.className = 'big '+(cls||''); }
+
+      if(!(L>0) || !(g>0) || !(thDeg>=0)){
+        setOut(outSmall,'—'); setOut(outFull,'—'); setOut(outDiff,'—'); setOut(outFreq,'—');
+        return;
+      }
+
+      const T0 = 2*Math.PI*Math.sqrt(L/g);
+      const k = Math.sin(toRad(thDeg)/2);
+      const K = K_complete(k);
+      const Tfull = 4*Math.sqrt(L/g)*K;
+
+      const diffRel = (Tfull - T0)/Tfull; // diferença relativa
+      const freq = 1/Tfull;
+
+      // classificação do erro
+      if(thDeg <= 11){ msgClass='ok'; }
+      else if(thDeg <= 25){ msgClass='warn'; }
+      else { msgClass='err'; }
+
+      setOut(outSmall, fmtBR(T0, 6), msgClass);
+      setOut(outFull, fmtBR(Tfull, 6));
+      setOut(outDiff, (diffRel>=0?'+':'') + fmtBR(diffRel*100, 4) + ' %', msgClass);
+      setOut(outFreq, fmtBR(freq, 6));
+    }
+
+    // Sincronizar slider e caixa de texto do ângulo
+    const thInput = document.getElementById('theta');
+    const thRange = document.getElementById('thetaRange');
+    function syncFromText(){
+      const v = parseBR(thInput.value);
+      if(isFinite(v)) thRange.value = String(Math.max(0, Math.min(90, v)));
+      compute();
+    }
+    function syncFromRange(){
+      thInput.value = thRange.value.replace('.',',');
+      compute();
+    }
+    thInput.addEventListener('input', syncFromText);
+    thRange.addEventListener('input', syncFromRange);
+
+    document.getElementById('btnCalc').addEventListener('click', compute);
+
+    // Calcular ao carregar
+    window.addEventListener('DOMContentLoaded', compute);
+  </script>
+	<p align="center">EVS - 2026</p>
+</body>
+</html>

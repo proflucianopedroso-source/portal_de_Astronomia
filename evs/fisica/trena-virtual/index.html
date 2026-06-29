@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Trena Virtual</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #canvas {
+            border: 2px solid #ddd;
+            cursor: crosshair;
+            margin: 20px 0;
+            background-color: #fff;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #calibrateBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #measureBtn {
+            background-color: #2196F3;
+            color: white;
+        }
+        #resetBtn {
+            background-color: #f44336;
+            color: white;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #info {
+            margin-top: 15px;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 30px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .info {
+            background-color: #d9edf7;
+            color: #31708f;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 80px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.calibrating {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status.measuring {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>EVS - Trena Virtual</h1>
+        
+        <div class="input-group">
+            <label for="imageInput">Carregar Imagem:</label>
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+        
+        <div class="input-group">
+            <label for="rulerLength">Comprimento real da régua:</label>
+            <input type="number" id="rulerLength" step="0.01" value="10" min="0.1"> cm
+        </div>
+        
+        <div>
+            <button id="calibrateBtn">Calibrar Régua</button>
+            <button id="measureBtn" disabled>Medir Objeto</button>
+            <button id="resetBtn">Resetar</button>
+            <span id="statusIndicator" class="status" style="display: none;"></span>
+        </div>
+        
+        <canvas id="canvas" width="800" height="600"></canvas>
+        
+        <div id="info" class="info">Carregue uma imagem para começar</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const calibrateBtn = document.getElementById('calibrateBtn');
+        const measureBtn = document.getElementById('measureBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const rulerLengthInput = document.getElementById('rulerLength');
+        const infoDiv = document.getElementById('info');
+        const imageInput = document.getElementById('imageInput');
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        let state = 'idle'; // idle, calibrating, measuring
+        let points = [];
+        let calibrationPoints = [];
+        let pixelsPerCm = 0;
+        let img = null;
+        let currentImage = null;
+
+        // Função para desenhar pontos
+        function drawPoint(x, y, label, color = 'red') {
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.fillStyle = 'black';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText(label, x + 10, y - 10);
+        }
+
+        // Função para desenhar linha entre dois pontos
+        function drawLine(pointA, pointB, color = 'blue') {
+            ctx.beginPath();
+            ctx.moveTo(pointA.x, pointA.y);
+            ctx.lineTo(pointB.x, pointB.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // Função para redesenhar tudo
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (currentImage) {
+                ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+            }
+            
+            // Redesenhar pontos de calibração
+            if (calibrationPoints.length > 0) {
+                calibrationPoints.forEach((point, index) => {
+                    drawPoint(point.x, point.y, `R${index + 1}`, '#4CAF50');
+                });
+                
+                if (calibrationPoints.length === 2) {
+                    drawLine(calibrationPoints[0], calibrationPoints[1], '#4CAF50');
+                }
+            }
+            
+            // Redesenhar pontos de medição
+            if (points.length > 0) {
+                points.forEach((point, index) => {
+                    drawPoint(point.x, point.y, `P${index + 1}`, '#2196F3');
+                });
+                
+                if (points.length === 2) {
+                    drawLine(points[0], points[1], '#2196F3');
+                }
+            }
+        }
+
+        // Carregar imagem
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img = new Image();
+                    img.onload = function() {
+                        currentImage = img;
+                        redrawCanvas();
+                        reset();
+                        showInfo('Imagem carregada com sucesso!', 'success');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Evento de clique no canvas
+        canvas.addEventListener('click', function(event) {
+            if (!currentImage) {
+                showInfo('Por favor, carregue uma imagem primeiro.', 'error');
+                return;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            if (state === 'calibrating') {
+                calibrationPoints.push({x, y});
+                redrawCanvas();
+                
+                if (calibrationPoints.length === 2) {
+                    // Calcular a distância em pixels
+                    const dx = calibrationPoints[1].x - calibrationPoints[0].x;
+                    const dy = calibrationPoints[1].y - calibrationPoints[0].y;
+                    const distancePixels = Math.sqrt(dx * dx + dy * dy);
+                    const rulerLengthCm = parseFloat(rulerLengthInput.value);
+                    
+                    if (rulerLengthCm <= 0) {
+                        showInfo('O comprimento da régua deve ser maior que zero.', 'error');
+                        reset();
+                        return;
+                    }
+                    
+                    pixelsPerCm = distancePixels / rulerLengthCm;
+                    
+                    // Atualizar estado
+                    state = 'idle';
+                    calibrateBtn.disabled = false;
+                    measureBtn.disabled = false;
+                    statusIndicator.style.display = 'none';
+                    
+                    showInfo(`Calibração concluída! ${pixelsPerCm.toFixed(2)} pixels/cm`, 'success');
+                } else {
+                    showInfo(`Clique no segundo ponto da régua (${calibrationPoints.length}/2)`, 'info');
+                }
+            } else if (state === 'measuring') {
+                points.push({x, y});
+                redrawCanvas();
+                
+                if (points.length === 2) {
+                    // Calcular a distância
+                    const dx = points[1].x - points[0].x;
+                    const dy = points[1].y - points[0].y;
+                    const distancePixels = Math.sqrt(dx * dx + dy * dy);
+                    const distanceCm = distancePixels / pixelsPerCm;
+                    
+                    // Atualizar estado
+                    state = 'idle';
+                    measureBtn.disabled = false;
+                    statusIndicator.style.display = 'none';
+                    
+                    showInfo(`Distância medida: ${distanceCm.toFixed(2)} cm`, 'success');
+                } else {
+                    showInfo(`Clique no segundo ponto do objeto (${points.length}/2)`, 'info');
+                }
+            }
+        });
+
+        // Botão Calibrar
+        calibrateBtn.addEventListener('click', function() {
+            if (!currentImage) {
+                showInfo('Por favor, carregue uma imagem primeiro.', 'error');
+                return;
+            }
+            
+            state = 'calibrating';
+            calibrationPoints = [];
+            points = [];
+            redrawCanvas();
+            
+            calibrateBtn.disabled = true;
+            measureBtn.disabled = true;
+            statusIndicator.textContent = 'Modo Calibração';
+            statusIndicator.className = 'status calibrating';
+            statusIndicator.style.display = 'inline-block';
+            
+            showInfo('Clique nos dois extremos da régua para calibrar (1/2)', 'info');
+        });
+
+        // Botão Medir
+        measureBtn.addEventListener('click', function() {
+            if (!currentImage) {
+                showInfo('Por favor, carregue uma imagem primeiro.', 'error');
+                return;
+            }
+            
+            if (pixelsPerCm === 0) {
+                showInfo('Por favor, calibre a régua primeiro.', 'error');
+                return;
+            }
+            
+            state = 'measuring';
+            points = [];
+            redrawCanvas();
+            
+            measureBtn.disabled = true;
+            statusIndicator.textContent = 'Modo Medição';
+            statusIndicator.className = 'status measuring';
+            statusIndicator.style.display = 'inline-block';
+            
+            showInfo('Clique nos dois pontos do objeto para medir (1/2)', 'info');
+        });
+
+        // Botão Resetar
+        resetBtn.addEventListener('click', reset);
+
+        function reset() {
+            state = 'idle';
+            points = [];
+            calibrationPoints = [];
+            pixelsPerCm = 0;
+            
+            calibrateBtn.disabled = false;
+            measureBtn.disabled = true;
+            statusIndicator.style.display = 'none';
+            
+            if (currentImage) {
+                redrawCanvas();
+                showInfo('Aplicação resetada. Pronto para calibrar.', 'info');
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                showInfo('Carregue uma imagem para começar', 'info');
+            }
+        }
+
+        function showInfo(message, type) {
+            infoDiv.textContent = message;
+            infoDiv.className = type;
+        }
+    </script>
+</body>
+</html>
+
+LaLEC/UFVJM/
+Prof. Luciano Soares Pedroso

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>EVS - Formação Suave com Luas</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        body { margin: 0; background: #000; color: #4CC9F0; font-family: 'Exo 2', sans-serif; overflow: hidden; }
+        canvas { display: block; cursor: move; }
+        .ui { position: absolute; top: 20px; left: 20px; pointer-events: none; background: rgba(10, 15, 30, 0.85); padding: 20px; border-radius: 12px; border: 1px solid #4361EE; }
+        .controls { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 15px 30px; border-radius: 50px; border: 1px solid #444; }
+        .stats { color: #fff; font-family: 'Roboto Mono', monospace; font-size: 13px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+
+<div class="ui">
+    <p align="center">
+    <b><font size="4">EVS - Acreção Protoplanetária</font></b></p>
+	<p align="center">
+    <font color="#FFFFFF" size="2">Prof. Luciano Soares Pedroso</font></p>
+	<p align="center">
+    <font size="2" color="#FFFFFF">EVS para fins didáticos: Estrela, planetas e 
+	corpos fora de escala.</font></p>
+    <div class="stats" id="p1Info0">
+		<p align="center"><b>USE O MOUSE PARA ROTACIONAR</b></p>
+		<p align="center">&nbsp;</div>
+    <div class="stats" id="p1Info">Planeta A: 25u</div>
+    <div class="stats" id="p2Info">Planeta B: 25u</div>
+    <div class="stats" id="moonInfo" style="color: #AAAAAA; display: none;">Lua Capturada</div>
+    <div class="stats">Resíduos: <span id="particleCount" style="color:#ffcc00; font-weight:bold;">300</span></div>
+</div>
+
+<div class="controls">
+    <span style="color:#fff;">Acelerar Tempo: </span>
+    <input id="speedSlider" type="range" min="0" max="10" value="1">
+    <span id="speedVal" style="color:#4CC9F0; font-weight:bold; margin-left:10px;">1x</span>
+</div>
+
+<script>
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+document.body.appendChild(canvas);
+
+let width, height, angleX = 1.1, angleY = 0.5;
+let isDragging = false, lastMouseX, lastMouseY;
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+
+// Constantes de Simulação
+const G = 0.8;
+const SUN_MASS = 4500;
+const SUN_RADIUS = 22;
+const BOUNDS = 3000;
+const MAX_TRAIL = 100;
+
+const sun = { x: 0, y: 0, z: 0, mass: SUN_MASS };
+let particles = [], planets = [];
+
+// Objeto Lua (Leve e Otimizado)
+let moon = { 
+    active: false, 
+    parent: null, 
+    mass: 0, 
+    radius: 0, 
+    dist: 0, 
+    angle: 0, 
+    speed: 0,
+    color: "#C0C0C0",
+    lastUpdateTime: 0
+};
+
+window.onmousedown = (e) => { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; };
+window.onmouseup = () => isDragging = false;
+window.onmousemove = (e) => {
+    if (isDragging) {
+        angleY += (e.clientX - lastMouseX) * 0.01;
+        angleX += (e.clientY - lastMouseY) * 0.01;
+        lastMouseX = e.clientX; lastMouseY = e.clientY;
+    }
+};
+
+class Body {
+    constructor(isPlanet, orbitDist, color, name) {
+        this.isPlanet = isPlanet;
+        this.color = color || "#FFF";
+        this.name = name || "Corpo";
+        this.history = [];
+        this.active = true;
+        this.init(orbitDist);
+    }
+
+    init(dist) {
+        const a = Math.random() * Math.PI * 2;
+        const d = dist || (70 + Math.random() * 400);
+        this.x = Math.cos(a) * d;
+        this.z = Math.sin(a) * d;
+        this.y = (Math.random() - 0.5) * 15;
+        
+        const v = Math.sqrt((G * sun.mass) / d) * (0.8 + Math.random() * 0.4);
+        this.vx = -Math.sin(a) * v;
+        this.vz = Math.cos(a) * v;
+        this.vy = (Math.random() - 0.5) * 0.2;
+        
+        if (this.isPlanet) {
+            this.mass = 25;
+        } else {
+            // MASSA REDUZIDA:
+            // Agora variam de 0.5 a no máximo 8. 
+            // Isso evita "trancos" na órbita e deixa a simulação fluida.
+            // Usamos random^3 para criar uma curva onde a maioria é poeira (pequena).
+            this.mass = Math.pow(Math.random(), 3) * 7.5 + 0.5; 
+        }
+
+        this.radius = Math.pow(this.mass, 0.35); 
+    }
+
+    update(steps) {
+        if (!this.active) return;
+        
+        for(let s = 0; s < steps; s++) {
+            const dSq = this.x*this.x + this.y*this.y + this.z*this.z;
+            
+            if (dSq > BOUNDS*BOUNDS) { this.active = false; return; }
+            
+            const d = Math.sqrt(dSq);
+            if (d < SUN_RADIUS) { this.active = false; return; }
+
+            // Gravidade do Sol
+            const f = (G * sun.mass) / dSq;
+            this.vx -= (this.x / d) * f;
+            this.vy -= (this.y / d) * f;
+            this.vz -= (this.z / d) * f;
+            
+            // Gravidade dos planetas (influência suave)
+            for (let pl of planets) {
+                const pdx = pl.x - this.x;
+                const pdy = pl.y - this.y;
+                const pdz = pl.z - this.z;
+                const pdSq = pdx*pdx + pdy*pdy + pdz*pdz;
+                
+                if (pdSq > 0.1 && pdSq < 2500) { // Só influencia próximo
+                    const pd = Math.sqrt(pdSq);
+                    const pf = (G * pl.mass * 0.1) / pdSq; // Força reduzida para os planetas
+                    this.vx += (pdx / pd) * pf;
+                    this.vy += (pdy / pd) * pf;
+                    this.vz += (pdz / pd) * pf;
+                }
+            }
+            
+            this.x += this.vx; 
+            this.y += this.vy; 
+            this.z += this.vz;
+        }
+
+        if (this.isPlanet) {
+            this.history.push({x: this.x, y: this.y, z: this.z});
+            if (this.history.length > MAX_TRAIL) this.history.shift();
+            this.radius = Math.pow(this.mass, 0.35) * 1.5;
+        }
+    }
+
+    project() {
+        let x1 = this.x * Math.cos(angleY) + this.z * Math.sin(angleY);
+        let z1 = -this.x * Math.sin(angleY) + this.z * Math.cos(angleY);
+        let y2 = this.y * Math.cos(angleX) - z1 * Math.sin(angleX);
+        let z2 = this.y * Math.sin(angleX) + z1 * Math.cos(angleX);
+        const scale = 800 / (800 + z2);
+        return { px: x1 * scale + width / 2, py: y2 * scale + height / 2, ps: scale * this.radius, pz: z2 };
+    }
+}
+
+function init() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    particles = Array.from({ length: 400 }, () => new Body(false));
+    planets = [
+        new Body(true, 160, "#4CC9F0", "Planeta A"),
+        new Body(true, 300, "#F72585", "Planeta B")
+    ];
+    moon.active = false;
+    document.getElementById('moonInfo').style.display = 'none';
+}
+
+function solveAcretion() {
+    const steps = parseInt(speedSlider.value);
+    
+    planets.forEach(pl => pl.update(steps));
+
+    let activeCount = 0;
+
+    for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (!p.active) continue;
+        p.update(steps);
+        if (!p.active) continue; 
+
+        let captured = false;
+        
+        for (let k = 0; k < planets.length; k++) {
+            const pl = planets[k];
+            const dx = p.x - pl.x;
+            const dy = p.y - pl.y; 
+            const dz = p.z - pl.z;
+            const distSq = dx*dx + dy*dy + dz*dz;
+            
+            const hitRadius = pl.radius + p.radius + 1.0;
+            
+            if (distSq < hitRadius * hitRadius) {
+                // LÓGICA DE CAPTURA DE LUA (30% chance)
+                // Condições: Planeta B, sem lua, massa mínima (agora > 3, já que reduzimos as massas)
+                if (pl.name === "Planeta B" && !moon.active && p.mass > 3 && Math.random() < 0.30) {
+                    moon.active = true;
+                    moon.parent = pl;
+                    moon.mass = p.mass;
+                    moon.radius = Math.pow(p.mass, 0.35);
+                    moon.dist = pl.radius * 4 + moon.radius; 
+                    moon.angle = Math.random() * Math.PI * 2;
+                    moon.speed = 0.04; 
+                    moon.lastUpdateTime = performance.now();
+                    
+                    p.active = false;
+                    
+                    document.getElementById('moonInfo').style.display = 'block';
+                    document.getElementById('moonInfo').innerText = `Lua Capturada! (${Math.floor(moon.mass)}u)`;
+                } else {
+                    // Absorção Normal
+                    const totalMass = pl.mass + p.mass;
+                    pl.vx = (pl.vx * pl.mass + p.vx * p.mass) / totalMass;
+                    pl.vy = (pl.vy * pl.mass + p.vy * p.mass) / totalMass;
+                    pl.vz = (pl.vz * pl.mass + p.vz * p.mass) / totalMass;
+                    pl.mass += p.mass;
+                    p.active = false;
+                }
+                captured = true;
+                break;
+            }
+        }
+        if (!captured) activeCount++;
+    }
+
+    if (Math.random() < 0.01) particles = particles.filter(p => p.active);
+
+    // UI
+    document.getElementById('p1Info').innerHTML = `<span style="color:${planets[0].color}">${planets[0].name}</span>: ${Math.floor(planets[0].mass)}u`;
+    document.getElementById('p2Info').innerHTML = `<span style="color:${planets[1].color}">${planets[1].name}</span>: ${Math.floor(planets[1].mass)}u`;
+    document.getElementById('particleCount').innerText = activeCount;
+    speedVal.innerText = steps + "x";
+}
+
+function drawPlanetPath(planet) {
+    if (planet.history.length < 2) return;
+    ctx.beginPath();
+    ctx.strokeStyle = planet.color;
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 1;
+    
+    // Otimização: Desenha a trilha pulando pontos se estiver muito longa
+    const step = planet.history.length > 50 ? 2 : 1;
+    
+    for(let i = 0; i < planet.history.length; i += step) {
+        const pt = planet.history[i];
+        let x1 = pt.x * Math.cos(angleY) + pt.z * Math.sin(angleY);
+        let z1 = -pt.x * Math.sin(angleY) + pt.z * Math.cos(angleY);
+        let y2 = pt.y * Math.cos(angleX) - z1 * Math.sin(angleX);
+        let z2 = pt.y * Math.sin(angleX) + z1 * Math.cos(angleX);
+        const scale = 800 / (800 + z2);
+        if (i === 0) ctx.moveTo(x1 * scale + width / 2, y2 * scale + height / 2);
+        else ctx.lineTo(x1 * scale + width / 2, y2 * scale + height / 2);
+    }
+    ctx.stroke();
+}
+
+function loop() {
+    ctx.fillStyle = '#05070a'; 
+    ctx.fillRect(0, 0, width, height);
+    
+    solveAcretion();
+
+    // Sol
+    ctx.shadowBlur = 40; ctx.shadowColor = "#FFD700";
+    ctx.fillStyle = "#FFF";
+    ctx.beginPath(); ctx.arc(width/2, height/2, 10, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Trilhas
+    ctx.globalAlpha = 1;
+    planets.forEach(drawPlanetPath);
+
+    // Partículas (CÍRCULOS RETURN)
+    for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (!p.active) continue;
+        const proj = p.project();
+        
+        // Visual suave: opacidade levemente variada
+        ctx.globalAlpha = 0.5 + (p.mass / 10) * 0.5;
+        
+        // CORREÇÃO: usar fillStyle baseado na massa da partícula
+        ctx.fillStyle = `hsl(${40 + p.mass * 10}, 100%, ${60 + p.mass * 2}%)`;
+        ctx.beginPath();
+        ctx.arc(proj.px, proj.py, Math.max(0.5, proj.ps), 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Planetas
+    planets.forEach(pl => {
+        const proj = pl.project();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = pl.color;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = pl.color;
+        ctx.beginPath(); ctx.arc(proj.px, proj.py, proj.ps, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+    });
+
+    // Lua - CORRIGIDO
+    if (moon.active && moon.parent) {
+        // Atualiza o ângulo da lua aqui para movimento contínuo
+        if (!moon.lastUpdateTime) moon.lastUpdateTime = performance.now();
+        const now = performance.now();
+        const deltaTime = (now - moon.lastUpdateTime) / 1000; // segundos
+        moon.lastUpdateTime = now;
+        moon.angle += moon.speed * deltaTime * 60; // 60fps base
+        
+        // Posição da lua no espaço 3D mundial
+        const lx = moon.parent.x + Math.cos(moon.angle) * moon.dist;
+        const lz = moon.parent.z + Math.sin(moon.angle) * moon.dist;
+        const ly = moon.parent.y + Math.sin(moon.angle * 0.5) * moon.dist * 0.3; // leve inclinação orbital
+        
+        // Projeção 3D da lua (usando as mesmas transformações da câmera)
+        let x1 = lx * Math.cos(angleY) + lz * Math.sin(angleY);
+        let z1 = -lx * Math.sin(angleY) + lz * Math.cos(angleY);
+        let y2 = ly * Math.cos(angleX) - z1 * Math.sin(angleX);
+        let z2 = ly * Math.sin(angleX) + z1 * Math.cos(angleX);
+        
+        const scale = 800 / (800 + z2);
+        const px = x1 * scale + width / 2;
+        const py = y2 * scale + height / 2;
+        const ps = Math.max(1, scale * moon.radius); // Tamanho mínimo visível
+
+        // Desenha a órbita da lua
+        ctx.strokeStyle = 'rgba(192, 192, 192, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let a = 0; a < Math.PI * 2; a += 0.1) {
+            const olx = moon.parent.x + Math.cos(a) * moon.dist;
+            const olz = moon.parent.z + Math.sin(a) * moon.dist;
+            const oly = moon.parent.y + Math.sin(a * 0.5) * moon.dist * 0.3;
+            
+            let ox1 = olx * Math.cos(angleY) + olz * Math.sin(angleY);
+            let oz1 = -olx * Math.sin(angleY) + olz * Math.cos(angleY);
+            let oy2 = oly * Math.cos(angleX) - oz1 * Math.sin(angleX);
+            let oz2 = oly * Math.sin(angleX) + oz1 * Math.cos(angleX);
+            
+            const s = 800 / (800 + oz2);
+            const opx = ox1 * s + width / 2;
+            const opy = oy2 * s + height / 2;
+            
+            if (a === 0) ctx.moveTo(opx, opy);
+            else ctx.lineTo(opx, opy);
+        }
+        ctx.stroke();
+
+        // Desenha a lua
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = moon.color;
+        ctx.shadowBlur = 5; 
+        ctx.shadowColor = "#FFF";
+        ctx.beginPath(); 
+        ctx.arc(px, py, ps, 0, Math.PI * 2); 
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Pequeno brilho na lua
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath(); 
+        ctx.arc(px - ps*0.2, py - ps*0.2, ps*0.3, 0, Math.PI * 2); 
+        ctx.fill();
+    }
+
+    requestAnimationFrame(loop);
+}
+
+window.onresize = init;
+init();
+loop();
+</script>
+</body>
+</html>

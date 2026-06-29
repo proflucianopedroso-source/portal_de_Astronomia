@@ -1,0 +1,27 @@
+header{
+    padding:15px 30px;
+    background:rgba(0,0,0,.6);
+    backdrop-filter:blur(10px);
+
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+.section{
+    padding:20px 40px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:
+        repeat(auto-fit,minmax(230px,1fr));
+
+    gap:20px;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+    opacity:0.6;
+}

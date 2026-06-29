@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta charset="utf-8"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>EVS - Calculadora Interativa das fases da Lua - Hemisfério Sul</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
+<style>
+body { 
+  background: #101820; 
+  color: #fff; 
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.container { max-width: 900px; margin: 0 auto; }
+h2 { color: #fff; text-align: center; margin-bottom: 20px; }
+.moon-container { display: flex; align-items: center; justify-content: center; margin: 20px 0; }
+.moon-image { width: 180px; height: 180px; object-fit: contain; transition: opacity 0.3s ease; }
+.moon-image.south { transform: scaleX(-1); }
+.result-field { 
+  margin-top: 1.5rem; 
+  padding: 1.5rem; 
+  background: #222a37; 
+  border-radius: 8px; 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+  min-height: 450px;
+  transition: all 0.3s ease;
+}
+.responsive-form { display: flex; flex-direction: column; gap: 1rem; max-width: 500px; margin: auto; }
+ul { list-style-type: none; padding: 0; }
+li { padding: 8px 0; border-bottom: 1px solid #344256; }
+li:last-child { border-bottom: none; }
+.loading { text-align: center; padding: 20px; color: #fff; }
+.error { 
+  color: #ff6b6b; 
+  text-align: center; 
+  padding: 20px; 
+  background: rgba(255,107,107,0.1); 
+  border-radius: 6px;
+  border-left: 4px solid #ff6b6b;
+}
+.success { color: #6bff6b; text-align: center; padding: 10px; background: rgba(107,255,107,0.1); border-radius: 6px; }
+.slider-container { margin-top: 20px; padding: 15px; background: #1a2330; border-radius: 8px; }
+.small-note { font-size: 0.9rem; color: #cbd5e1; }
+.debug { font-size: 0.85rem; color: #9fb2d5; margin-top: 8px; }
+.cidade-info { 
+  background: #00b0f0; 
+  color: #000; 
+  padding: 8px 16px; 
+  border-radius: 8px; 
+  margin-bottom: 15px;
+  font-weight: bold;
+  text-align: center;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inputs e botões */
+.responsive-form input[type="text"],
+.responsive-form input[type="datetime-local"],
+.responsive-form input[type="number"],
+.responsive-form select {
+  background-color: #1e293b;
+  color: #ffffff;
+  border: 1px solid #4a6fa5;
+  padding: 10px;
+  border-radius: 6px;
+  width: 100%;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+.responsive-form input::placeholder { color: #cbd5e1; opacity: 1; }
+.responsive-form input:focus { outline: none; border-color: #00b0f0; box-shadow: 0 0 6px #00b0f0; }
+
+#timeSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 6px;
+  background: linear-gradient(90deg,#4a6fa5 0%,#5d84be 100%);
+  outline: none;
+  margin-top: 8px;
+}
+
+.responsive-form button {
+  background: #4a6fa5 !important;
+  border: none;
+  transition: background 0.3s;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.responsive-form button:hover { background: #5d84be !important; }
+.responsive-form label, .small-note { color: #cfe7ff; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2><font color="#00b0f0">🌙 Calculadora Interativa das fases da Lua - Hemisfério Sul</font></h2>
+  <form class="responsive-form" id="mainForm">
+    <label for="cidade"><font color="#00b0f0">📍 Cidade (informe cidade, UF)</font></label>
+    <input type="text" id="cidade" required placeholder="Ex: Alfenas, MG">
+    <label for="data"><font color="#00b0f0">📅 Data inicial</font></label>
+    <input type="datetime-local" id="data" required>
+    <button type="submit" id="buscarBtn">🔍 Buscar Lua</button>
+    <div class="small-note">💡 Dica: use "Cidade, UF" (ex.: <em>Florianópolis, SC</em>). Apenas cidades do Hemisfério Sul.</div>
+  </form>
+
+  <section class="result-field" id="result">
+    <div class="small-note" style="text-align: center; padding: 40px;">
+      🌎 Aguardando busca...<br>
+      Digite uma cidade do Hemisfério Sul e clique em "Buscar Lua"
+    </div>
+  </section>
+
+  <div class="slider-container" id="sliderContainer" style="display:none;">
+    <label for="timeSlider"><font color="#00b0f0">⏰ Ajustar data/hora (±48 horas)</font></label>
+    <input type="range" id="timeSlider" min="-48" max="48" value="0" step="1">
+    <div class="debug" id="sliderInfo"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/suncalc@1.8.0/suncalc.min.js"></script>
+<script>
+// Variáveis globais - serão completamente destruídas e recriadas
+let estadoAtual = {
+  cidade: null,
+  lat: null,
+  lng: null,
+  dataBase: null,
+  dataAtual: null
+};
+
+// Função para resetar COMPLETAMENTE o estado
+function resetarCompletamente() {
+  console.log("=== RESETANDO COMPLETAMENTE O SISTEMA ===");
+  
+  // Destroi o objeto antigo e cria um novo
+  estadoAtual = {
+    cidade: null,
+    lat: null,
+    lng: null,
+    dataBase: null,
+    dataAtual: null
+  };
+  
+  // Esconde e reseta o slider
+  const sliderContainer = document.getElementById('sliderContainer');
+  const timeSlider = document.getElementById('timeSlider');
+  const sliderInfo = document.getElementById('sliderInfo');
+  
+  if (sliderContainer) sliderContainer.style.display = 'none';
+  if (timeSlider) timeSlider.value = 0;
+  if (sliderInfo) sliderInfo.textContent = '';
+  
+  // Limpa completamente o resultado com mensagem de loading
+  const resultadoDiv = document.getElementById('result');
+  if (resultadoDiv) {
+    resultadoDiv.innerHTML = `
+      <div style="text-align: center; padding: 40px;">
+        <div class="loading">🔄 Resetando... Aguarde</div>
+      </div>
+    `;
+  }
+  
+  console.log("Estado após reset:", estadoAtual);
+}
+
+/* Formata número com vírgula como separador decimal */
+function formatarNumero(num, casas = 2) {
+  return num.toFixed(casas).replace('.', ',');
+}
+
+/* Converte valor Date para value do datetime-local (hora local) */
+function toLocalDateTimeInputValue(dt) {
+  const pad = (n)=> n.toString().padStart(2,'0');
+  return dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate())
+    + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+}
+
+async function buscarInfo() {
+  const cidade = document.getElementById('cidade').value.trim();
+  const dataStr = document.getElementById('data').value;
+  const buscarBtn = document.getElementById('buscarBtn');
+  const resultado = document.getElementById('result');
+  
+  // VALIDAÇÕES INICIAIS
+  if (!cidade || !dataStr) {
+    resultado.innerHTML = '<div class="error">❌ Por favor, preencha todos os campos.</div>';
+    return;
+  }
+  
+  // RESET COMPLETO ANTES DE QUALQUER OPERAÇÃO
+  resetarCompletamente();
+  
+  // Desabilita botão durante a busca
+  buscarBtn.disabled = true;
+  buscarBtn.textContent = '⏳ Buscando...';
+  
+  try {
+    // Mostra loading com a cidade que está sendo buscada
+    resultado.innerHTML = `
+      <div class="loading">
+        🔍 Buscando "${cidade}"...<br>
+        <span class="small-note">Aguarde, consultando coordenadas...</span>
+      </div>
+    `;
+    
+    console.log(`Buscando cidade: ${cidade}`);
+    
+    // Busca coordenadas da nova cidade
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cidade)}, Brasil&format=json&limit=1&addressdetails=1&countrycodes=br&timestamp=${Date.now()}`;
+    const resp = await fetch(url, {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    });
+    const data = await resp.json();
+    
+    console.log("Resposta da API:", data);
+    
+    if (data && data.length > 0) {
+      const novaLat = parseFloat(data[0].lat);
+      const novaLng = parseFloat(data[0].lon);
+      const nomeCompleto = data[0].display_name.split(',')[0];
+      
+      console.log(`Coordenadas encontradas: Lat=${novaLat}, Lng=${novaLng}`);
+      
+      // VERIFICA HEMISFÉRIO SUL
+      if (novaLat >= 0) {
+        resultado.innerHTML = `<div class="error">
+          ⚠️ <strong>${cidade.toUpperCase()}</strong> está no Hemisfério Norte!<br><br>
+          🌍 Latitude: ${formatarNumero(novaLat,4)}° Norte<br><br>
+          🌎 Por favor, selecione uma cidade do <strong>Hemisfério Sul</strong> (latitude negativa).<br><br>
+          📍 Exemplos válidos:<br>
+          • Porto Alegre, RS (30°S)<br>
+          • Florianópolis, SC (27°S)<br>
+          • Curitiba, PR (25°S)<br>
+          • São Paulo, SP (23°S)<br>
+          • Belo Horizonte, MG (19°S)
+        </div>`;
+        buscarBtn.disabled = false;
+        buscarBtn.textContent = '🔍 Buscar Lua';
+        return;
+      }
+      
+      // ATUALIZA ESTADO COM NOVOS DADOS
+      estadoAtual.cidade = nomeCompleto;
+      estadoAtual.lat = novaLat;
+      estadoAtual.lng = novaLng;
+      estadoAtual.dataBase = new Date(dataStr);
+      estadoAtual.dataAtual = new Date(estadoAtual.dataBase.getTime());
+      
+      console.log("Novo estado configurado:", estadoAtual);
+      
+      // Mostra mensagem de sucesso antes de atualizar
+      resultado.innerHTML = `
+        <div class="success">
+          ✅ Cidade encontrada!<br>
+          📍 ${nomeCompleto}<br>
+          🌍 Latitude: ${formatarNumero(Math.abs(novaLat),4)}° Sul<br>
+          🕐 Carregando dados da Lua...
+        </div>
+      `;
+      
+      // Pequeno delay para garantir que o DOM atualizou
+      setTimeout(() => {
+        // MOSTRA SLIDER
+        document.getElementById('sliderContainer').style.display = 'block';
+        
+        // ATUALIZA INFORMAÇÕES DA LUA
+        updateMoon();
+        
+        buscarBtn.disabled = false;
+        buscarBtn.textContent = '🔍 Buscar Lua';
+      }, 100);
+      
+    } else {
+      resultado.innerHTML = `<div class="error">
+        ❌ Cidade "${cidade}" não encontrada.<br><br>
+        💡 Tente usar o formato "Cidade, UF" (ex.: "Alfenas, MG")<br>
+        💡 Exemplos: "Florianópolis, SC", "Curitiba, PR", "São Paulo, SP"
+      </div>`;
+      buscarBtn.disabled = false;
+      buscarBtn.textContent = '🔍 Buscar Lua';
+      return;
+    }
+  } catch (e) {
+    console.error("Erro ao buscar cidade:", e);
+    resultado.innerHTML = '<div class="error">🌐 Erro de conexão. Verifique sua internet e tente novamente.</div>';
+    buscarBtn.disabled = false;
+    buscarBtn.textContent = '🔍 Buscar Lua';
+  }
+}
+
+// FUNÇÃO CORRIGIDA PARA NOMES DAS FASES DA LUA
+function getPhaseName(phase) {
+  // phase é um valor entre 0 e 1, onde:
+  // 0 = Lua Nova
+  // 0.25 = Quarto Crescente
+  // 0.5 = Lua Cheia
+  // 0.75 = Quarto Minguante
+  
+  const iluminacao = phase;
+  
+  // Lua Nova (0% a 2%)
+  if (iluminacao === 0 || iluminacao < 0.02) return "🌑 Lua Nova";
+  
+  // Crescente (2% a 25%)
+  if (iluminacao >= 0.02 && iluminacao < 0.23) return "🌒 Lua Crescente";
+  
+  // Quarto Crescente (exatamente 25% ± margem)
+  if (iluminacao >= 0.23 && iluminacao < 0.27) return "🌓 Quarto Crescente";
+  
+  // Crescente Gibosa (27% a 48%)
+  if (iluminacao >= 0.27 && iluminacao < 0.48) return "🌔 Crescente Gibosa";
+  
+  // Lua Cheia (48% a 52%)
+  if (iluminacao >= 0.48 && iluminacao <= 0.52) return "🌕 Lua Cheia";
+  
+  // Minguante Gibosa (52% a 73%)
+  if (iluminacao > 0.52 && iluminacao <= 0.73) return "🌖 Minguante Gibosa";
+  
+  // Quarto Minguante (73% a 77%)
+  if (iluminacao > 0.73 && iluminacao <= 0.77) return "🌗 Quarto Minguante";
+  
+  // Minguante (77% a 98%)
+  if (iluminacao > 0.77 && iluminacao < 0.98) return "🌘 Lua Minguante";
+  
+  // Lua Nova (98% a 100%)
+  if (iluminacao >= 0.98) return "🌑 Lua Nova";
+  
+  return "🌙 Fase Indefinida";
+}
+
+function updateMoon() {
+  // VERIFICA SE TODOS OS DADOS ESTÃO VÁLIDOS
+  if (!estadoAtual.dataAtual || estadoAtual.lat === null || estadoAtual.lng === null) {
+    console.error("❌ Dados inválidos para updateMoon:", estadoAtual);
+    document.getElementById('result').innerHTML = '<div class="error">❌ Erro: dados da cidade não carregados corretamente. Tente buscar novamente.</div>';
+    return;
+  }
+  
+  console.log(`✅ Atualizando lua para: Lat=${estadoAtual.lat}, Lng=${estadoAtual.lng}, Data=${estadoAtual.dataAtual}`);
+  
+  try {
+    const illumination = SunCalc.getMoonIllumination(estadoAtual.dataAtual);
+    const phaseName = getPhaseName(illumination.phase);
+    const pos = SunCalc.getMoonPosition(estadoAtual.dataAtual, estadoAtual.lat, estadoAtual.lng);
+    
+    // Calcula a porcentagem de iluminação corretamente
+    const porcentagemIluminacao = illumination.fraction * 100;
+
+    // Converte azimute para bússola
+    const azimuteRad = pos.azimuth;
+    let azimuteDegRaw = azimuteRad * 180 / Math.PI;
+    let azimuteCompass = (azimuteDegRaw + 180) % 360;
+    if (azimuteCompass < 0) azimuteCompass += 360;
+
+    const altura = pos.altitude * 180/Math.PI;
+    const estacao = getSeason(estadoAtual.dataAtual, estadoAtual.lat);
+    const constelacao = getConstellationApprox(estadoAtual.dataAtual);
+    let diaLunar = calcularDiaLunar(illumination.phase);
+    
+    const cidadeNome = document.getElementById('cidade').value.trim().toUpperCase();
+    const imageSrc = `images/lua (${diaLunar}).jpg`;
+    
+    // DETERMINA SE INVERTE A IMAGEM (Hemisfério Sul)
+    const inverterImagem = estadoAtual.lat < 0;
+    
+    const resultadoHTML = `
+      <div class="cidade-info">
+        🌍 HEMISFÉRIO SUL - ${cidadeNome}
+      </div>
+      <div class="moon-container">
+        <img src="${imageSrc}" 
+             alt="Fase da Lua: ${phaseName}" 
+             class="moon-image ${inverterImagem ? 'south' : ''}" 
+             id="moonImg" 
+             onerror="this.style.opacity=0.4; this.alt+=' (imagem não encontrada)'; this.parentElement.innerHTML+='<div class=\\'small-note\\' style=\\'margin-top:10px;\\'>📸 Imagem não encontrada, mas os dados astronômicos estão corretos!</div>'">
+      </div>
+      <h4>📍 ${cidadeNome}<br>
+      📐 ${formatarNumero(Math.abs(estadoAtual.lat),4)}° ${estadoAtual.lat < 0 ? 'S' : 'N'}, ${formatarNumero(estadoAtual.lng,4)}° ${estadoAtual.lng < 0 ? 'O' : 'L'}<br>
+      📅 ${estadoAtual.dataAtual.toLocaleString('pt-BR')}</h4>
+      <ul>
+        <li><strong>🌙 Fase da Lua:</strong> ${phaseName} <span style="color: #00b0f0;">(${formatarNumero(porcentagemIluminacao,1)}% iluminada)</span></li>
+        <li><strong>📆 Dia Lunar (idade):</strong> ${diaLunar}º dia de ~29,53 dias</li>
+        <li><strong>✨ Constelação (aprox.):</strong> ${constelacao}</li>
+        <li><strong>🧭 Azimute (bússola):</strong> ${formatarNumero(azimuteCompass,2)}° <span class="small-note">(0°=N, 90°=L, 180°=S, 270°=O)</span></li>
+        <li><strong>📐 Altura (elevação):</strong> ${formatarNumero(altura,2)}° acima do horizonte</li>
+        <li><strong>🍂 Estação do Ano:</strong> ${estacao}</li>
+      </ul>
+      <div class="small-note" style="margin-top: 15px; text-align: center;">
+        💡 Use o slider abaixo para ver a posição da Lua em diferentes horários
+      </div>`;
+      
+    document.getElementById('result').innerHTML = resultadoHTML;
+      
+  } catch (error) {
+    console.error("❌ Erro ao calcular posição da lua:", error);
+    document.getElementById('result').innerHTML = '<div class="error">❌ Erro ao calcular dados lunares. Tente outra data ou cidade.</div>';
+  }
+}
+
+function calcularDiaLunar(phase) {
+  const lunarMonth = 29.53;
+  let age = Math.round(phase * lunarMonth);
+  if (age < 1) age = 1;
+  if (age > 29) age = 29;
+  return age;
+}
+
+function getSeason(dt, lat) {
+  const y = dt.getFullYear();
+  const hemisferioSul = lat < 0;
+  
+  const outonoInicio = new Date(y, 2, 20);   // 20 Mar
+  const invernoInicio = new Date(y, 5, 21);  // 21 Jun
+  const primaveraInicio = new Date(y, 8, 22); // 22 Set
+  const veraoInicio = new Date(y, 11, 21);   // 21 Dez
+  
+  if (hemisferioSul) {
+    if (dt >= outonoInicio && dt < invernoInicio) return "🍂 Outono";
+    if (dt >= invernoInicio && dt < primaveraInicio) return "❄️ Inverno";
+    if (dt >= primaveraInicio && dt < veraoInicio) return "🌸 Primavera";
+    return "☀️ Verão";
+  } else {
+    if (dt >= outonoInicio && dt < invernoInicio) return "🌸 Primavera";
+    if (dt >= invernoInicio && dt < primaveraInicio) return "☀️ Verão";
+    if (dt >= primaveraInicio && dt < veraoInicio) return "🍂 Outono";
+    return "❄️ Inverno";
+  }
+}
+
+function getConstellationApprox(dt) {
+  const month = dt.getMonth();
+  const constellations = [
+    "♒ Aquário", "♓ Peixes", "♈ Áries", "♉ Touro", 
+    "♊ Gêmeos", "♋ Câncer", "♌ Leão", "♍ Virgem", 
+    "♎ Libra", "♏ Escorpião", "♐ Sagitário", "♑ Capricórnio"
+  ];
+  return constellations[month];
+}
+
+// EVENTO DO SLIDER
+document.getElementById('timeSlider').addEventListener('input', function(){
+  const hoursOffset = parseInt(this.value,10);
+  if (!estadoAtual.dataBase || estadoAtual.lat === null) {
+    console.warn("Slider acionado sem dados válidos");
+    return;
+  }
+  
+  estadoAtual.dataAtual = new Date(estadoAtual.dataBase.getTime() + hoursOffset * 3600 * 1000);
+  document.getElementById('sliderInfo').innerHTML = `⏰ ${hoursOffset > 0 ? '+' : ''}${hoursOffset} horas: ${estadoAtual.dataAtual.toLocaleString('pt-BR')}`;
+  updateMoon();
+});
+
+// FORM SUBMIT
+document.getElementById('mainForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  buscarInfo();
+});
+
+// INICIALIZAÇÃO
+window.onload = function() {
+  const now = new Date();
+  document.getElementById('data').value = toLocalDateTimeInputValue(now);
+  
+  // Preenche com uma cidade exemplo do Hemisfério Sul
+  document.getElementById('cidade').value = "Alfenas, MG";
+  
+  console.log("✅ Calculadora da Lua - Hemisfério Sul pronta!");
+  console.log("ℹ️ Digite uma nova cidade e clique em Buscar para resetar completamente");
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - O Tempo no Sistema Solar – Clássico e Relativístico</title>
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #020617;
+            --accent: #e94560;
+            --text: #f8fafc;
+            --card: rgba(15, 23, 42, 0.88);
+            --ok: #4ade80;
+            --warn: #f87171;
+            --earth-glow: #38bdf8;
+            --sun: #fbbf24;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text);
+            background: radial-gradient(circle at top, #1e293b, #020617);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .stars { 
+            position: fixed; 
+            inset: 0; 
+            z-index: -1; 
+        }
+        
+        .star {
+            position: absolute; 
+            width: 2px; 
+            height: 2px;
+            background: white; 
+            border-radius: 50%;
+            opacity: .6; 
+            animation: twinkle 4s infinite ease-in-out;
+        }
+        
+        @keyframes twinkle { 
+            0%,100%{opacity:.2} 
+            50%{opacity:1} 
+        }
+
+        header { 
+            text-align: center; 
+            padding: 2.5rem 1rem 1.5rem; 
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 2.5rem; 
+            letter-spacing: 2px;
+            margin-bottom: .5rem;
+            text-shadow: 0 0 15px rgba(233,69,96,.6);
+            background: linear-gradient(135deg, #fff, #e94560);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle { 
+            color: #cbd5f5; 
+            font-size: 1.1rem; 
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .intro, .notes {
+            max-width: 950px; 
+            margin: 1.5rem auto;
+            padding: 1.5rem;
+            background: rgba(255,255,255,.05);
+            border-radius: 14px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 30px rgba(0,0,0,.4);
+            transition: all 0.3s ease;
+        }
+
+        .intro:hover, .notes:hover {
+            background: rgba(255,255,255,.08);
+            box-shadow: 0 15px 40px rgba(233,69,96,.2);
+        }
+
+        .notes h3 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            font-size: 1.25rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        strong {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex; 
+            justify-content: center;
+            gap: 1rem; 
+            margin: 2rem 0; 
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none; 
+            border-radius: 30px;
+            padding: .8rem 1.4rem; 
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            background: var(--accent); 
+            color: white;
+            box-shadow: 0 5px 20px rgba(233,69,96,.4);
+            transition: all .25s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        button:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 28px rgba(233,69,96,.7); 
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+
+        .toggle {
+            display: flex; 
+            align-items: center; 
+            gap: .6rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            background: rgba(255,255,255,.1);
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+        }
+
+        .toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        main {
+            max-width: 1200px; 
+            margin: 0 auto 3rem;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+            gap: 1.6rem;
+        }
+
+        .planet {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 1.4rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,.5);
+            position: relative; 
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .planet:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        /* Destaque para a Terra */
+        .planet.earth {
+            border: 2px solid var(--earth-glow);
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+        }
+
+        .planet::before {
+            content: ''; 
+            position: absolute; 
+            inset: 0 0 auto 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+        }
+
+        .planet.earth::before {
+            background: linear-gradient(90deg, var(--earth-glow), var(--sun), transparent);
+        }
+
+        .planet h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.35rem;
+            display: flex; 
+            align-items: center; 
+            gap: .5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .meta {
+            display: flex; 
+            justify-content: space-between;
+            font-size: .9rem; 
+            margin: .6rem 0 1rem;
+            color: #e5e7eb;
+            background: rgba(0,0,0,.2);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .direct { 
+            color: var(--ok); 
+            font-weight: bold;
+        }
+        
+        .retrograde { 
+            color: var(--warn); 
+            font-weight: bold;
+        }
+
+        .timer {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.8rem; 
+            text-align: center;
+            padding: 1rem; 
+            border-radius: 12px;
+            background: rgba(0,0,0,.45);
+            letter-spacing: 2px;
+            border: 1px solid rgba(255,255,255,.1);
+        }
+
+        .rel { 
+            font-size: .85rem; 
+            text-align: center; 
+            margin-top: .8rem; 
+            color: #cbd5f5; 
+            font-family: 'Roboto', sans-serif;
+            background: rgba(0,0,0,.2);
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.05);
+        }
+
+        footer { 
+            text-align: center; 
+            padding: 1.5rem; 
+            font-size: .9rem; 
+            color: #94a3b8; 
+            font-family: 'Roboto', sans-serif;
+            border-top: 1px solid rgba(255,255,255,.1);
+            margin-top: 2rem;
+        }
+
+        .notes ul {
+            padding-left: 1.2rem;
+            margin: 0.6rem 0;
+        }
+        
+        .notes p {
+            margin: 0.7rem 0;
+            line-height: 1.6;
+        }
+
+        #eqPanel {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--accent);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            font-size: 0.8rem;
+        }
+
+        .info-item {
+            background: rgba(0,0,0,.2);
+            padding: 0.3rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .info-item span {
+            color: var(--accent);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<header>
+    <h1>⏱️ EVS - O Tempo no Sistema Solar</h1>
+    <p class="subtitle">Comparação entre tempo clássico (rotação) e correções relativísticas</p>
+</header>
+
+<section class="intro">
+    <p align="justify">Este EVS compara a passagem do tempo nos corpos do Sistema Solar considerando três camadas: <strong>(i)</strong> tempo clássico associado à rotação, <strong>(ii)</strong> correção relativística cinemática (Relatividade Especial) e <strong>(iii)</strong> correção relativística gravitacional (Relatividade Geral).</p>
+</section>
+
+<div class="controls">
+    <button onclick="startAll()"><i class="fas fa-play"></i> Iniciar</button>
+    <button onclick="pauseAll()"><i class="fas fa-pause"></i> Pausar</button>
+    <button onclick="resetAll()"><i class="fas fa-rotate-left"></i> Zerar</button>
+    <div class="toggle">
+        <input type="checkbox" id="relToggle" checked>
+        <label for="relToggle">Mostrar correções relativísticas</label>
+    </div>
+</div>
+
+<main id="grid">
+    </main>
+
+<section class="notes">
+    <h3 onclick="toggleEq()"><i class="fas fa-chevron-right" id="eqIcon"></i> Ver fundamentos físicos</h3>
+    <div id="eqPanel" style="display: none;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 1rem; margin-top: 1rem;">
+            <div style="background: rgba(0,0,0,.2); padding: 1rem; border-radius: 10px;">
+                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">📌 Tempo clássico</h4>
+                <p>\( t_{\text{local}} = t_{\text{real}} \times \frac{1 \text{ dia terrestre}}{T_{\text{dia, planeta}}} \)</p>
+                <p style="font-size: 0.9rem;">Onde \( T_{\text{dia, planeta}} \) é dado em dias terrestres.</p>
+            </div>
+            
+            <div style="background: rgba(0,0,0,.2); padding: 1rem; border-radius: 10px;">
+                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">⚡ Relatividade Especial</h4>
+                <p>\( \Delta\tau \approx \Delta t \left(1 - \frac{v^2}{2c^2}\right) \)</p>
+                <p style="font-size: 0.9rem;">Correção cinemática (dilatação do tempo pela velocidade).</p>
+            </div>
+            
+            <div style="background: rgba(0,0,0,.2); padding: 1rem; border-radius: 10px;">
+                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">🌌 Relatividade Geral</h4>
+                <p>\( \Delta\tau \approx \Delta t \left(1 - \frac{GM}{rc^2}\right) \)</p>
+                <p style="font-size: 0.9rem;">Correção gravitacional (campo fraco).</p>
+            </div>
+            
+            <div style="background: rgba(0,0,0,.2); padding: 1rem; border-radius: 10px; grid-column: span 2;">
+                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">🔬 Modelo combinado (diferença em relação à Terra)</h4>
+                <p>\( \Delta\tau_{\text{rel}} = \Delta t \left[ \left( \frac{GM_{\text{T}}}{R_{\text{T}}c^2} + \frac{v_{\text{T}}^2}{2c^2} \right) - \left( \frac{GM}{Rc^2} + \frac{v^2}{2c^2} \right) \right] \)</p>
+                <p style="font-size: 0.9rem;">A diferença é exibida em microssegundos (µs) acumulados.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="notes">
+    <h3><i class="fas fa-clock"></i> Como interpretar os resultados?</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 1rem; margin-top: 1rem;">
+        <div>
+            <p><strong>Tempo local (HH:MM:SS):</strong></p>
+            <p align="justify">Representa um relógio que completa 24h a cada rotação do planeta. Em Vênus (dia = 243 dias terrestres), o relógio avança muito lentamente. Em Júpiter (dia ≈ 9,9h), avança mais rápido que o da Terra.</p>
+        </div>
+        <div>
+            <p><strong>Correção relativística (µs):</strong></p>
+            <p align="justify">Mostra a diferença acumulada em microssegundos em relação à Terra, considerando:</p>
+            <ul>
+                <li>
+				<p align="justify">Efeitos gravitacionais (RG)</li>
+                <li>
+				<p align="justify">Efeitos cinemáticos (RE)</li>
+            </ul>
+            <p align="justify">Valores negativos indicam que o tempo passa mais devagar que na Terra.</p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p>Prof. Luciano Soares Pedroso · Ensino de Física · 🚀 O tempo é relativo</p>
+</footer>
+
+<script>
+    // Gerar estrelas de fundo
+    const starBox = document.getElementById('stars');
+    for (let i = 0; i < 200; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 100 + '%';
+        s.style.animationDelay = Math.random() * 4 + 's';
+        s.style.width = (Math.random() * 3 + 1) + 'px';
+        s.style.height = s.style.width;
+        starBox.appendChild(s);
+    }
+
+    // Constantes físicas
+    const G = 6.67430e-11;      // m³ kg⁻¹ s⁻²
+    const c = 299792458;         // m/s
+    const earthMs = 86400000;    // ms em um dia terrestre
+
+    // Dados dos corpos do sistema solar
+    const bodies = [
+        {id:'mercurio', name:'Mercúrio', icon:'☿', day:58.646, M:3.3011e23, R:2.4397e6, v:47.87e3, rot:'direct', color:'#8c7853'},
+        {id:'venus', name:'Vênus', icon:'♀', day:243.025, M:4.8675e24, R:6.0518e6, v:35.02e3, rot:'retrograde', color:'#e6b800'},
+        {id:'terra', name:'Terra', icon:'⊕', day:1, M:5.9722e24, R:6.371e6, v:29.78e3, rot:'direct', color:'#38bdf8'},
+        {id:'marte', name:'Marte', icon:'♂', day:1.025957, M:6.4171e23, R:3.3895e6, v:24.07e3, rot:'direct', color:'#c1440e'},
+        {id:'jupiter', name:'Júpiter', icon:'♃', day:0.41354, M:1.8982e27, R:6.9911e7, v:13.07e3, rot:'direct', color:'#d8a27a'},
+        {id:'saturno', name:'Saturno', icon:'♄', day:0.4395, M:5.6834e26, R:5.8232e7, v:9.69e3, rot:'direct', color:'#e0bb87'},
+        {id:'urano', name:'Urano', icon:'⛢', day:0.71833, M:8.6810e25, R:2.5362e7, v:6.80e3, rot:'retrograde', color:'#4fd0e7'},
+        {id:'netuno', name:'Netuno', icon:'♆', day:0.67125, M:1.0241e26, R:2.4622e7, v:5.43e3, rot:'direct', color:'#4b70dd'},
+        {id:'lua', name:'Lua', icon:'☽', day:29.53059, M:7.342e22, R:1.7374e6, v:1.022e3, rot:'direct', color:'#c0c0c0'}
+    ];
+
+    const grid = document.getElementById('grid');
+    
+    // Ordenar: Terra primeiro, depois os outros
+    const earth = bodies.find(b => b.id === 'terra');
+    const others = bodies.filter(b => b.id !== 'terra');
+    const orderedBodies = [earth, ...others];
+
+    // Estado dos timers
+    const timers = {};
+    const paused = {};
+    const start = {};
+
+    // Pré-calcular correções gravitacionais e cinemáticas para cada corpo (em relação à Terra)
+    const earthGrav = (G * earth.M) / (earth.R * c * c);
+    const earthKin = (earth.v * earth.v) / (2 * c * c);
+
+    // Criar cards dos planetas
+    orderedBodies.forEach(b => {
+        const isEarth = b.id === 'terra';
+        
+        // Pré-calcular valores relativísticos para exibição
+        const grav = (G * b.M) / (b.R * c * c);
+        const kin = (b.v * b.v) / (2 * c * c);
+        
+        // Diferença em relação à Terra (por segundo)
+        const diffPerSec = (earthGrav + earthKin) - (grav + kin);
+        
+        grid.innerHTML += `
+        <div class="planet ${isEarth ? 'earth' : ''}" style="border-top-color: ${b.color}">
+            <h2>
+                <span style="color: ${b.color}">${b.icon}</span> ${b.name}
+                ${isEarth ? '<i class="fas fa-star" style="color:var(--sun); font-size:0.9em; margin-left:5px;"></i>' : ''}
+            </h2>
+            <div class="meta">
+                <span><i class="far fa-clock"></i> ${b.day.toString().replace('.', ',')} dias</span>
+                <span class="${b.rot}">${b.rot === 'direct' ? '↻ Direta' : '↺ Retrógrada'}</span>
+            </div>
+            <div class="info-grid">
+                <div class="info-item"><span>v</span> ${(b.v/1000).toFixed(1)} km/s</div>
+                <div class="info-item"><span>R</span> ${(b.R/1000).toFixed(0)} km</div>
+                <div class="info-item"><span>GM/c²R</span> ${(grav*1e9).toFixed(2)} ns/s</div>
+                <div class="info-item"><span>v²/2c²</span> ${(kin*1e9).toFixed(2)} ns/s</div>
+            </div>
+            <div class="timer" id="t-${b.id}">00:00:00</div>
+            <div class="rel" id="r-${b.id}">
+                <i class="fas fa-atom"></i> Δt: 0,00 µs
+                <span style="display:block; font-size:0.7rem; color:#94a3b8;">(diferença acumulada)</span>
+            </div>
+        </div>`;
+        
+        timers[b.id] = null;
+        paused[b.id] = 0;
+        start[b.id] = 0;
+    });
+
+    // Função de atualização para cada corpo
+    function tick(body) {
+        const elapsed = Date.now() - start[body.id]; // ms desde o início
+        
+        // Tempo clássico (baseado na rotação)
+        const f = elapsed / (body.day * earthMs);
+        const totalSeconds = Math.floor(86400 * f);
+        const h = Math.floor(totalSeconds / 3600) % 24;
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        
+        document.getElementById('t-' + body.id).textContent =
+            `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+        // Cálculos relativísticos (se ativado)
+        if (document.getElementById('relToggle').checked) {
+            // Correções para este corpo (por segundo)
+            const grav = (G * body.M) / (body.R * c * c);
+            const kin = (body.v * body.v) / (2 * c * c);
+            
+            // Diferença em relação à Terra (por segundo)
+            const diffPerSec = (earthGrav + earthKin) - (grav + kin);
+            
+            // Diferença acumulada em microssegundos
+            const diffAccum = diffPerSec * (elapsed / 1000) * 1e6;
+            
+            // Formatação com sinal
+            const signal = diffAccum >= 0 ? '+' : '';
+            document.getElementById('r-' + body.id).innerHTML = `
+                <i class="fas fa-atom" style="color:var(--accent)"></i> Δt: ${signal}${diffAccum.toFixed(2)} µs
+                <span style="display:block; font-size:0.7rem; color:#94a3b8;">
+                    ${diffAccum > 0 ? '⏱️ mais rápido' : diffAccum < 0 ? '🐢 mais lento' : '⚖️ igual'} que a Terra
+                </span>
+            `;
+        } else {
+            document.getElementById('r-' + body.id).innerHTML = `
+                <i class="fas fa-atom"></i> Efeitos relativísticos ocultos
+                <span style="display:block; font-size:0.7rem; color:#94a3b8;">(marque a opção acima)</span>
+            `;
+        }
+    }
+
+    // Funções de controle
+    function startOne(id) {
+        if (timers[id]) return;
+        const body = bodies.find(b => b.id === id);
+        start[id] = Date.now() - paused[id];
+        timers[id] = setInterval(() => tick(body), 100); // Atualiza a cada 100ms para maior precisão
+    }
+
+    function pauseOne(id) {
+        if (!timers[id]) return;
+        clearInterval(timers[id]);
+        timers[id] = null;
+        paused[id] = Date.now() - start[id];
+    }
+
+    function resetOne(id) {
+        if (timers[id]) {
+            clearInterval(timers[id]);
+            timers[id] = null;
+        }
+        paused[id] = 0;
+        start[id] = 0;
+        document.getElementById('t-' + id).textContent = '00:00:00';
+        
+        const body = bodies.find(b => b.id === id);
+        if (body) {
+            const grav = (G * body.M) / (body.R * c * c);
+            const kin = (body.v * body.v) / (2 * c * c);
+            const diffPerSec = (earthGrav + earthKin) - (grav + kin);
+            
+            document.getElementById('r-' + id).innerHTML = `
+                <i class="fas fa-atom"></i> Δt: 0,00 µs
+                <span style="display:block; font-size:0.7rem; color:#94a3b8;">(diferença acumulada)</span>
+            `;
+        }
+    }
+
+    function startAll() { 
+        orderedBodies.forEach(b => startOne(b.id)); 
+    }
+    
+    function pauseAll() { 
+        orderedBodies.forEach(b => pauseOne(b.id)); 
+    }
+    
+    function resetAll() { 
+        orderedBodies.forEach(b => resetOne(b.id)); 
+    }
+
+    // Toggle para as equações
+    function toggleEq() {
+        const panel = document.getElementById('eqPanel');
+        const icon = document.getElementById('eqIcon');
+        if (panel.style.display === 'none' || panel.style.display === '') {
+            panel.style.display = 'block';
+            icon.style.transform = 'rotate(90deg)';
+        } else {
+            panel.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // Iniciar automaticamente ao carregar a página
+    window.addEventListener('load', () => {
+        startAll();
+    });
+</script>
+</body>
+</html>

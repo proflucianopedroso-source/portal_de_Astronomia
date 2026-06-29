@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- HTML5 -->
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>EVS - Observador do Céu</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+<link href="pacote.css" rel="stylesheet">
+<link href="Celeste.css" rel="stylesheet">
+</head>
+<body>
+
+
+<div id="chs-sphere"></div>
+  
+<div id="chs-controls">
+
+  <div id="chs-switch-container">
+    <div id="chs-celestial-label" class="no-select chs-mode-label">
+      <div class="no-select chs-mode-label-text">Esfera Celestial</div>
+    </div>
+
+      <img id="chs-celestial-arrow-horizontal" src="horizontal.svg" alt="" width="100" height="16" class="no-select">
+      <img id="chs-celestial-arrow-vertical" src="vertical.svg" alt="" width="90" height="30" class="no-select">
+
+    <button type="button" class="btn btn-primary" id="chs-switch-button">
+      deslocar
+    </button>
+
+      <img id="chs-horizon-arrow-horizontal" src="horizontal.svg" alt="" width="100" height="16" style="transform: rotate(180deg)" class="no-select">
+      <img id="chs-horizon-arrow-vertical" src="vertical.svg" alt="" width="90" height="30" style="transform: rotate(180deg)" class="no-select">
+
+    <div id="chs-horizon-label" class="no-select chs-mode-label">
+      <div class="no-select chs-mode-label-text">Horizonte</div>
+    </div>
+  </div>
+ 
+  <div id="chs-latitude-container"> 
+    <label id="chs-latitude-display" class="form-label no-select" for="chs-latitude-slider">
+	Latitude:</label>
+    <input class="form-range" id="chs-latitude-slider" type="range" min="-90" max="90" step="0.01" value="-21.25">
+  </div>
+
+</div>
+
+
+
+<script src="pacote.js"></script>
+<script src="celeste.js"></script>
+
+</body>
+
+</html>

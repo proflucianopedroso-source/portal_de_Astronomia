@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!-- HTML5 -->
+<meta charset="utf-8"/>	
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EVS - Analema Interativo</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">  
+  <style>
+    /* Reset e Estilo Base */
+    *, *::before, *::after { box-sizing: border-box; user-select: none; }
+    html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body {
+      background: #050510;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    #container {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+    }
+
+    /* Painéis Flutuantes */
+    .panel {
+      position: absolute;
+      background: rgba(10, 15, 30, 0.85);
+      backdrop-filter: blur(10px);
+      padding: 15px;
+      border-radius: 10px;
+      z-index: 100;
+      border: 1px solid rgba(88, 192, 124, 0.2);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+    }
+
+    #info { top: 20px; left: 20px; width: 280px; }
+    #controls { top: 20px; right: 20px; width: 300px; }
+
+    h2 { margin: 0 0 10px 0; color: #58c07c; font-size: 1.3rem; text-align: center; }
+    .section-header {
+      color: #58c07c; font-size: 0.85rem; font-weight: bold;
+      text-transform: uppercase; border-bottom: 1px solid rgba(88, 192, 124, 0.3);
+      margin: 12px 0 8px 0; padding-bottom: 4px;
+    }
+
+    .row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 4px; }
+    .val { color: #90ee90; font-family: monospace; font-weight: bold; }
+
+    label { display: block; font-size: 0.85rem; color: #aaa; margin-top: 10px; }
+    input[type="range"] { width: 100%; accent-color: #58c07c; cursor: pointer; }
+
+    .btn-group { display: flex; gap: 5px; margin-top: 10px; }
+    button {
+      flex: 1; background: #2a2a40; color: #fff; border: 1px solid rgba(255,255,255,0.1);
+      padding: 8px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;
+      transition: 0.2s;
+    }
+    button:hover { background: #3a3a50; border-color: #58c07c; }
+    button.active { background: #58c07c; color: #000; font-weight: bold; }
+
+    /* Responsividade Mobile */
+    @media (max-width: 768px) {
+      .panel { width: 90% !important; left: 5% !important; right: auto; position: relative; margin-top: 10px; }
+      #controls { margin-bottom: 20px; }
+      body { overflow-y: auto; }
+      #container { position: fixed; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="container"></div>
+
+  <div id="info" class="panel">
+    <h2>EVS - Analema</h2>
+    <div class="section-header">Dados Atuais</div>
+    <div class="row"><span>Data:</span> <span class="val" id="dateDisplay">--</span></div>
+    <div class="row"><span>Hora Solar:</span> <span class="val" id="solarTime">
+		--</span></div>
+    <div class="row"><span>Altitude:</span> <span class="val" id="sunAlt">0,0°</span></div>
+    <div class="row"><span>Azimute:</span> <span class="val" id="sunAz">0,0°</span></div>
+    
+    <div class="section-header">Astronomia</div>
+    <div class="row"><span>Declinação:</span> <span class="val" id="sunDecl">
+		0,0°</span></div>
+    <div class="row"><span>Eq. Tempo:</span> <span class="val" id="eotVal">0,0 
+		min</span></div>
+    <div class="row"><span>Estação (Aprox):</span> <span class="val" id="seasonVal">
+		--</span></div>
+    
+    <div style="margin-top:15px; font-size:0.8rem; color:#ccc; border-top:1px dashed #444; padding-top:8px">
+      <i>Dica: Botão esquerdo do mouse para girar e direito para mover a base. 
+		Scroll para zoom.</i>
+    	<p align="center"><font color="#FFFFFF">Prof. Luciano Soares Pedroso</font></div>
+  </div>
+
+  <div id="controls" class="panel">
+    <div class="section-header">Configurações</div>
+    <label>Latitude: <span class="val" id="latVal">-23,5°</span> (Hemisfério <span id="hemisphereVal">
+	Sul</span>)</label>
+    <input type="range" id="latSlider" min="-85" max="85" step="0.5" value="-23.5">
+
+    <label>Horário: <span class="val" id="timeVal">12:00</span></label>
+    <input type="range" id="timeSlider" min="6" max="18" step="0.05" value="12">
+
+    <label>Velocidade da Animação:</label>
+    <input type="range" id="speedSlider" min="0" max="30" value="5">
+
+    <div class="btn-group">
+      <button id="btnPlay" onclick="togglePlay()">Pausar</button>
+      <button onclick="resetSim()">Reiniciar</button>
+    </div>
+
+    <div class="section-header">Câmera</div>
+    <div class="btn-group">
+      <button onclick="setCam('observer')" id="btnObs" class="active">Observador</button>
+      <button onclick="setCam('orbital')" id="btnOrb">Orbital</button>
+      <button onclick="setCam('top')" id="btnTop">Topo</button>
+    </div>
+
+    <div class="section-header">Visualização</div>
+    <div class="btn-group">
+      <button onclick="toggleGrid()">Grade</button>
+      <button onclick="toggleLabels()">Rótulos</button>
+      <button onclick="toggleOrbit()">Rastro</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    // Variáveis Globais
+    let scene, camera, renderer, controls;
+    let sunMesh, analemaLine, orbitLine, groundGrid, cardinalGroup;
+    let labels = []; 
+    
+    // Estado
+    const state = {
+        lat: -23.5,
+        hour: 12,
+        day: 0,
+        speed: 5,
+        playing: true,
+        showLabels: true,
+        showOrbit: true,
+        lastDayIndex: -1
+    };
+
+    // Dados
+    let analemaPoints = new Array(366).fill(null);
+    let orbitTrail = [];
+    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+    function init() {
+        const container = document.getElementById('container');
+        
+        // 1. Cena
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510);
+        scene.fog = new THREE.FogExp2(0x050510, 0.005);
+
+        // 2. Câmera (Afastada para ver tudo)
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 40, 160); 
+
+        // 3. Renderizador
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // 4. OrbitControls
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = false;
+        controls.minDistance = 5;
+        controls.maxDistance = 350;
+        controls.maxPolarAngle = Math.PI / 2 - 0.02; // Limite do chão
+
+        // 5. Luz
+        const ambient = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambient);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+        sunLight.position.set(50, 100, 50);
+        scene.add(sunLight);
+
+        // 6. Criação dos Objetos
+        createEnvironment();
+        createAnalemaSystem();
+        createSeasonalLabels(); 
+        
+        // Aplica estilos iniciais
+        updateLabelsStyle();
+
+        // 7. Listeners
+        window.addEventListener('resize', onResize);
+        setupUI();
+
+        // Inicia Loop
+        animate();
+    }
+
+    function createEnvironment() {
+        groundGrid = new THREE.GridHelper(100, 50, 0x444444, 0x222222);
+        scene.add(groundGrid);
+
+        const plane = new THREE.Mesh(
+            new THREE.PlaneGeometry(300, 300),
+            new THREE.MeshBasicMaterial({ color: 0x0a0a15 })
+        );
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = -0.1;
+        scene.add(plane);
+
+        // Altitude Lines
+        const mat = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.3 });
+        [30, 60].forEach(deg => {
+            const r = 40 * Math.cos(THREE.MathUtils.degToRad(deg));
+            const h = 40 * Math.sin(THREE.MathUtils.degToRad(deg));
+            const pts = new THREE.EllipseCurve(0,0,r,r,0,2*Math.PI,false,0).getPoints(64);
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const line = new THREE.Line(geo, mat);
+            line.rotation.x = -Math.PI/2;
+            line.position.y = h;
+            scene.add(line);
+        });
+
+        cardinalGroup = new THREE.Group();
+        const addCard = (txt, x, z, col) => {
+            const s = createTextSprite(txt, 40, col);
+            s.position.set(x, 2, z);
+            cardinalGroup.add(s);
+        };
+        addCard("N", 0, -52, "#58c07c"); 
+        addCard("S", 0, 52, "#58c07c");
+        addCard("L", 52, 0, "#58c07c");
+        addCard("O", -52, 0, "#58c07c");
+        scene.add(cardinalGroup);
+    }
+
+    function createAnalemaSystem() {
+        sunMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(1.2, 32, 16),
+            new THREE.MeshBasicMaterial({ color: 0xffff00 })
+        );
+        scene.add(sunMesh);
+
+        const anaGeo = new THREE.BufferGeometry();
+        const anaMat = new THREE.LineBasicMaterial({ color: 0xff4500, linewidth: 2 });
+        analemaLine = new THREE.Line(anaGeo, anaMat);
+        scene.add(analemaLine);
+
+        const orbGeo = new THREE.BufferGeometry();
+        const orbMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.4 });
+        orbitLine = new THREE.Line(orbGeo, orbMat);
+        scene.add(orbitLine);
+    }
+
+    function createTextSprite(message, size, color) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 300; canvas.height = 150;
+        ctx.font = `Bold ${size}px Arial`;
+        ctx.fillStyle = color;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.shadowColor = "rgba(0,0,0,0.8)";
+        ctx.shadowBlur = 4;
+        ctx.fillText(message, 150, 75);
+        
+        const tex = new THREE.CanvasTexture(canvas);
+        const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+        const spr = new THREE.Sprite(mat);
+        spr.scale.set(16, 8, 1);
+        return spr;
+    }
+
+    function createSeasonalLabels() {
+        // Cria placeholders na cena
+        // 0:Jun, 1:Dez, 2:Mar, 3:Set
+        for(let i=0; i<4; i++) {
+            const geo = new THREE.SphereGeometry(1.2, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.visible = false;
+            scene.add(mesh);
+
+            const spr = createTextSprite("", 24, "#ffffff");
+            spr.visible = false;
+            scene.add(spr);
+
+            labels.push({ mesh: mesh, sprite: spr, indexType: i }); 
+        }
+    }
+
+    function updateLabelsStyle() {
+        const isSouth = state.lat < 0;
+        
+        const configs = [
+            { 
+                text: isSouth ? "Sol. Inverno" : "Sol. Verão", 
+                color: isSouth ? "#66ccff" : "#ffcc00" // Junho
+            },
+            { 
+                text: isSouth ? "Sol. Verão" : "Sol. Inverno", 
+                color: isSouth ? "#ffcc00" : "#66ccff" // Dezembro
+            },
+            { 
+                text: isSouth ? "Eq. Outono" : "Eq. Primavera", 
+                color: "#ffaa88" 
+            },
+            { 
+                text: isSouth ? "Eq. Primavera" : "Eq. Outono", 
+                color: "#88ff88" 
+            }
+        ];
+
+        labels.forEach((lbl, i) => {
+            const cfg = configs[i];
+            lbl.mesh.material.color.set(cfg.color);
+            
+            scene.remove(lbl.sprite);
+            const newSpr = createTextSprite(cfg.text, 40, cfg.color);
+            newSpr.visible = state.showLabels && lbl.mesh.visible;
+            // Mantém posição se já existir
+            if (lbl.sprite.position.lengthSq() > 0) {
+                newSpr.position.copy(lbl.sprite.position);
+            }
+            scene.add(newSpr);
+            lbl.sprite = newSpr;
+        });
+    }
+
+    function calcSolarPos(day, hour, latDeg) {
+        const radLat = THREE.MathUtils.degToRad(latDeg);
+        const gamma = 2 * Math.PI * (day - 1) / 365;
+        const decl = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) 
+                     - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma);
+        const B = 2 * Math.PI * (day - 81) / 365;
+        const eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+        const solarTime = hour + eot / 60;
+        const hourAngle = THREE.MathUtils.degToRad(15 * (solarTime - 12));
+        const sinAlt = Math.sin(radLat) * Math.sin(decl) + Math.cos(radLat) * Math.cos(decl) * Math.cos(hourAngle);
+        const alt = Math.asin(sinAlt);
+        const cosAz = (Math.sin(decl) - Math.sin(alt) * Math.sin(radLat)) / (Math.cos(alt) * Math.cos(radLat));
+        let az = Math.acos(THREE.MathUtils.clamp(cosAz, -1, 1));
+        if (hourAngle > 0) az = 2 * Math.PI - az;
+
+        const r = 40;
+        const x = r * Math.cos(alt) * Math.sin(az);
+        const y = r * Math.sin(alt);
+        const z = -r * Math.cos(alt) * Math.cos(az);
+        return { pos: new THREE.Vector3(x,y,z), decl, eot, alt, az };
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        if (state.playing) {
+            state.day += (state.speed * 0.05);
+            if (state.day >= 365) state.day = 0;
+        }
+        
+        const dIndex = Math.floor(state.day);
+        const data = calcSolarPos(state.day, state.hour, state.lat);
+        
+        sunMesh.position.copy(data.pos);
+        
+        if (state.showOrbit) {
+            orbitTrail.push(data.pos.clone());
+            if (orbitTrail.length > 60) orbitTrail.shift();
+            orbitLine.geometry.setFromPoints(orbitTrail);
+        } else {
+            orbitLine.geometry.setFromPoints([]);
+        }
+
+        if (dIndex !== state.lastDayIndex) {
+            const fixedData = calcSolarPos(dIndex, state.hour, state.lat);
+            analemaPoints[dIndex] = fixedData.pos;
+            
+            if (dIndex === 0) analemaPoints.fill(null);
+            
+            const validPts = analemaPoints.filter(p => p !== null);
+            analemaLine.geometry.setFromPoints(validPts);
+            state.lastDayIndex = dIndex;
+            
+            updateLabelsPositions();
+            updateDOM(data);
+        }
+
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    function updateLabelsPositions() {
+        // 172=Jun, 355=Dez, 80=Mar, 266=Set
+        const days = [172, 355, 80, 266];
+
+        labels.forEach((lbl, i) => {
+            const pt = analemaPoints[days[i]];
+            if (pt) {
+                lbl.mesh.position.copy(pt);
+                lbl.mesh.visible = state.showLabels;
+                
+                lbl.sprite.position.copy(pt).add(new THREE.Vector3(0, 3.5, 0));
+                lbl.sprite.visible = state.showLabels;
+            } else {
+                lbl.mesh.visible = false;
+                lbl.sprite.visible = false;
+            }
+        });
+    }
+
+    function updateDOM(data) {
+        const date = new Date(2023, 0, Math.floor(state.day) + 1);
+        document.getElementById('dateDisplay').innerText = `${date.getDate()} ${monthNames[date.getMonth()]}`;
+        const h = Math.floor(state.hour + data.eot/60);
+        const m = Math.floor(Math.abs((state.hour + data.eot/60 - h)*60));
+        document.getElementById('solarTime').innerText = `${h}:${m.toString().padStart(2,'0')}`;
+        
+        // ALTERAÇÃO AQUI: .replace('.', ',')
+        document.getElementById('sunAlt').innerText = THREE.MathUtils.radToDeg(data.alt).toFixed(1).replace('.', ',') + "°";
+        document.getElementById('sunAz').innerText = THREE.MathUtils.radToDeg(data.az).toFixed(1).replace('.', ',') + "°";
+        document.getElementById('sunDecl').innerText = THREE.MathUtils.radToDeg(data.decl).toFixed(1).replace('.', ',') + "°";
+        document.getElementById('eotVal').innerText = data.eot.toFixed(1).replace('.', ',') + " min";
+        
+        const d = THREE.MathUtils.radToDeg(data.decl);
+        let season = "";
+        const isSouth = state.lat < 0;
+        if (Math.abs(d) < 5) season = "Equinócio (prox)";
+        else if (d > 15) season = isSouth ? "Inverno" : "Verão";
+        else if (d < -15) season = isSouth ? "Verão" : "Inverno";
+        document.getElementById('seasonVal').innerText = season;
+    }
+
+    function setupUI() {
+        const get = id => document.getElementById(id);
+        get('latSlider').addEventListener('input', (e) => {
+            state.lat = parseFloat(e.target.value);
+            // ALTERAÇÃO AQUI: .replace('.', ',')
+            get('latVal').innerText = state.lat.toFixed(1).replace('.', ',') + "°";
+            get('hemisphereVal').innerText = state.lat < 0 ? "Sul" : "Norte";
+            resetSim();
+        });
+        get('timeSlider').addEventListener('input', (e) => {
+            state.hour = parseFloat(e.target.value);
+            const h = Math.floor(state.hour);
+            const m = Math.floor((state.hour - h)*60);
+            get('timeVal').innerText = `${h}:${m.toString().padStart(2,'0')}`;
+            resetSim();
+        });
+        get('speedSlider').addEventListener('input', (e) => state.speed = parseFloat(e.target.value));
+    }
+
+    function resetSim() {
+        state.day = 0;
+        state.lastDayIndex = -1;
+        analemaPoints.fill(null);
+        orbitTrail = [];
+        analemaLine.geometry.setFromPoints([]);
+        updateLabelsStyle();
+    }
+
+    function togglePlay() {
+        state.playing = !state.playing;
+        document.getElementById('btnPlay').innerText = state.playing ? "Pausar" : "Continuar";
+    }
+
+    function setCam(mode) {
+        document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active'));
+        const map = { 'observer': 'btnObs', 'orbital': 'btnOrb', 'top': 'btnTop' };
+        document.getElementById(map[mode]).classList.add('active');
+
+        if (mode === 'observer') {
+            controls.autoRotate = false;
+            controls.object.position.set(0, 40, state.lat < 0 ? 160 : -160);
+            controls.target.set(0, 10, 0);
+        } else if (mode === 'orbital') {
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 2.0;
+            controls.object.position.set(100, 60, 100);
+            controls.target.set(0, 0, 0);
+        } else {
+            controls.autoRotate = false;
+            controls.object.position.set(0, 200, 0);
+            controls.target.set(0, 0, 0);
+        }
+    }
+
+    function toggleGrid() { groundGrid.visible = !groundGrid.visible; cardinalGroup.visible = !cardinalGroup.visible; }
+    function toggleLabels() { state.showLabels = !state.showLabels; updateLabelsPositions(); }
+    function toggleOrbit() { state.showOrbit = !state.showOrbit; }
+
+    function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // Inicialização
+    init();
+  </script>
+</body>
+</html>

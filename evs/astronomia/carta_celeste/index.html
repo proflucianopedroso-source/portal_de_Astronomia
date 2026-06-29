@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌟 Carta Celeste Dinâmica Local</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  
+  <style>
+    :root {
+      --primary: #1a1a2e; --secondary: #16213e; --accent: #0f3460;
+      --highlight: #e94560; --text: #f1f1f1; --text-muted: #b8b8d1;
+      --card-bg: rgba(26, 26, 46, 0.9); --success: #4ade80;
+      --warning: #fbbf24; --error: #f87171;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--primary), var(--secondary), #0f0c29);
+      color: var(--text); line-height: 1.6; min-height: 100vh; padding: 1rem;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header {
+      text-align: center; padding: 1.5rem 1rem; margin-bottom: 1.5rem;
+      background: var(--card-bg); border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+    }
+    h1 {
+      font-size: 1.8rem; margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, #fff, var(--highlight));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle { color: var(--text-muted); font-size: 1.1rem; max-width: 700px; margin: 0 auto; }
+    .main-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+    @media (min-width: 900px) { .main-grid { grid-template-columns: 350px 1fr; } }
+    .card {
+      background: var(--card-bg); border-radius: 16px; padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+      position: relative;
+    }
+    .card-title {
+      display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem;
+      margin-bottom: 1.2rem; padding-bottom: 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.15); color: var(--highlight);
+    }
+    .input-group { margin-bottom: 1.2rem; }
+    label { display: block; margin-bottom: 0.4rem; font-weight: 500; color: var(--text-muted); }
+    input, button {
+      width: 100%; padding: 0.8rem 1rem; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);
+      color: var(--text); font-size: 1rem;
+    }
+    input:focus {
+      outline: none; border-color: var(--highlight);
+      box-shadow: 0 0 0 3px rgba(233,69,96,0.2);
+    }
+    button {
+      background: linear-gradient(45deg, var(--accent), var(--highlight));
+      border: none; font-weight: 600; cursor: pointer; margin-top: 0.5rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    button:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(233,69,96,0.4); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-geolocate { background: linear-gradient(45deg, #06b6d4, #3b82f6); }
+    .btn-calculate { background: linear-gradient(45deg, #10b981, #059669); margin-top: 1rem; }
+    .status { padding: 0.8rem; border-radius: 8px; margin: 1rem 0; font-size: 0.95rem; }
+    .status.info { background: rgba(59,130,246,0.15); border-left: 3px solid #3b82f6; }
+    .status.success { background: rgba(16,185,129,0.15); border-left: 3px solid #10b981; }
+    .status.error { background: rgba(248,113,113,0.15); border-left: 3px solid #f87171; }
+    .calculation-step {
+      margin: 1.2rem 0; padding: 1rem; background: rgba(255,255,255,0.05);
+      border-radius: 10px; border-left: 3px solid var(--accent);
+    }
+    .calculation-step h4 { margin-bottom: 0.5rem; color: var(--highlight); }
+    .equation { text-align: center; margin: 0.8rem 0; font-size: 1.1rem; }
+    
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 550px;
+      background: radial-gradient(circle at center, #020208 0%, #000 70%);
+      border-radius: 16px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    
+    #celestialChart { width: 100%; height: 100%; display: block; cursor: crosshair; }
+    
+    /* Painel de informações ABAIXO da carta celeste */
+    .info-panel {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 1.5rem;
+      margin: 1rem 0;
+      display: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    
+    .info-panel.visible {
+      display: block;
+    }
+    
+    .info-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+    
+    .info-panel-title {
+      font-size: 1.2rem;
+      color: var(--highlight);
+      font-weight: 600;
+    }
+    
+    .info-panel-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+      width: auto;
+      margin: 0;
+    }
+    
+    .info-panel-close:hover {
+      color: var(--highlight);
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    
+    .info-detail {
+      padding: 0.8rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+    }
+    
+    .info-detail-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+    
+    .info-detail-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .info-constellation-badge {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      background: rgba(102,204,255,0.2);
+      border: 1px solid rgba(102,204,255,0.3);
+      border-radius: 20px;
+      font-size: 0.9rem;
+      color: #66ccff;
+      margin-bottom: 0.5rem;
+    }
+    
+    .moon-phase-mini {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+    }
+    
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1rem; justify-content: center; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; }
+    .legend-color { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); }
+    
+    .results-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .results-table th, .results-table td {
+      padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .results-table th {
+      background: rgba(255,255,255,0.08); font-weight: 600; color: var(--highlight);
+    }
+    .results-table tr:hover { background: rgba(255,255,255,0.05); }
+    
+    .loading {
+      display: inline-block; width: 20px; height: 20px;
+      border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
+      border-top-color: var(--highlight); animation: spin 1s linear infinite; margin-right: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+    footer { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; }
+    .reference {
+      font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;
+      padding-top: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.1);
+    }
+    .moon-phase-info {
+      background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px;
+      margin: 0.8rem 0; display: flex; align-items: center; gap: 1rem;
+    }
+    .moon-icon { width: 50px; height: 50px; border-radius: 50%; background: #f0f0f0; box-shadow: 0 0 20px rgba(240,240,240,0.5); }
+    .suggestions-list {
+      position: absolute; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px; max-height: 150px; overflow-y: auto; width: calc(100% - 3rem);
+      z-index: 1000; margin-top: -0.5rem; display: none;
+    }
+    .suggestion-item {
+      padding: 0.6rem 1rem; cursor: pointer; font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .suggestion-item:hover { background: rgba(255,255,255,0.1); }
+    
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; } .subtitle { font-size: 1rem; }
+      .chart-container { height: 450px; } .main-grid { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌟 EVS - Carta Celeste Dinâmica Local</h1>
+	<p align="center">Prof. Luciano Soares Pedroso</p>
+      <p class="subtitle">Simulador com constelações precisas • Clique nos objetos para ver detalhes abaixo</p>
+    </header>
+    
+    <div class="main-grid">
+      <div class="card">
+        <h2 class="card-title">📍 Configuração</h2>
+        <div class="input-group" style="position: relative;">
+          <label for="cityInput">Digite sua cidade:</label>
+          <input type="text" id="cityInput" placeholder="Ex: Alfenas, MG, Brasil" autocomplete="off" />
+          <div id="suggestionsList" class="suggestions-list"></div>
+        </div>
+        <button id="geolocateBtn" class="btn-geolocate"><span>🌐</span> Usar minha localização atual</button>
+        <div id="locationStatus" class="status info hidden">Aguardando entrada...</div>
+        <div class="input-group">
+          <label for="dateInput">Data e hora:</label>
+          <input type="datetime-local" id="dateInput" />
+        </div>
+        <button id="calculateBtn" class="btn-calculate" disabled><span>✨</span> Calcular Carta Celeste</button>
+        <div class="reference"><strong>Referência:</strong> Roberto Junior, A. J. et al. (2016). RBEF, 38(4). DOI: 10.1590/1806-9126-RBEF-2016-0131</div>
+      </div>
+      
+      <div class="card">
+        <h2 class="card-title">📊 Cálculos e Visualização</h2>
+        <div id="calculationsArea" class="hidden">
+          <div class="calculation-step">
+            <h4>1️⃣ Conversão para Dia Juliano (JD)</h4>
+            <div class="equation">$$ JD = B + \left\lfloor 365{,}25 \times (A + 4716) \right\rfloor + \left\lfloor 30{,}60001 \times (M + 1) \right\rfloor + D + \frac{H}{24} + 1720994{,}5 $$</div>
+            <p><strong>Resultado:</strong> <span id="jdResult">—</span></p>
+          </div>
+          <div class="calculation-step">
+            <h4>2️⃣ Tempo Sideral Local (TSL)</h4>
+            <div class="equation">$$ TSL = TSG + \frac{\lambda}{15} \quad \text{(em horas)} $$</div>
+            <p><strong>TSL calculado:</strong> <span id="tslResult">—</span></p>
+          </div>
+          <div class="calculation-step">
+            <h4>3️⃣ Transformação para Coordenadas Horizontais</h4>
+            <div class="equation">$$ h = \arcsin\left[ \sin\delta \cdot \sin\varphi + \cos\delta \cdot \cos\varphi \cdot \cos(AH) \right] $$</div>
+            <div class="equation">$$ Az = \arccos\left[ \frac{\sin\delta - \sin\varphi \cdot \sin h}{\cos\varphi \cdot \cos h} \right] $$</div>
+          </div>
+          <div id="moonPhaseSection" class="calculation-step hidden">
+            <h4>🌙 Fase da Lua</h4>
+            <div class="moon-phase-info">
+              <canvas id="moonCanvas" width="50" height="50" class="moon-icon"></canvas>
+              <div><strong id="moonPhaseName">—</strong><br><small id="moonIllumination">Iluminação: —%</small><br><small id="moonAge">Idade: — dias</small></div>
+            </div>
+          </div>
+          <h4 style="margin: 1.5rem 0 0.8rem;">📋 Objetos Celestes Visíveis</h4>
+          <div style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+            <table class="results-table">
+              <thead><tr><th>Objeto</th><th>Tipo</th><th>Azimute (°)</th><th>Altura (°)</th></tr></thead>
+              <tbody id="starsTableBody"><tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Aguardando cálculo...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <h4 style="margin: 1.5rem 0 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🗺️</span> Carta Celeste Interativa
+        </h4>
+        
+        <!-- CARTA CELESTE (SEM PAINEL AO LADO) -->
+        <div class="chart-container">
+          <canvas id="celestialChart"></canvas>
+        </div>
+        
+        <!-- PAINEL DE INFORMAÇÕES ABAIXO DA CARTA -->
+        <div id="infoPanel" class="info-panel">
+          <div class="info-panel-header">
+            <span class="info-panel-title" id="infoPanelTitle">✨ Informações do Objeto</span>
+            <button class="info-panel-close" id="infoPanelClose" title="Fechar">×</button>
+          </div>
+          <div id="infoPanelContent">
+            <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+              🖱️ Clique em qualquer objeto na carta celeste acima para ver suas informações detalhadas aqui
+            </p>
+          </div>
+        </div>
+        
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-color" style="background:#ffd76a"></div><span>Estrelas</span></div>
+          <div class="legend-item"><div class="legend-color" style="background:#66ccff"></div><span>Constelações</span></div>
+          <div class="legend-item"><div class="legend-color" style="background:#f0f0f0"></div><span>Lua</span></div>
+          <div class="legend-item"><div class="legend-color" style="background:#ff9999"></div><span>Planetas</span></div>
+          <div class="legend-item"><div class="legend-color" style="background:#e94560"></div><span>Horizonte</span></div>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>🔭 EVS • Dados estelares simplificados para fins didáticos</p>
+      <p style="margin-top:0.3rem"><small>Geolocalização usada apenas para coordenadas, sem armazenamento.</small></p>
+    </footer>
+  </div>
+
+  <script>
+    // ============================================
+    // CATÁLOGO DE ESTRELAS
+    // ============================================
+    const starCatalog = [
+      { name: "α Sco", ra: 16.49013, dec: -26.43195, mag: 1.0, constellation: "Escorpião", type: "star" },
+      { name: "σ Sco", ra: 16.08333, dec: -25.58333, mag: 2.9, constellation: "Escorpião", type: "star" },
+      { name: "τ Sco", ra: 16.59167, dec: -28.21667, mag: 2.8, constellation: "Escorpião", type: "star" },
+      { name: "ε Sco", ra: 16.83333, dec: -34.28333, mag: 2.3, constellation: "Escorpião", type: "star" },
+      { name: "δ Sco", ra: 16.00278, dec: -22.61667, mag: 2.3, constellation: "Escorpião", type: "star" },
+      { name: "α Cru", ra: 12.44250, dec: -63.09944, mag: 0.8, constellation: "Cruzeiro do Sul", type: "star" },
+      { name: "β Cru", ra: 12.79583, dec: -59.69389, mag: 1.3, constellation: "Cruzeiro do Sul", type: "star" },
+      { name: "γ Cru", ra: 12.51917, dec: -57.11306, mag: 1.6, constellation: "Cruzeiro do Sul", type: "star" },
+      { name: "δ Cru", ra: 12.26056, dec: -58.74917, mag: 2.8, constellation: "Cruzeiro do Sul", type: "star" },
+      { name: "α Ori", ra: 5.91953, dec: 7.40703, mag: 0.5, constellation: "Órion", type: "star" },
+      { name: "β Ori", ra: 5.24229, dec: -8.20164, mag: 0.1, constellation: "Órion", type: "star" },
+      { name: "δ Ori", ra: 5.53333, dec: -0.29833, mag: 2.2, constellation: "Órion", type: "star" },
+      { name: "ε Ori", ra: 5.60333, dec: -1.20167, mag: 1.7, constellation: "Órion", type: "star" },
+      { name: "ζ Ori", ra: 5.67611, dec: -1.94167, mag: 1.8, constellation: "Órion", type: "star" },
+      { name: "α Leo", ra: 10.13917, dec: 11.96722, mag: 1.4, constellation: "Leão", type: "star" },
+      { name: "β Leo", ra: 11.81667, dec: 14.57111, mag: 2.1, constellation: "Leão", type: "star" },
+      { name: "γ Leo", ra: 10.13333, dec: 19.84167, mag: 2.0, constellation: "Leão", type: "star" },
+      { name: "α Tau", ra: 4.59878, dec: 16.50931, mag: 0.9, constellation: "Touro", type: "star" },
+      { name: "α Gem", ra: 7.57667, dec: 31.88833, mag: 1.6, constellation: "Gêmeos", type: "star" },
+      { name: "β Gem", ra: 7.75528, dec: 28.02611, mag: 1.1, constellation: "Gêmeos", type: "star" },
+      { name: "α Vir", ra: 13.41917, dec: -11.16111, mag: 1.0, constellation: "Virgem", type: "star" },
+      { name: "ε Sgr", ra: 18.40694, dec: -34.38389, mag: 1.8, constellation: "Sagitário", type: "star" },
+      { name: "σ Sgr", ra: 18.91972, dec: -26.29694, mag: 2.0, constellation: "Sagitário", type: "star" }
+    ];
+
+    // ============================================
+    // CONEXÕES DAS CONSTELAÇÕES (CORRIGIDAS)
+    // ============================================
+    const constellationLines = {
+      "Escorpião": [
+        ["α Sco", "δ Sco"], ["δ Sco", "σ Sco"], ["σ Sco", "τ Sco"],
+        ["τ Sco", "ε Sco"], ["ε Sco", "α Sco"]
+      ],
+      "Cruzeiro do Sul": [
+        ["α Cru", "γ Cru"], ["γ Cru", "β Cru"], ["β Cru", "δ Cru"],
+        ["δ Cru", "α Cru"]
+      ],
+      "Órion": [
+        ["α Ori", "β Ori"], ["β Ori", "ζ Ori"], ["ζ Ori", "ε Ori"],
+        ["ε Ori", "δ Ori"], ["δ Ori", "α Ori"], ["ζ Ori", "δ Ori"]
+      ],
+      "Leão": [ ["α Leo", "γ Leo"], ["γ Leo", "β Leo"] ],
+      "Gêmeos": [ ["α Gem", "β Gem"] ]
+    };
+
+    // ============================================
+    // FUNÇÕES MATEMÁTICAS
+    // ============================================
+    const deg2rad = deg => deg * Math.PI / 180;
+    const rad2deg = rad => rad * 180 / Math.PI;
+    const floor = x => Math.floor(x);
+    
+    function calculateJulianDay(year, month, day, hour) {
+      if (month <= 2) { year -= 1; month += 12; }
+      const A = floor(year / 100), B = 2 - A + floor(A / 4);
+      return B + floor(365.25 * (year + 4716)) + floor(30.60001 * (month + 1)) + day + hour/24 + 1720994.5;
+    }
+    
+    function calculateTSG(JD) {
+      const year = new Date((JD - 1721425.5) * 86400000).getUTCFullYear();
+      const JD0 = calculateJulianDay(year, 1, 0, 0), S = (JD0 - 2451545.0) / 36525;
+      let TSG_sec = 24110.54841 + 8640184.812866*S + 0.093104*S*S - 6e-6*S*S*S/3600;
+      let TSG = (TSG_sec/3600) % 24; if (TSG < 0) TSG += 24;
+      const UT_hours = (JD % 1) * 24;
+      TSG = (TSG + 1.002737909 * UT_hours) % 24;
+      return TSG < 0 ? TSG + 24 : TSG;
+    }
+    
+    function calculateTSL(TSG, longitude) { return (TSG + longitude/15) % 24; }
+    
+    function calculateHorizontalCoords(ra, dec, tsl, latitude) {
+      let AH_hours = tsl - ra;
+      while (AH_hours > 12) AH_hours -= 24; while (AH_hours < -12) AH_hours += 24;
+      const AH_deg = AH_hours * 15, phi = deg2rad(latitude), delta = deg2rad(dec), AH = deg2rad(AH_deg);
+      const sin_h = Math.sin(delta)*Math.sin(phi) + Math.cos(delta)*Math.cos(phi)*Math.cos(AH);
+      const h_rad = Math.asin(sin_h), h_deg = rad2deg(h_rad);
+      const cos_Az = (Math.sin(delta) - Math.sin(phi)*sin_h) / (Math.cos(phi)*Math.cos(h_rad));
+      const cos_Az_clamped = Math.max(-1, Math.min(1, cos_Az));
+      let Az_deg = rad2deg(Math.acos(cos_Az_clamped));
+      if (Math.sin(AH) < 0) Az_deg = 360 - Az_deg;
+      return { az: Az_deg, alt: h_deg, ah: AH_deg };
+    }
+    
+    function calculateMoonPhase(JD) {
+      const synodicMonth = 29.53058867, knownNewMoon = 2451550.1;
+      const phase = ((JD - knownNewMoon) / synodicMonth) % 1;
+      const age = phase * synodicMonth, illumination = (1 - Math.cos(2*Math.PI*phase))/2 * 100;
+      let phaseName;
+      if (phase < 0.0625 || phase > 0.9375) phaseName = "Lua Nova";
+      else if (phase < 0.1875) phaseName = "Lua Crescente";
+      else if (phase < 0.3125) phaseName = "Quarto Crescente";
+      else if (phase < 0.4375) phaseName = "Crescente Gibosa";
+      else if (phase < 0.5625) phaseName = "Lua Cheia";
+      else if (phase < 0.6875) phaseName = "Minguante Gibosa";
+      else if (phase < 0.8125) phaseName = "Quarto Minguante";
+      else phaseName = "Lua Minguante";
+      return { phase, age, illumination, phaseName };
+    }
+    
+    function calculateMoonPosition(JD, TSL, latitude) {
+      const daysSinceJ2000 = JD - 2451545.0;
+      const L0 = 218.316 + 13.176396*daysSinceJ2000, P = 83.353 + 0.111404*daysSinceJ2000;
+      const Omega = 125.045 - 0.052954*daysSinceJ2000, M = L0 - P, C = 6.289*Math.sin(deg2rad(M));
+      const lambda = L0 + C, beta = 5.128*Math.sin(deg2rad(L0 - Omega)), epsilon = 23.439;
+      const ra = rad2deg(Math.atan2(Math.sin(deg2rad(lambda))*Math.cos(deg2rad(epsilon)) - Math.tan(deg2rad(beta))*Math.sin(deg2rad(epsilon)), Math.cos(deg2rad(lambda))));
+      const dec = rad2deg(Math.asin(Math.sin(deg2rad(beta))*Math.cos(deg2rad(epsilon)) + Math.cos(deg2rad(beta))*Math.sin(deg2rad(epsilon))*Math.sin(deg2rad(lambda))));
+      return calculateHorizontalCoords(((ra%360)+360)%360/15, dec, TSL, latitude);
+    }
+    
+    // MAGNITUDES REAIS DOS PLANETAS
+    function calculatePlanetPosition(planet, JD, TSL, latitude) {
+      const daysSinceJ2000 = JD - 2451545.0;
+      const planetData = { 
+        "Mercúrio": { period: 87.97, mag: -1.6 }, 
+        "Vênus": { period: 224.70, mag: -4.6 }, 
+        "Marte": { period: 686.98, mag: -2.0 }, 
+        "Júpiter": { period: 4332.59, mag: -2.2 }, 
+        "Saturno": { period: 10759.22, mag: -0.4 } 
+      };
+      const data = planetData[planet]; 
+      if (!data) return null;
+      const angle = (daysSinceJ2000 / data.period * 360) % 360;
+      const ra = ((angle + 180) % 360) / 15, dec = Math.sin(deg2rad(angle)) * 23.5;
+      const coords = calculateHorizontalCoords(ra, dec, TSL, latitude);
+      return { ...coords, ra, dec, mag: data.mag, name: planet };
+    }
+    
+    function getVisibleObjects(stars, latitude, tsl, moonCoords, planets, minAltitude = -5) {
+      const objects = [];
+      stars.forEach(star => {
+        const coords = calculateHorizontalCoords(star.ra, star.dec, tsl, latitude);
+        if (coords.alt > minAltitude) objects.push({ ...star, az: coords.az, alt: coords.alt });
+      });
+      if (moonCoords && moonCoords.alt > minAltitude) {
+        objects.push({ name: "Lua", type: "moon", az: moonCoords.az, alt: moonCoords.alt, mag: -12.7, constellation: "" });
+      }
+      planets.forEach(planet => {
+        if (planet && planet.alt > minAltitude) objects.push({ 
+          name: planet.name, type: "planet", az: planet.az, alt: planet.alt, 
+          mag: planet.mag, constellation: "" 
+        });
+      });
+      return objects.sort((a, b) => a.mag - b.mag);
+    }
+
+    // ============================================
+    // FUNÇÕES DE INTERFACE
+    // ============================================
+    const formatNumber = (num, decimals = 4) => num.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    
+    function drawMoonPhase(canvas, phase, illumination) {
+      const ctx = canvas.getContext('2d'), centerX = canvas.width/2, centerY = canvas.height/2, radius = canvas.width/2 - 2;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, Math.PI*2);
+      ctx.fillStyle = '#e0e0e0'; ctx.fill();
+      if (phase > 0.02 && phase < 0.98) {
+        ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, Math.PI*2);
+        const shadowOffset = Math.cos(2*Math.PI*phase) * radius;
+        const gradient = ctx.createLinearGradient(centerX-radius, centerY, centerX+radius, centerY);
+        if (phase < 0.5) { gradient.addColorStop(0,'rgba(0,0,0,0.9)'); gradient.addColorStop(0.5+shadowOffset/(2*radius),'rgba(0,0,0,0)'); gradient.addColorStop(1,'rgba(0,0,0,0)'); }
+        else { gradient.addColorStop(0,'rgba(0,0,0,0)'); gradient.addColorStop(0.5+shadowOffset/(2*radius),'rgba(0,0,0,0)'); gradient.addColorStop(1,'rgba(0,0,0,0.9)'); }
+        ctx.fillStyle = gradient; ctx.fill();
+      }
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+    }
+    
+    function drawMoonDisc(ctx, x, y, radius, phase) {
+      ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI*2);
+      ctx.fillStyle = '#f0f0f0'; ctx.fill();
+      if (phase > 0.02 && phase < 0.98) {
+        ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI*2);
+        const shadowOffset = Math.cos(2*Math.PI*phase) * radius;
+        const gradient = ctx.createLinearGradient(x-radius, y, x+radius, y);
+        if (phase < 0.5) { gradient.addColorStop(0,'rgba(0,0,0,0.85)'); gradient.addColorStop(0.5+shadowOffset/(2*radius),'rgba(0,0,0,0)'); gradient.addColorStop(1,'rgba(0,0,0,0)'); }
+        else { gradient.addColorStop(0,'rgba(0,0,0,0)'); gradient.addColorStop(0.5+shadowOffset/(2*radius),'rgba(0,0,0,0)'); gradient.addColorStop(1,'rgba(0,0,0,0.85)'); }
+        ctx.fillStyle = gradient; ctx.fill();
+      }
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+    }
+
+    // ============================================
+    // FUNÇÃO PARA ATUALIZAR O PAINEL DE INFORMAÇÕES
+    // ============================================
+    function updateInfoPanel(data) {
+      const panel = document.getElementById('infoPanel');
+      const content = document.getElementById('infoPanelContent');
+      const title = document.getElementById('infoPanelTitle');
+      
+      if (!data) {
+        panel.classList.remove('visible');
+        return;
+      }
+      
+      panel.classList.add('visible');
+      
+      let html = '';
+      
+      // Nome e tipo do objeto
+      const typeEmoji = { 'star': '⭐', 'moon': '🌙', 'planet': '🪐' };
+      const typeName = { 'star': 'Estrela', 'moon': 'Lua', 'planet': 'Planeta' };
+      
+      title.textContent = `${typeEmoji[data.type] || '✨'} ${data.name}`;
+      
+      html += '<div class="info-grid">';
+      
+      // Constelação e tipo
+      html += '<div class="info-detail">';
+      html += '<div class="info-detail-label">Tipo</div>';
+      html += `<div class="info-detail-value">${typeName[data.type] || 'Objeto celeste'}</div>`;
+      if (data.constellation) {
+        html += `<div class="info-constellation-badge" style="margin-top:0.5rem;">${data.constellation}</div>`;
+      }
+      html += '</div>';
+      
+      // Coordenadas
+      html += '<div class="info-detail">';
+      html += '<div class="info-detail-label">Azimute</div>';
+      html += `<div class="info-detail-value">${formatNumber(data.az, 1)}°</div>`;
+      html += '<div class="info-detail-label" style="margin-top:0.5rem;">Altura</div>';
+      html += `<div class="info-detail-value">${formatNumber(data.alt, 1)}°</div>`;
+      html += '</div>';
+      
+      // Magnitude
+      if (data.mag !== undefined) {
+        html += '<div class="info-detail">';
+        html += '<div class="info-detail-label">Magnitude aparente</div>';
+        html += `<div class="info-detail-value">${data.mag.toFixed(1)}</div>`;
+        html += '</div>';
+      }
+      
+      // Visibilidade
+      const visibilityStatus = data.alt > 30 ? 'Ótima visibilidade' : 
+                               data.alt > 15 ? 'Boa visibilidade' : 
+                               data.alt > 5 ? 'Visibilidade razoável' : 
+                               'Próximo ao horizonte';
+      
+      const visibilityColor = data.alt > 30 ? '#4ade80' : 
+                              data.alt > 15 ? '#fbbf24' : 
+                              data.alt > 5 ? '#f97316' : '#ef4444';
+      
+      html += '<div class="info-detail">';
+      html += '<div class="info-detail-label">Visibilidade</div>';
+      html += `<div class="info-detail-value" style="color: ${visibilityColor};">${visibilityStatus}</div>`;
+      html += '</div>';
+      
+      html += '</div>'; // Fecha info-grid
+      
+      // Informações específicas da Lua
+      if (data.type === 'moon' && data.info) {
+        html += `
+          <div class="moon-phase-mini" style="margin-top:1rem;">
+            <canvas id="infoMoonCanvas" width="50" height="50" style="border-radius: 50%; background: #f0f0f0; box-shadow: 0 0 20px rgba(240,240,240,0.5);"></canvas>
+            <div>
+              <strong style="color: #f0f0f0;">${data.info.phaseName}</strong>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">Iluminação: ${formatNumber(data.info.illumination, 1)}%</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">Idade: ${formatNumber(data.info.age, 1)} dias</div>
+            </div>
+          </div>
+        `;
+        
+        setTimeout(() => {
+          const moonCanvas = document.getElementById('infoMoonCanvas');
+          if (moonCanvas) {
+            drawMoonPhase(moonCanvas, data.info.phase, data.info.illumination);
+          }
+        }, 100);
+      }
+      
+      // Informações específicas de planetas
+      if (data.type === 'planet') {
+        const planetInfo = {
+          'Mercúrio': 'Planeta mais próximo do Sol. Superfície coberta de crateras.',
+          'Vênus': 'Planeta mais brilhante do céu noturno. Conhecido como "Estrela d\'Alva".',
+          'Marte': 'O Planeta Vermelho. Alvo de exploração espacial.',
+          'Júpiter': 'Maior planeta do Sistema Solar. Tem 79 luas conhecidas.',
+          'Saturno': 'Famoso por seu sistema de anéis. Segundo maior planeta.'
+        };
+        
+        if (planetInfo[data.name]) {
+          html += `
+            <div class="info-detail" style="margin-top:1rem;">
+              <div class="info-detail-label">💡 Curiosidade</div>
+              <div class="info-detail-value" style="font-size: 0.9rem;">${planetInfo[data.name]}</div>
+            </div>
+          `;
+        }
+      }
+      
+      content.innerHTML = html;
+      
+      // Scroll suave até o painel
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ============================================
+    // GEOLOCALIZAÇÃO MELHORADA
+    // ============================================
+    async function geocodeCity(cityName) {
+      const apis = [
+        async () => {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=3&addressdetails=1&accept-language=pt-BR`;
+          const response = await fetch(url, { 
+            headers: { 'User-Agent': 'CartaCeleste-Edu/1.0', 'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8' }
+          });
+          if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+          const data = await response.json();
+          if (!data || data.length === 0) return null;
+          return data;
+        },
+        async () => {
+          const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(cityName)}&limit=3&lang=pt`;
+          const response = await fetch(url);
+          if (!response.ok) return null;
+          const data = await response.json();
+          if (!data || !data.features || data.features.length === 0) return null;
+          return data.features.map(f => ({
+            lat: f.geometry.coordinates[1],
+            lon: f.geometry.coordinates[0],
+            display_name: f.properties.name + (f.properties.country ? ', ' + f.properties.country : '')
+          }));
+        }
+      ];
+
+      let bestMatch = null;
+
+      for (const apiCall of apis) {
+        try {
+          const results = await apiCall();
+          if (results && results.length > 0) {
+            const searchTerms = cityName.toLowerCase().split(/[,\s]+/);
+            
+            for (const result of results) {
+              const resultName = (result.display_name || '').toLowerCase();
+              const matchScore = searchTerms.filter(term => resultName.includes(term)).length;
+              
+              if (matchScore >= 1) {
+                if (!bestMatch || matchScore > bestMatch.score) {
+                  bestMatch = {
+                    latitude: result.lat || parseFloat(result.lat),
+                    longitude: result.lon || parseFloat(result.lon),
+                    displayName: result.display_name || `${result.lat}, ${result.lon}`,
+                    score: matchScore
+                  };
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('API de geocodificação falhou:', error);
+          continue;
+        }
+      }
+
+      if (!bestMatch) {
+        throw new Error('Cidade não encontrada. Tente um formato como: "Alfenas, MG" ou "São Paulo, Brasil"');
+      }
+
+      return {
+        latitude: bestMatch.latitude,
+        longitude: bestMatch.longitude,
+        displayName: bestMatch.displayName
+      };
+    }
+    
+    async function searchCities(query) {
+      if (query.length < 3) return [];
+      
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=pt-BR`;
+        const response = await fetch(url, { 
+          headers: { 'User-Agent': 'CartaCeleste-Edu/1.0', 'Accept-Language': 'pt-BR' }
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.map(item => ({
+          displayName: item.display_name,
+          latitude: parseFloat(item.lat),
+          longitude: parseFloat(item.lon)
+        }));
+      } catch (error) {
+        console.error('Erro na busca:', error);
+        return [];
+      }
+    }
+    
+    function getCurrentLocation() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) { 
+          reject(new Error('Geolocalização não suportada pelo navegador')); 
+          return; 
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            reverseGeocode(position.coords.latitude, position.coords.longitude)
+              .then(cityName => {
+                resolve({ 
+                  latitude: position.coords.latitude, 
+                  longitude: position.coords.longitude, 
+                  displayName: cityName || `Sua localização (${position.coords.latitude.toFixed(4)}°, ${position.coords.longitude.toFixed(4)}°)` 
+                });
+              })
+              .catch(() => {
+                resolve({ 
+                  latitude: position.coords.latitude, 
+                  longitude: position.coords.longitude, 
+                  displayName: `Sua localização (${position.coords.latitude.toFixed(4)}°, ${position.coords.longitude.toFixed(4)}°)` 
+                });
+              });
+          },
+          error => {
+            let msg;
+            switch(error.code) {
+              case error.PERMISSION_DENIED: 
+                msg = 'Permissão de localização negada. Permita o acesso no navegador e tente novamente.'; 
+                break;
+              case error.POSITION_UNAVAILABLE: 
+                msg = 'Localização indisponível. Verifique se o GPS está ativado.'; 
+                break;
+              case error.TIMEOUT: 
+                msg = 'Tempo esgotado. Tente novamente em alguns segundos.'; 
+                break;
+              default: 
+                msg = 'Erro ao obter localização. Tente digitar a cidade manualmente.';
+            }
+            reject(new Error(msg));
+          },
+          { 
+            enableHighAccuracy: true, 
+            timeout: 20000, 
+            maximumAge: 300000 
+          }
+        );
+      });
+    }
+    
+    async function reverseGeocode(lat, lon) {
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=pt-BR`;
+        const response = await fetch(url, { 
+          headers: { 'User-Agent': 'CartaCeleste-Edu/1.0' }
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        
+        if (data.address) {
+          const addr = data.address;
+          return addr.city || addr.town || addr.village || addr.municipality || addr.county || data.display_name;
+        }
+        return data.display_name;
+      } catch (error) {
+        console.error('Reverse geocoding falhou:', error);
+        return null;
+      }
+    }
+
+    // ============================================
+    // RENDERIZAÇÃO DA CARTA CELESTE
+    // ============================================
+    function renderCelestialChart(canvas, results) {
+      const ctx = canvas.getContext('2d');
+      const parent = canvas.parentElement;
+      const w = parent.clientWidth, h = parent.clientHeight;
+      canvas.width = w; canvas.height = h;
+      const centerX = w/2, centerY = h/2;
+      const radius = Math.min(w, h) * 0.42;
+      
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#020208'; ctx.fillRect(0, 0, w, h);
+      
+      // HORIZONTE
+      ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, Math.PI*2);
+      ctx.fillStyle = '#050510'; ctx.fill();
+      ctx.strokeStyle = '#e94560'; ctx.lineWidth = 2; ctx.stroke();
+      
+      // GRADES
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+      for (let alt = 30; alt <= 60; alt += 30) {
+        const r = radius * ((90 - alt) / 90);
+        ctx.beginPath(); ctx.arc(centerX, centerY, r, 0, Math.PI*2); ctx.stroke();
+      }
+      
+      // CARDINAIS
+      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 15px Segoe UI'; ctx.textAlign = 'center';
+      ctx.fillText('N', centerX, centerY - radius - 15);
+      ctx.fillText('S', centerX, centerY + radius + 22);
+      ctx.fillText('L', centerX + radius + 18, centerY + 5);
+      ctx.fillText('O', centerX - radius - 18, centerY + 5);
+      
+      // PROJEÇÃO ESTEREOGRÁFICA
+      function project(az, alt) {
+        if (alt < 0) return null;
+        const r = radius * Math.tan(deg2rad(90 - alt) / 2);
+        const theta = deg2rad(az - 90);
+        return { x: centerX + r * Math.cos(theta), y: centerY + r * Math.sin(theta) };
+      }
+      
+      window.activeChartTargets = [];
+      
+      // CONSTELAÇÕES
+      ctx.strokeStyle = 'rgba(102,204,255,0.75)'; 
+      ctx.lineWidth = 1.5;
+      for (const constellation in constellationLines) {
+        const lines = constellationLines[constellation];
+        lines.forEach(pair => {
+          const starA = results.objects.find(o => o.name === pair[0]);
+          const starB = results.objects.find(o => o.name === pair[1]);
+          if (!starA || !starB) return;
+          
+          if (starA.alt <= 0 || starB.alt <= 0) return;
+          
+          const p1 = project(starA.az, starA.alt);
+          const p2 = project(starB.az, starB.alt);
+          if (!p1 || !p2) return;
+          
+          const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+          if (dist > radius * 1.5) return;
+          
+          const dx = p2.x - p1.x, dy = p2.y - p1.y;
+          const len = Math.sqrt(dx*dx + dy*dy);
+          if (len > 0) {
+            const crossProduct = p1.x * dy - p1.y * dx;
+            const distToCenter = Math.abs(crossProduct) / len;
+            if (distToCenter < radius * 0.1 && dist > radius * 0.8) return;
+          }
+          
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        });
+      }
+      
+      // ESTRELAS
+      results.objects.forEach(obj => {
+        if (obj.type !== 'star' || obj.alt <= 0) return;
+        const pos = project(obj.az, obj.alt); 
+        if (!pos) return;
+        
+        if (Math.hypot(pos.x - centerX, pos.y - centerY) > radius) return;
+        
+        const size = Math.max(1.2, 3.5 - obj.mag * 0.5);
+        const glowSize = size * 2.5;
+        
+        const glow = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glowSize);
+        glow.addColorStop(0, 'rgba(255,255,255,0.9)'); 
+        glow.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        
+        ctx.beginPath(); 
+        ctx.arc(pos.x, pos.y, glowSize, 0, Math.PI*2);
+        ctx.fillStyle = glow; 
+        ctx.fill();
+        
+        ctx.beginPath(); 
+        ctx.arc(pos.x, pos.y, size, 0, Math.PI*2);
+        ctx.fillStyle = obj.mag < 1 ? '#ffffff' : '#ffd76a'; 
+        ctx.fill();
+        
+        if (obj.mag < 1.5) {
+          ctx.fillStyle = 'rgba(255,255,255,0.9)'; 
+          ctx.font = '10px Segoe UI'; 
+          ctx.textAlign = 'left';
+          ctx.fillText(obj.name, pos.x + 8, pos.y - 6);
+        }
+        
+        window.activeChartTargets.push({ 
+          x: pos.x, y: pos.y, 
+          radius: size + 4, 
+          data: obj 
+        });
+      });
+      
+      // PLANETAS
+      results.objects.forEach(obj => {
+        if (obj.type !== 'planet' || obj.alt <= 0) return;
+        const pos = project(obj.az, obj.alt); 
+        if (!pos) return;
+        
+        if (Math.hypot(pos.x - centerX, pos.y - centerY) > radius) return;
+        
+        // Tamanho baseado na magnitude real
+        const planetSize = Math.max(3, 5 + obj.mag * 0.8);
+        
+        ctx.beginPath(); 
+        ctx.arc(pos.x, pos.y, planetSize, 0, Math.PI*2);
+        ctx.fillStyle = '#ff9999'; 
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff'; 
+        ctx.lineWidth = 1; 
+        ctx.stroke();
+        
+        ctx.fillStyle = '#ff9999'; 
+        ctx.font = 'bold 10px Segoe UI';
+        ctx.fillText(obj.name, pos.x + planetSize + 3, pos.y - 3);
+        
+        window.activeChartTargets.push({ 
+          x: pos.x, y: pos.y, 
+          radius: planetSize + 3, 
+          data: obj 
+        });
+      });
+      
+      // LUA
+      if (results.moonCoords && results.moonCoords.alt > 0) {
+        const pos = project(results.moonCoords.az, results.moonCoords.alt);
+        if (pos && Math.hypot(pos.x - centerX, pos.y - centerY) <= radius) {
+          drawMoonDisc(ctx, pos.x, pos.y, 8, results.moonPhase ? results.moonPhase.phase : 0);
+          ctx.fillStyle = '#f0f0f0'; 
+          ctx.font = 'bold 10px Segoe UI';
+          ctx.fillText('Lua', pos.x + 11, pos.y - 4);
+          
+          window.activeChartTargets.push({
+            x: pos.x, y: pos.y, radius: 10,
+            data: { 
+              name: 'Lua', type: 'moon', 
+              az: results.moonCoords.az, 
+              alt: results.moonCoords.alt,
+              mag: -12.7,
+              info: results.moonPhase 
+            }
+          });
+        }
+      }
+    }
+
+    // ============================================
+    // LÓGICA PRINCIPAL
+    // ============================================
+    const cityInput = document.getElementById('cityInput'), 
+          dateInput = document.getElementById('dateInput'),
+          geolocateBtn = document.getElementById('geolocateBtn'), 
+          calculateBtn = document.getElementById('calculateBtn'),
+          locationStatus = document.getElementById('locationStatus'), 
+          calculationsArea = document.getElementById('calculationsArea'),
+          suggestionsList = document.getElementById('suggestionsList'),
+          infoPanel = document.getElementById('infoPanel'),
+          infoPanelClose = document.getElementById('infoPanelClose');
+    
+    let selectedLocation = null;
+    let searchTimeout = null;
+    
+    function setDefaultDateTime() {
+      const now = new Date(); 
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      dateInput.value = now.toISOString().slice(0, 16);
+    }
+    
+    function updateLocationStatus(message, type = 'info') {
+      locationStatus.textContent = message; 
+      locationStatus.className = `status ${type}`; 
+      locationStatus.classList.remove('hidden');
+    }
+    
+    // Fechar painel de informações
+    infoPanelClose.addEventListener('click', () => {
+      infoPanel.classList.remove('visible');
+    });
+    
+    // Sistema de autocomplete
+    cityInput.addEventListener('input', async (e) => {
+      const query = e.target.value.trim();
+      
+      if (searchTimeout) clearTimeout(searchTimeout);
+      
+      if (query.length < 3) {
+        suggestionsList.style.display = 'none';
+        calculateBtn.disabled = true;
+        return;
+      }
+      
+      searchTimeout = setTimeout(async () => {
+        const suggestions = await searchCities(query);
+        
+        if (suggestions.length > 0) {
+          suggestionsList.innerHTML = '';
+          suggestions.forEach(suggestion => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.textContent = suggestion.displayName;
+            div.addEventListener('click', () => {
+              cityInput.value = suggestion.displayName;
+              selectedLocation = suggestion;
+              suggestionsList.style.display = 'none';
+              calculateBtn.disabled = false;
+              updateLocationStatus(`✅ Local selecionado: ${suggestion.displayName}`, 'success');
+            });
+            suggestionsList.appendChild(div);
+          });
+          suggestionsList.style.display = 'block';
+        } else {
+          suggestionsList.style.display = 'none';
+        }
+      }, 300);
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (!cityInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+        suggestionsList.style.display = 'none';
+      }
+    });
+    
+    async function performCalculations(latitude, longitude, dateTime) {
+      const date = new Date(dateTime);
+      const year = date.getUTCFullYear(), month = date.getUTCMonth()+1, day = date.getUTCDate();
+      const hour = date.getUTCHours() + date.getUTCMinutes()/60 + date.getUTCSeconds()/3600;
+      const JD = calculateJulianDay(year, month, day, hour), TSG = calculateTSG(JD), TSL = calculateTSL(TSG, longitude);
+      const moonPhase = calculateMoonPhase(JD);
+      const moonCoords = calculateMoonPosition(JD, TSL, latitude);
+      const planets = ["Mercúrio","Vênus","Marte","Júpiter","Saturno"].map(name => {
+        return calculatePlanetPosition(name, JD, TSL, latitude);
+      }).filter(p => p !== null);
+      const objects = getVisibleObjects(starCatalog, latitude, TSL, moonCoords, planets);
+      return { JD, TSL, latitude, longitude, moonPhase, moonCoords, planets, objects, dateTime: date.toLocaleString('pt-BR') };
+    }
+    
+    function updateCalculationsUI(results) {
+      document.getElementById('jdResult').textContent = formatNumber(results.JD, 5);
+      document.getElementById('tslResult').textContent = `${formatNumber(results.TSL, 4)} h`;
+      
+      if (results.moonPhase) {
+        document.getElementById('moonPhaseSection').classList.remove('hidden');
+        document.getElementById('moonPhaseName').textContent = results.moonPhase.phaseName;
+        document.getElementById('moonIllumination').textContent = `Iluminação: ${formatNumber(results.moonPhase.illumination, 1)}%`;
+        document.getElementById('moonAge').textContent = `Idade: ${formatNumber(results.moonPhase.age, 1)} dias`;
+        drawMoonPhase(document.getElementById('moonCanvas'), results.moonPhase.phase, results.moonPhase.illumination);
+      }
+      
+      const tbody = document.getElementById('starsTableBody'); tbody.innerHTML = '';
+      if (results.objects.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--warning)">Nenhum objeto visível no horizonte agora 😔</td></tr>';
+      } else {
+        results.objects.slice(0, 20).forEach(obj => {
+          const typeLabel = { "star":"⭐ Estrela", "moon":"🌙 Lua", "planet":"🪐 Planeta" }[obj.type];
+          const row = document.createElement('tr');
+          row.innerHTML = `<td><strong>${obj.name}</strong>${obj.constellation?`<br><small>${obj.constellation}</small>`:''}</td><td>${typeLabel}</td><td>${formatNumber(obj.az,2)}°</td><td>${formatNumber(obj.alt,2)}°</td>`;
+          tbody.appendChild(row);
+        });
+        if (results.objects.length > 20) {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td colspan="4" style="text-align:center;color:var(--text-muted)">+${results.objects.length-20} objetos visíveis...</td>`;
+          tbody.appendChild(row);
+        }
+      }
+      
+      const canvas = document.getElementById('celestialChart');
+      renderCelestialChart(canvas, results);
+      if (window.MathJax) MathJax.typesetPromise();
+    }
+    
+    // Event Listeners
+    geolocateBtn.addEventListener('click', async () => {
+      updateLocationStatus('🔄 Obtendo sua localização...', 'info');
+      geolocateBtn.disabled = true; 
+      geolocateBtn.innerHTML = '<span class="loading"></span> Localizando...';
+      
+      try {
+        const location = await getCurrentLocation();
+        cityInput.value = location.displayName;
+        selectedLocation = location;
+        updateLocationStatus(`✅ Localização obtida: ${location.displayName}`, 'success');
+        calculateBtn.disabled = false;
+      } catch (error) { 
+        updateLocationStatus(`❌ ${error.message}`, 'error'); 
+        console.error('Erro de geolocalização:', error);
+      } finally { 
+        geolocateBtn.disabled = false; 
+        geolocateBtn.innerHTML = '<span>🌐</span> Usar minha localização atual'; 
+      }
+    });
+    
+    calculateBtn.addEventListener('click', async () => {
+      const cityName = cityInput.value.trim(), dateTime = dateInput.value;
+      
+      if (!cityName || !dateTime) { 
+        updateLocationStatus('⚠️ Preencha cidade e data/hora', 'error'); 
+        return; 
+      }
+      
+      calculateBtn.disabled = true; 
+      calculateBtn.innerHTML = '<span class="loading"></span> Calculando...';
+      updateLocationStatus('🔄 Processando...', 'info'); 
+      calculationsArea.classList.add('hidden');
+      infoPanel.classList.remove('visible');
+      
+      try {
+        let location = selectedLocation;
+        
+        if (!location || location.displayName !== cityName) {
+          updateLocationStatus('🌍 Buscando coordenadas da cidade...', 'info');
+          location = await geocodeCity(cityName);
+          cityInput.value = location.displayName;
+          selectedLocation = location;
+        }
+        
+        updateLocationStatus('🔭 Calculando posições celestes...', 'info');
+        const results = await performCalculations(location.latitude, location.longitude, dateTime);
+        
+        updateLocationStatus(`✅ Carta celeste gerada para ${location.displayName}`, 'success');
+        updateCalculationsUI(results); 
+        calculationsArea.classList.remove('hidden');
+        
+      } catch (error) { 
+        updateLocationStatus(`❌ Erro: ${error.message}`, 'error'); 
+        console.error('Erro no cálculo:', error);
+      } finally { 
+        calculateBtn.disabled = false; 
+        calculateBtn.innerHTML = '<span>✨</span> Calcular Carta Celeste'; 
+      }
+    });
+    
+    // Interação com o canvas - clique para mostrar informações
+    document.getElementById('celestialChart').addEventListener('click', (e) => {
+      const canvas = e.currentTarget;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      let clicked = null;
+      
+      if (window.activeChartTargets) {
+        let minDistance = Infinity;
+        for (const target of window.activeChartTargets) {
+          const dist = Math.hypot(mx - target.x, my - target.y);
+          if (dist < target.radius && dist < minDistance) {
+            clicked = target.data;
+            minDistance = dist;
+          }
+        }
+      }
+      
+      if (clicked) {
+        updateInfoPanel(clicked);
+      }
+    });
+    
+    // Hover no canvas - mudar cursor
+    document.getElementById('celestialChart').addEventListener('mousemove', (e) => {
+      const canvas = e.currentTarget;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      let hovered = false;
+      
+      if (window.activeChartTargets) {
+        for (const target of window.activeChartTargets) {
+          if (Math.hypot(mx - target.x, my - target.y) < target.radius) {
+            hovered = true;
+            break;
+          }
+        }
+      }
+      
+      canvas.style.cursor = hovered ? 'pointer' : 'crosshair';
+    });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      setDefaultDateTime();
+      cityInput.addEventListener('keypress', e => { 
+        if (e.key === 'Enter' && !calculateBtn.disabled) calculateBtn.click(); 
+      });
+      updateLocationStatus('💡 Digite uma cidade ou use sua localização para começar', 'info');
+    });
+  </script>
+</body>
+</html>

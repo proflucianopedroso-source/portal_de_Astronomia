@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa do Céu - Calculadora Astronômica</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-deep: #030712;
+      --bg-card: rgba(15, 23, 42, 0.7);
+      --border: rgba(99, 179, 237, 0.15);
+      --accent: #38bdf8;
+      --accent-warm: #f59e0b;
+      --text-primary: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .space-bg {
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 20% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 60%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+        linear-gradient(180deg, #030712 0%, #0c1222 50%, #030712 100%);
+      z-index: -2;
+    }
+
+    #starsCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .input-field {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(99, 179, 237, 0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      border: none;
+      border-radius: 10px;
+      padding: 12px 24px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
+    }
+
+    .result-block {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(99, 179, 237, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .moon-container {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #1e293b 0%, #0f172a 100%);
+      box-shadow: inset 0 -8px 20px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #skyMapCanvas {
+      width: 100%;
+      height: 450px;
+      border-radius: 12px;
+      cursor: crosshair;
+      background: #050a15;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .planet-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="space-bg"></div>
+  <canvas id="starsCanvas"></canvas>
+
+  <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+    <header class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold mb-2" style="background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        EVS - Mapa do Céu - Calculadora Astronômica
+      </h1>
+      <p class="text-lg" style="color: var(--text-muted);">Estação, Lua, Planetas e Mapa do Céu</p>
+      <p class="mt-2 text-sm" style="color: var(--accent-warm);">Prof. Luciano Soares Pedroso</p>
+    </header>
+
+    <div class="glass-card p-5 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
+        <div>
+          <label class="block text-xs mb-2" style="color: var(--text-muted);">Data</label>
+          <input type="date" id="dateInput" value="2026-06-14" class="input-field">
+        </div>
+        <div>
+          <label class="block text-xs mb-2" style="color: var(--text-muted);">Hora (UTC)</label>
+          <input type="time" id="timeInput" value="18:00" class="input-field">
+        </div>
+        <div>
+          <label class="block text-xs mb-2" style="color: var(--text-muted);">Latitude</label>
+          <input type="number" id="latInput" step="0.0001" min="-90" max="90" value="-21.43" class="input-field">
+        </div>
+        <div>
+          <label class="block text-xs mb-2" style="color: var(--text-muted);">Longitude</label>
+          <input type="number" id="lonInput" step="0.0001" min="-180" max="180" value="-45.95" class="input-field">
+        </div>
+        <div class="col-span-2">
+          <button id="calcBtn" class="btn-primary w-full">Calcular</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-grid grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="space-y-4">
+        <div class="result-block">
+          <div class="section-title">Estacao do Ano</div>
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: rgba(56, 189, 248, 0.1);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2"/>
+              </svg>
+            </div>
+            <div>
+              <div id="seasonText" class="font-semibold text-lg">—</div>
+              <div id="seasonDetail" class="text-sm" style="color: var(--text-muted);">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-block">
+          <div class="section-title">Fase Lunar</div>
+          <div class="flex items-start gap-5">
+            <div class="moon-container flex-shrink-0">
+              <svg id="moonSvg" width="90" height="90" viewBox="0 0 100 100"></svg>
+            </div>
+            <div class="flex-1 space-y-2">
+              <div id="moonPhaseName" class="font-semibold text-xl" style="color: var(--accent);">—</div>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="p-2 rounded-lg" style="background: rgba(15, 23, 42, 0.6);">
+                  <div style="color: var(--text-muted);">Iluminacao</div>
+                  <div id="moonIllum" class="font-mono font-medium">—</div>
+                </div>
+                <div class="p-2 rounded-lg" style="background: rgba(15, 23, 42, 0.6);">
+                  <div style="color: var(--text-muted);">Idade</div>
+                  <div id="moonAge" class="font-mono font-medium">—</div>
+                </div>
+                <div class="p-2 rounded-lg" style="background: rgba(15, 23, 42, 0.6);">
+                  <div style="color: var(--text-muted);">Azimute</div>
+                  <div id="moonAz" class="font-mono font-medium">—</div>
+                </div>
+                <div class="p-2 rounded-lg" style="background: rgba(15, 23, 42, 0.6);">
+                  <div style="color: var(--text-muted);">Altitude</div>
+                  <div id="moonAlt" class="font-mono font-medium">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-block">
+          <div class="section-title">Planetas Visiveis</div>
+          <div id="planetsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div class="text-sm" style="color: var(--text-muted);">Calculando...</div>
+          </div>
+        </div>
+
+        <div class="result-block">
+          <div class="section-title">Estrela Mais Brilhante Visivel</div>
+          <div id="brightStar" class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full" style="background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);"></div>
+            <div>
+              <div id="starName" class="font-semibold">—</div>
+              <div id="starCoords" class="text-sm font-mono" style="color: var(--text-muted);">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Mapa do Céu (Vista Zenital)</h3>
+          <div class="flex gap-2 text-xs">
+            <span class="flex items-center gap-1"><span class="planet-dot" style="background: #f5f3e8;"></span>Lua</span>
+            <span class="flex items-center gap-1"><span class="planet-dot" style="background: #38bdf8;"></span>Planetas</span>
+          </div>
+        </div>
+        <canvas id="skyMapCanvas"></canvas>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <th class="text-left py-2" style="color: var(--accent);">Objeto</th>
+                <th class="text-left py-2" style="color: var(--accent);">Azimute</th>
+                <th class="text-left py-2" style="color: var(--accent);">Altitude</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <footer class="text-center mt-8 py-4">
+      <p class="text-sm" style="color: var(--text-muted);">EVS para fins Didaticos - LSP 2026</p>
+    </footer>
+  </div>
+
+  <script>
+    // ============ UTILITIES ============
+    const toRad = deg => deg * Math.PI / 180;
+    const toDeg = rad => rad * 180 / Math.PI;
+    const mod = (v, m) => ((v % m) + m) % m;
+    const fmt = (n, d = 1) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+    // ============ ASTRONOMY CORE ============
+    function julianDate(y, m, d, h = 0, min = 0) {
+      if (m <= 2) { y--; m += 12; }
+      const A = Math.floor(y / 100);
+      const B = 2 - A + Math.floor(A / 4);
+      return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5 + (h + min / 60) / 24;
+    }
+
+    function gmst(jd) {
+      const T = (jd - 2451545.0) / 36525.0;
+      return mod(280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T, 360);
+    }
+
+    function sunPosition(jd) {
+      const T = (jd - 2451545.0) / 36525.0;
+      const M = mod(357.52911 + 35999.05029 * T, 360);
+      const L0 = mod(280.46646 + 36000.76983 * T, 360);
+      const C = (1.914602 - 0.004817 * T) * Math.sin(toRad(M)) + 0.019993 * Math.sin(toRad(2 * M));
+      const lambda = L0 + C - 0.00569;
+      const eps = 23.439;
+      const ra = toDeg(Math.atan2(Math.sin(toRad(lambda)) * Math.cos(toRad(eps)), Math.cos(toRad(lambda))));
+      const dec = toDeg(Math.asin(Math.sin(toRad(eps)) * Math.sin(toRad(lambda))));
+      return { lon: lambda, ra: ra / 15, dec };
+    }
+
+    // ============ MOON CALCULATION (CORRIGIDO) ============
+    // Constante para o ciclo sinódico preciso (Meeus)
+    const SYNODIC_MONTH = 29.530588853;
+    const NEW_MOON_JD = 2451550.1; // Lua Nova de referência (6 Jan 2000)
+
+    function getMoonPhase(jd) {
+      // Cálculo preciso da fase baseado no ciclo sinódico
+      const daysSinceNew = jd - NEW_MOON_JD;
+      const phaseCycles = daysSinceNew / SYNODIC_MONTH;
+      const currentCycle = phaseCycles - Math.floor(phaseCycles); // Fração do ciclo (0 a 1)
+      
+      // Idade da lua em dias
+      const age = currentCycle * SYNODIC_MONTH;
+      
+      // Ângulo de fase (0 a 360)
+      // 0 = Nova, 90 = Quarto Crescente, 180 = Cheia, 270 = Quarto Minguante
+      const phaseAngle = currentCycle * 360;
+      
+      // Iluminação
+      const illumination = (1 - Math.cos(toRad(phaseAngle))) / 2;
+      
+      return {
+        angle: phaseAngle,       // 0 a 360
+        illumination: illumination,
+        age: age
+      };
+    }
+
+    function getMoonPosition(jd, sunLon) {
+      // Para posicionar a Lua no mapa corretamente em relação ao Sol:
+      // A Lua se move ~13.2° por dia em longitude eclíptica.
+      // Usamos a fase para determinar a diferença de longitude em relação ao Sol.
+      
+      const phase = getMoonPhase(jd);
+      // Diferença de longitude: Lua - Sol.
+      // Fase 0 (Nova) -> diff = 0
+      // Fase 90 (Crescente) -> diff = 90
+      // Fase 180 (Cheia) -> diff = 180
+      const deltaLon = phase.angle;
+      
+      let moonLon = sunLon + deltaLon;
+      moonLon = mod(moonLon, 360);
+      
+      // Latitude lunar simplificada (varia ±5°, usamos uma função seno para simular)
+      const lat = 5.1 * Math.sin(toRad(moonLon * 1.1)); // Simulação simples para visualização
+      
+      const eps = 23.439;
+      const ra = toDeg(Math.atan2(Math.sin(toRad(moonLon)) * Math.cos(toRad(eps)) - Math.tan(toRad(lat)) * Math.sin(toRad(eps)), Math.cos(toRad(moonLon))));
+      const dec = toDeg(Math.asin(Math.sin(toRad(lat)) * Math.cos(toRad(eps)) + Math.cos(toRad(lat)) * Math.sin(toRad(eps)) * Math.sin(toRad(moonLon))));
+      
+      return { lon: moonLon, lat, ra: ra / 15, dec };
+    }
+
+    const planets = {
+      'Mercúrio': { a: 0.387, e: 0.206, L: 252.25, w: 77.46, n: 4.09233, color: '#a8a8a8' },
+      'Vênus': { a: 0.723, e: 0.007, L: 181.98, w: 131.60, n: 1.60213, color: '#e6c87a' },
+      'Marte': { a: 1.524, e: 0.093, L: 355.45, w: 336.04, n: 0.52402, color: '#e07a5f' },
+      'Júpiter': { a: 5.203, e: 0.049, L: 34.40, w: 14.73, n: 0.08309, color: '#d4a574' },
+      'Saturno': { a: 9.537, e: 0.054, L: 49.95, w: 92.60, n: 0.03344, color: '#f0d890' }
+    };
+
+    function planetPosition(name, jd) {
+      const p = planets[name];
+      const T = (jd - 2451545.0) / 36525.0;
+      const L = mod(p.L + p.n * 36525 * T, 360);
+      const M = mod(L - p.w, 360);
+      let E = toRad(M);
+      for (let i = 0; i < 5; i++) E = toRad(M) + p.e * Math.sin(E);
+      const v = toDeg(2 * Math.atan2(Math.sqrt(1 + p.e) * Math.sin(E / 2), Math.sqrt(1 - p.e) * Math.cos(E / 2)));
+      const lon = mod(v + p.w, 360);
+      const eps = 23.439;
+      const ra = toDeg(Math.atan2(Math.sin(toRad(lon)) * Math.cos(toRad(eps)), Math.cos(toRad(lon))));
+      const dec = toDeg(Math.asin(Math.sin(toRad(eps)) * Math.sin(toRad(lon))));
+      return { lon, ra: ra / 15, dec, color: p.color };
+    }
+
+    function toHorizontal(ra, dec, lat, lst) {
+      const H = toRad(mod(lst - ra * 15, 360));
+      const decR = toRad(dec), latR = toRad(lat);
+      const alt = toDeg(Math.asin(Math.sin(decR) * Math.sin(latR) + Math.cos(decR) * Math.cos(latR) * Math.cos(H)));
+      const az = mod(toDeg(Math.atan2(-Math.sin(H), Math.cos(latR) * Math.tan(decR) - Math.sin(latR) * Math.cos(H))) + 180, 360);
+      return { alt, az };
+    }
+
+    const starCatalog = [
+      { name: 'Sirius', ra: 6.752, dec: -16.716, mag: -1.46 },
+      { name: 'Canopus', ra: 6.399, dec: -52.695, mag: -0.72 },
+      { name: 'Alpha Centauri', ra: 14.660, dec: -60.835, mag: -0.27 },
+      { name: 'Arcturus', ra: 14.261, dec: 19.182, mag: -0.05 },
+      { name: 'Vega', ra: 18.615, dec: 38.783, mag: 0.03 },
+      { name: 'Capella', ra: 5.278, dec: 45.998, mag: 0.08 },
+      { name: 'Rigel', ra: 5.242, dec: -8.201, mag: 0.13 },
+      { name: 'Procyon', ra: 7.655, dec: 5.225, mag: 0.34 },
+      { name: 'Betelgeuse', ra: 5.919, dec: 7.407, mag: 0.42 },
+      { name: 'Achernar', ra: 1.629, dec: -57.237, mag: 0.46 },
+      { name: 'Hadar', ra: 14.064, dec: -60.373, mag: 0.61 },
+      { name: 'Altair', ra: 19.846, dec: 8.868, mag: 0.77 },
+      { name: 'Aldebaran', ra: 4.599, dec: 16.509, mag: 0.85 },
+      { name: 'Antares', ra: 16.490, dec: -26.432, mag: 0.96 },
+      { name: 'Spica', ra: 13.420, dec: -11.161, mag: 0.97 }
+    ];
+
+    // ============ MOON RENDERING ============
+    function drawMoon(svgId, illumination, phaseAngle, isSouthernHemisphere) {
+      const svg = document.getElementById(svgId);
+      svg.innerHTML = '';
+      
+      const r = 42;
+      const cx = 50, cy = 50;
+      
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const grad = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+      grad.setAttribute('id', 'moonGrad');
+      grad.innerHTML = '<stop offset="0%" stop-color="#f5f3e8"/><stop offset="100%" stop-color="#d4d0c4"/>';
+      defs.appendChild(grad);
+      svg.appendChild(defs);
+
+      const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      bg.setAttribute('cx', cx); bg.setAttribute('cy', cy); bg.setAttribute('r', r);
+      bg.setAttribute('fill', '#0a0f1a');
+      svg.appendChild(bg);
+
+      if (illumination < 0.01) return; // Lua Nova
+
+      // Lógica do Terminador Corrigida
+      // Fase 0-180: Crescente (Waxing)
+      // Fase 180-360: Minguante (Waning)
+      const isWaxing = phaseAngle < 180;
+      
+      // HS: Crescente ilumina da ESQUERDA (formato "C")
+      // HN: Crescente ilumina da DIREITA (formato "D")
+      const litRight = (isSouthernHemisphere && !isWaxing) || (!isSouthernHemisphere && isWaxing);
+
+      const termFactor = Math.cos(toRad(phaseAngle));
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      let d;
+      const rx = r * Math.abs(termFactor);
+      
+      if (illumination <= 0.5) {
+        if (litRight) {
+          d = `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} A ${rx} ${r} 0 0 0 ${cx} ${cy - r} Z`;
+        } else {
+          d = `M ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx} ${cy + r} A ${rx} ${r} 0 0 1 ${cx} ${cy - r} Z`;
+        }
+      } else {
+        const fullCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        fullCircle.setAttribute('cx', cx); fullCircle.setAttribute('cy', cy); fullCircle.setAttribute('r', r);
+        fullCircle.setAttribute('fill', 'url(#moonGrad)');
+        svg.appendChild(fullCircle);
+        
+        const shadowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const shadowOnRight = !litRight;
+        let sd;
+        const sRx = rx;
+        
+        if (shadowOnRight) {
+          sd = `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} A ${sRx} ${r} 0 0 0 ${cx} ${cy - r} Z`;
+        } else {
+          sd = `M ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx} ${cy + r} A ${sRx} ${r} 0 0 1 ${cx} ${cy - r} Z`;
+        }
+        
+        shadowPath.setAttribute('d', sd);
+        shadowPath.setAttribute('fill', '#0a0f1a');
+        svg.appendChild(shadowPath);
+        return;
+      }
+
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'url(#moonGrad)');
+      svg.appendChild(path);
+    }
+
+    function getMoonPhaseName(illum, phaseAngle) {
+      if (illum < 0.02) return 'Lua Nova';
+      if (illum < 0.23) return phaseAngle < 180 ? 'Lua Crescente' : 'Lua Minguante';
+      if (illum < 0.27) return phaseAngle < 180 ? 'Quarto Crescente' : 'Quarto Minguante';
+      if (illum < 0.48) return phaseAngle < 180 ? 'Gibosa Crescente' : 'Gibosa Minguante';
+      if (illum < 0.52) return 'Lua Cheia';
+      if (illum < 0.77) return phaseAngle < 180 ? 'Gibosa Crescente' : 'Gibosa Minguante';
+      if (illum < 0.98) return phaseAngle < 180 ? 'Lua Crescente' : 'Lua Minguante';
+      return 'Lua Cheia';
+    }
+
+    // ============ BACKGROUND STARS ============
+    function initBackgroundStars() {
+      const canvas = document.getElementById('starsCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      
+      const stars = [];
+      for (let i = 0; i < 150; i++) {
+        stars.push({
+          x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+          size: Math.random() * 1.5 + 0.5, opacity: Math.random() * 0.5 + 0.2,
+          speed: Math.random() * 0.01 + 0.005, phase: Math.random() * Math.PI * 2
+        });
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        stars.forEach(s => {
+          s.phase += s.speed;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity * (0.5 + 0.5 * Math.sin(s.phase))})`;
+          ctx.fill();
+        });
+        requestAnimationFrame(animate);
+      }
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) animate();
+    }
+
+    // ============ SKY MAP ============
+    function drawSkyMap(objects, lat) {
+      const canvas = document.getElementById('skyMapCanvas');
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      
+      const w = rect.width, h = rect.height;
+      const cx = w / 2;
+      const cy = h * 0.55;
+      const radius = Math.min(w, h) * 0.42;
+      
+      const bg = ctx.createRadialGradient(cx, cy * 0.5, 0, cx, cy * 0.5, radius * 1.5);
+      bg.addColorStop(0, '#0a1628');
+      bg.addColorStop(1, '#030810');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+      
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
+      ctx.lineWidth = 1;
+      [30, 60].forEach(alt => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * (1 - alt / 90), 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+      ctx.font = '600 14px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText('N', cx, cy - radius - 15);
+      ctx.fillText('S', cx, cy + radius + 25);
+      ctx.fillText('L', cx + radius + 20, cy + 5);
+      ctx.fillText('O', cx - radius - 20, cy + 5);
+      
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      for(let i=0; i<100; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const dist = Math.random() * radius;
+        const sx = cx + dist * Math.cos(a);
+        const sy = cy + dist * Math.sin(a);
+        ctx.beginPath();
+        ctx.arc(sx, sy, Math.random() * 1, 0, Math.PI*2);
+        ctx.fill();
+      }
+      
+      objects.forEach(obj => {
+        if (obj.alt < 0) return;
+        
+        const r = radius * (1 - obj.alt / 90);
+        const theta = toRad(obj.az - 90);
+        const x = cx + r * Math.cos(theta);
+        const y = cy + r * Math.sin(theta);
+        
+        obj.screenX = x;
+        obj.screenY = y;
+        
+        if (obj.type === 'moon') {
+          const grd = ctx.createRadialGradient(x, y, 0, x, y, 25);
+          grd.addColorStop(0, 'rgba(245,243,232,0.4)');
+          grd.addColorStop(1, 'rgba(245,243,232,0)');
+          ctx.fillStyle = grd;
+          ctx.beginPath();
+          ctx.arc(x, y, 25, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.arc(x, y, 8, 0, Math.PI * 2);
+          ctx.fillStyle = '#f5f3e8';
+          ctx.fill();
+        } else if (obj.type === 'planet') {
+           const grd = ctx.createRadialGradient(x, y, 0, x, y, 12);
+           grd.addColorStop(0, obj.color);
+           grd.addColorStop(1, 'rgba(0,0,0,0)');
+           ctx.fillStyle = grd;
+           ctx.beginPath();
+           ctx.arc(x, y, 12, 0, Math.PI * 2);
+           ctx.fill();
+
+           ctx.beginPath();
+           ctx.arc(x, y, 5, 0, Math.PI * 2);
+           ctx.fillStyle = obj.color;
+           ctx.fill();
+        } else {
+           const size = Math.max(2, 4 - obj.mag);
+           ctx.beginPath();
+           ctx.arc(x, y, size, 0, Math.PI * 2);
+           ctx.fillStyle = '#ffffff';
+           ctx.fill();
+        }
+      });
+
+      ctx.font = '500 11px Space Grotesk';
+      ctx.textAlign = 'left';
+      objects.forEach(obj => {
+        if (obj.alt > 0 && obj.screenX !== undefined) {
+           ctx.fillStyle = obj.type === 'moon' ? '#f5f3e8' : obj.type === 'planet' ? obj.color : 'rgba(255,255,255,0.7)';
+           ctx.fillText(obj.name, obj.screenX + 12, obj.screenY + 4);
+        }
+      });
+      
+      canvas.objects = objects;
+    }
+
+    // ============ MAIN CALC ============
+    function calculate() {
+      const dateStr = document.getElementById('dateInput').value;
+      const timeStr = document.getElementById('timeInput').value;
+      const lat = parseFloat(document.getElementById('latInput').value) || 0;
+      const lon = parseFloat(document.getElementById('lonInput').value) || 0;
+      
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const [h, min] = timeStr ? timeStr.split(':').map(Number) : [0, 0];
+      
+      const jd = julianDate(y, m, d, h, min);
+      const lst = mod(gmst(jd) + lon, 360);
+      
+      const isSH = lat < 0;
+      
+      // Season
+      const seasonsSH = ['Verao', 'Verao', 'Outono', 'Outono', 'Outono', 'Outono', 'Inverno', 'Inverno', 'Primavera', 'Primavera', 'Primavera', 'Primavera'];
+      document.getElementById('seasonText').textContent = isSH ? seasonsSH[m - 1] : seasonsSH[(m + 5) % 12];
+      document.getElementById('seasonDetail').textContent = isSH ? 'Hemisferio Sul' : 'Hemisferio Norte';
+      
+      // Sun
+      const sun = sunPosition(jd);
+      
+      // Moon Phase & Position (CORRIGIDO)
+      const moonPhase = getMoonPhase(jd);
+      const moonPos = getMoonPosition(jd, sun.lon);
+      const moonHor = toHorizontal(moonPos.ra, moonPos.dec, lat, lst);
+      
+      document.getElementById('moonPhaseName').textContent = getMoonPhaseName(moonPhase.illumination, moonPhase.angle);
+      document.getElementById('moonIllum').textContent = fmt(moonPhase.illumination * 100, 1) + '%';
+      document.getElementById('moonAge').textContent = moonPhase.age.toFixed(1) + ' dias';
+      document.getElementById('moonAz').textContent = fmt(moonHor.az, 1) + '\u00B0';
+      document.getElementById('moonAlt').textContent = fmt(moonHor.alt, 1) + '\u00B0';
+      
+      drawMoon('moonSvg', moonPhase.illumination, moonPhase.angle, isSH);
+      
+      // Planets
+      const visPlanets = [];
+      Object.keys(planets).forEach(name => {
+        const pos = planetPosition(name, jd);
+        const hor = toHorizontal(pos.ra, pos.dec, lat, lst);
+        if (hor.alt > 0) visPlanets.push({ name, ...hor, color: planets[name].color, type: 'planet' });
+      });
+      
+      document.getElementById('planetsGrid').innerHTML = visPlanets.length ? visPlanets.map(p => `
+        <div class="flex items-center gap-2 p-2 rounded-lg" style="background: rgba(15,23,42,0.6);">
+          <span class="planet-dot" style="background: ${p.color}; box-shadow: 0 0 4px ${p.color};"></span>
+          <div class="text-sm font-medium">${p.name}</div>
+        </div>
+      `).join('') : '<div class="text-sm col-span-full" style="color: var(--text-muted);">Nenhum planeta acima do horizonte</div>';
+      
+      // Stars
+      const visStars = [];
+      starCatalog.forEach(s => {
+        const hor = toHorizontal(s.ra, s.dec, lat, lst);
+        if (hor.alt > 0) visStars.push({ ...s, ...hor, type: 'star' });
+      });
+      visStars.sort((a, b) => a.mag - b.mag);
+      
+      if (visStars.length) {
+        document.getElementById('starName').textContent = visStars[0].name;
+        document.getElementById('starCoords').textContent = `az ${fmt(visStars[0].az, 1)}\u00B0 | alt ${fmt(visStars[0].alt, 1)}\u00B0 | mag ${visStars[0].mag}`;
+      } else {
+        document.getElementById('starName').textContent = 'Nenhuma visivel';
+        document.getElementById('starCoords').textContent = '-';
+      }
+      
+      // Sky Map
+      const allObjects = [
+        { name: 'Lua', ...moonHor, type: 'moon' }, 
+        ...visPlanets, 
+        ...visStars.slice(0, 6)
+      ];
+      drawSkyMap(allObjects, lat);
+      
+      // Table
+      document.getElementById('dataTableBody').innerHTML = allObjects.filter(o => o.alt > 0).map(o => `
+        <tr style="border-bottom: 1px solid rgba(99,179,237,0.05);">
+          <td class="py-2">
+            <span class="planet-dot" style="background: ${o.type === 'moon' ? '#f5f3e8' : o.type === 'planet' ? o.color : '#fff'};"></span>
+            ${o.name}
+          </td>
+          <td class="py-2 font-mono text-xs">${fmt(o.az, 1)}\u00B0</td>
+          <td class="py-2 font-mono text-xs">${fmt(o.alt, 1)}\u00B0</td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', calculate);
+    window.addEventListener('load', () => { initBackgroundStars(); calculate(); });
+  </script>
+</body>
+</html>

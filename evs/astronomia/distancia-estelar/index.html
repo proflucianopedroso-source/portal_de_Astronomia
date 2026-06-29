@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Distância Estelar | Versão Moderna</title>
+  <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+  <style>
+    /* Google Fonts para uma melhor tipografia */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+    :root {
+      --primary-color: #0d3b66;
+      --secondary-color: #faf0ca;
+      --accent-color: #f4d35e;
+      --background-color: #f9f9f9;
+      --text-color: #333;
+      --container-bg: #ffffff;
+      --border-radius: 12px;
+      --box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 2rem 1rem;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      margin: auto;
+      padding: 2rem;
+      background: var(--container-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      transition: all 0.3s ease-in-out;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 1rem;
+    }
+
+    h2 {
+      color: var(--primary-color);
+      margin-top: 0;
+      font-size: 2rem;
+    }
+
+    p {
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--primary-color);
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 1rem;
+      transition: all 0.2s ease-in-out;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary-color);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.2);
+    }
+    
+    button {
+      background: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+      border: none;
+      font-size: 1.1rem;
+      margin-top: 1rem;
+    }
+
+    button:hover {
+      background: #1a5b99;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .resultado {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: #eef7ff;
+      border-left: 5px solid var(--primary-color);
+      border-radius: 8px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      display: none; /* Oculto por padrão */
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    small {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: #555;
+    }
+
+    .formula-display {
+      font-family: "Georgia", serif;
+      font-size: 2em;
+      text-align: center;
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      color: var(--primary-color);
+    }
+    
+    .formula-display code {
+        font-family: monospace;
+        background: #eee;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .links-info ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .links-info li {
+      margin-bottom: 0.5rem;
+    }
+    .links-info a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .links-info a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 700px) {
+      body {
+          padding: 0;
+      }
+      .container {
+        width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 1.5rem;
+        min-height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h2 align="center">Calculadora de Distância Estelar</h2>
+	<h2 align="center"><font size="5" color="#000080">Modelo</font><small><font size="5" color="#000080">
+	</font></small><font size="5" color="#000080">003</font></h2>
+	<p align="center">Luciano e Julio</p>
+	<p align="center">setembro de 2025</p>
+      <p>Calcule a distância de uma estrela com base em sua iluminância (fluxo 
+		aferido no Smartphone - em lx) e luminosidade absoluta.</p>
+    </header>
+
+    <section class="calculator">
+      <div class="form-group">
+        <label for="fluxo">Iluminância (F) em lux (lx)</label>
+        <input type="number" id="fluxo" step="any" placeholder="Ex: 0.0015" />
+        <small>O valor em lux será convertido para W/m² usando um fator de eficácia luminosa de ~93 lm/W.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="estrelas">Selecione uma estrela para carregar sua luminosidade</label>
+        <select id="estrelas" onchange="preencherLuminosidade()">
+            <option value="">-- Selecione uma estrela --</option>
+            <option value="7.9e27" title="Sirius - Cão Maior">Sirius</option>
+            <option value="1.4e31" title="Canopus - Carina">Canopus</option>
+            <option value="5.6e26" title="Alpha Centauri - Centauro">Alpha Centauri</option>
+            <option value="3.0e30" title="Beta Centauri - Centauro">Beta Centauri</option>
+            <option value="3.4e29" title="Achernar - Eridanus">Achernar</option>
+            <option value="3.0e30" title="Hadar (Beta Cen) - Centauro">Hadar (Beta Cen)</option>
+            <option value="5.8e28" title="Acrux - Cruzeiro do Sul">Acrux</option>
+            <option value="6.5e29" title="Miaplacidus - Carina">Miaplacidus</option>
+            <option value="1.9e29" title="Gacrux - Cruzeiro do Sul">Gacrux</option>
+            <option value="8.8e28" title="Bellatrix - Órion">Bellatrix</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="luminosidade">Luminosidade Absoluta (L) em Watts (W)</label>
+        <input type="number" id="luminosidade" step="any" placeholder="Selecione uma estrela ou insira o valor" />
+        <small>Energia total que a estrela irradia por segundo. Valores aproximados.</small>
+      </div>
+
+      <button onclick="calcularDistancia()">Calcular Distância</button>
+
+      <div id="resultado" class="resultado"></div>
+    </section>
+
+    <section class="formula-info">
+      <h3>Fórmula Utilizada</h3>
+      <div class="formula-display">
+        d = &radic;[ L / (4&pi;F) ]
+      </div>
+      <p>Onde <code>d</code> é a distância, <code>L</code> é a luminosidade absoluta (W) e <code>F</code> é o fluxo recebido (W/m²).</p>
+    </section>
+    
+    <section class="links-info">
+        <h3>Links para Consulta (SIMBAD)</h3>
+        <ul>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Sirius" target="_blank" rel="noopener">Sirius (Cão Maior)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Canopus" target="_blank" rel="noopener">Canopus (Carina)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Alpha+Centauri" target="_blank" rel="noopener">Alpha Centauri (Centauro)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Beta+Centauri" target="_blank" rel="noopener">Beta Centauri (Centauro)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Achernar" target="_blank" rel="noopener">Achernar (Eridanus)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Hadar" target="_blank" rel="noopener">Hadar (Beta Cen) (Centauro)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Acrux" target="_blank" rel="noopener">Acrux (Cruzeiro do Sul)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Miaplacidus" target="_blank" rel="noopener">Miaplacidus (Carina)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Gacrux" target="_blank" rel="noopener">Gacrux (Cruzeiro do Sul)</a></li>
+          <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=Bellatrix" target="_blank" rel="noopener">Bellatrix (Órion)</a></li>
+        </ul>
+    </section>
+  </main>
+
+  <script>
+    function preencherLuminosidade() {
+      const select = document.getElementById("estrelas");
+      const valorL = select.value;
+      document.getElementById("luminosidade").value = valorL;
+    }
+
+    function calcularDistancia() {
+      const F_lux = parseFloat(document.getElementById("fluxo").value);
+      const L = parseFloat(document.getElementById("luminosidade").value);
+      const resultadoDiv = document.getElementById("resultado");
+
+      if (!F_lux || !L || F_lux <= 0 || L <= 0) {
+        resultadoDiv.style.display = "block";
+        resultadoDiv.innerHTML = "<strong>Erro:</strong> Por favor, insira valores numéricos positivos para a iluminância (F) e a luminosidade (L).";
+        return;
+      }
+      
+      // Fator de conversão aproximado de lux (lm/m²) para W/m².
+      // Baseado em uma eficácia luminosa média para espectro de luz estelar/solar.
+      // 1 W/m² ≈ 93 lux. Portanto, para converter lux para W/m², dividimos por 93.
+      const LUMINOSA_EFICACIA = 93;
+      const F_wm2 = F_lux / LUMINOSA_EFICACIA;
+
+      // Fórmula: d = sqrt(L / (4 * PI * F))
+      const d_metros = Math.sqrt(L / (4 * Math.PI * F_wm2));
+      
+      // Conversões para outras unidades
+      const d_parsecs = d_metros / 3.086e16;
+      const d_anosluz = d_metros / 9.461e15;
+
+      resultadoDiv.style.display = "block";
+      resultadoDiv.innerHTML =
+        `<strong>Distância Estimada:</strong><br>
+         <b>${d_metros.toExponential(3)} metros</b><br>
+         Aproximadamente <b>${d_parsecs.toFixed(3)} parsecs</b><br>
+         Aproximadamente <b>${d_anosluz.toFixed(3)} anos-luz</b>`;
+    }
+  </script>
+</body>
+</html>

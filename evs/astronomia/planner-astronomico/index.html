@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVS - Planner Astronômico</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0f1a;
+    color: white;
+}
+
+header {
+    text-align: center;
+    padding: 15px;
+    background: linear-gradient(90deg,#1a237e,#000);
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    height: calc(100vh - 80px);
+}
+
+@media(max-width:800px){
+    .container{
+        grid-template-columns:1fr;
+        grid-template-rows:320px 1fr;
+    }
+}
+
+.panel {
+    padding: 15px;
+    background:#12182b;
+    overflow:auto;
+}
+
+.card {
+    background:#1a2138;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.status {
+    padding:8px;
+    border-radius:8px;
+    text-align:center;
+    font-weight:bold;
+}
+
+.ruim { background:#b71c1c; }
+.moderado { background:#f9a825; color:#000; }
+.excelente { background:#1b5e20; }
+
+/* Ajuste para o input date e time manterem o mesmo estilo */
+input[type="date"] {
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:8px;
+    border:none;
+    font-size:16px;
+    background:#2a3350;
+    color:white;
+    /* Alguns navegadores ignoram o color em input date, mas mantemos a consistência */
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+select, input[type="time"] {
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:8px;
+    border:none;
+    font-size:16px;
+    background:#2a3350;
+    color:white;
+}
+
+select option {
+    background:#1a2138;
+}
+
+iframe {
+    width:100%;
+    height:100%;
+    border:none;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🌌 Planner Astronômico</h2>
+<p>Prof. Luciano Soares Pedroso</p>
+<p>Alfenas-MG | 18h–21h</p>
+</header>
+
+<div class="container">
+
+<div class="panel">
+
+<!-- 📅 Trocamos o select por um input date -->
+<input type="date" id="data" value="2026-06-04" onchange="updateAll()">
+
+<input type="time" id="hora" value="19:00" onchange="updateAll()">
+
+<div class="card">
+<h3>🌙 Lua</h3>
+<p id="lua"></p>
+</div>
+
+<div class="card">
+<h3>🌌 Qualidade do Céu</h3>
+<div id="status" class="status"></div>
+</div>
+
+<div class="card">
+<h3>🔭 Recomendações</h3>
+<p id="rec"></p>
+</div>
+
+</div>
+
+<iframe id="sky"
+src="https://stellarium-web.org/?lat=-21.4&lng=-45.9&alt=850&date=2026-06-04T19:00:00">
+</iframe>
+
+</div>
+
+<script>
+// ========== NOVA LÓGICA (substitui o objeto 'dados') ==========
+
+// Lua nova de referência (15/06/2026, 00:00 UTC) – fase 0
+const LUA_NOVA_REF = new Date(Date.UTC(2026, 5, 15)); // mês 5 = junho
+
+function obterIdadeLua(dataAlvo) {
+    // Diferença em dias (pode ser negativo)
+    const diffDias = (dataAlvo - LUA_NOVA_REF) / (1000 * 60 * 60 * 24);
+    // Ciclo lunar médio
+    const ciclo = 29.53058867;
+    // Idade em dias (0 a ciclo)
+    let idade = diffDias % ciclo;
+    if (idade < 0) idade += ciclo;
+    return idade;
+}
+
+function faseLua(idade) {
+    // Mapeamento de idade (dias) para fase
+    if (idade < 1.5) {
+        return { emoji: "🌑", nome: "Lua Nova", classe: "excelente", texto: "Excelente", rec: "🌑 Céu escuro a noite toda. Ideal para céu profundo e Via Láctea." };
+    } else if (idade < 6.5) {
+        return { emoji: "🌒", nome: "Lua Crescente", classe: "moderado", texto: "Boa após o pôr da Lua", rec: "⏰ Lua se põe cedo. Céu escuro no resto da noite. Ótimo para objetos fracos após o ocaso lunar." };
+    } else if (idade < 8.5) {
+        return { emoji: "🌓", nome: "Quarto Crescente", classe: "moderado", texto: "Moderada", rec: "🌓 Céu parcialmente iluminado. Observe até meia-noite; depois a Lua interfere." };
+    } else if (idade < 13.5) {
+        return { emoji: "🌔", nome: "Gibosa Crescente", classe: "ruim", texto: "Ruim", rec: "❌ Lua muito forte. Prefira observar a Lua e planetas brilhantes." };
+    } else if (idade < 15.5) {
+        return { emoji: "🌕", nome: "Lua Cheia", classe: "ruim", texto: "Ruim", rec: "❌ Céu extremamente iluminado. Aproveite para ver a Lua e as constelações mais brilhantes." };
+    } else if (idade < 21.5) {
+        return { emoji: "🌖", nome: "Gibosa Minguante", classe: "ruim", texto: "Ruim", rec: "❌ Lua ainda muito clara. Observe apenas objetos brilhantes ou aguarde a madrugada." };
+    } else if (idade < 23.5) {
+        return { emoji: "🌗", nome: "Minguante", classe: "excelente", texto: "Excelente", rec: "✅ Via Láctea visível. Céu escuro a partir da meia-noite. Excelente para astrofotografia." };
+    } else if (idade < 28.5) {
+        return { emoji: "🌘", nome: "Minguante fina", classe: "excelente", texto: "Excelente", rec: "✅ Melhor condição! Céu muito escuro. Aproveite galáxias, nebulosas e aglomerados." };
+    } else {
+        // 28.5 até 29.5 – volta à Lua Nova
+        return { emoji: "🌑", nome: "Lua Nova", classe: "excelente", texto: "Excelente", rec: "🌑 Céu totalmente escuro. Perfeito para céu profundo." };
+    }
+}
+
+function updateAll() {
+    const dataStr = document.getElementById("data").value;
+    const horaStr = document.getElementById("hora").value;
+
+    // Monta a data UTC (meio-dia para evitar fuso)
+    const [ano, mes, dia] = dataStr.split("-").map(Number);
+    const dataObj = new Date(Date.UTC(ano, mes - 1, dia));
+
+    const idade = obterIdadeLua(dataObj);
+    const fase = faseLua(idade);
+
+    document.getElementById("lua").innerHTML = `${fase.emoji} ${fase.nome}`;
+    document.getElementById("rec").innerHTML = fase.rec;
+
+    const statusDiv = document.getElementById("status");
+    statusDiv.className = "status " + fase.classe;
+    statusDiv.innerText = fase.texto;
+
+    // Atualiza o Stellarium Web com a data/hora escolhida
+    const novaURL = `https://stellarium-web.org/?lat=-21.4&lng=-45.9&alt=850&date=${dataStr}T${horaStr}:00`;
+    document.getElementById("sky").src = novaURL;
+}
+
+// Inicializa o planner com a data padrão
+updateAll();
+</script>
+
+</body>
+</html>
