@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🌍 EVS | Os 4 Movimentos da Terra</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+
+</head>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        font-family: 'Segoe UI', 'Inter', sans-serif;
+    }
+    
+    #info {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 100;
+        background: rgba(0,0,0,0.9);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 15px;
+        color: white;
+        border-left: 4px solid #ffffff;
+        pointer-events: none;
+        max-width: 350px;
+        font-size: 13px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    #info h1 {
+        margin: 0 0 5px 0;
+        font-size: 1.1em;
+        color: #ffffff;
+    }
+    
+    #info .cientifico {
+        font-size: 0.75em;
+        color: #88aaff;
+        margin-top: 5px;
+        border-top: 1px solid rgba(255,255,255,0.2);
+        padding-top: 5px;
+    }
+    
+    .controls-panel {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 15px;
+        z-index: 100;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        pointer-events: auto;
+        border: 1px solid rgba(255,255,255,0.3);
+        font-family: monospace;
+    }
+    
+    button {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 1px solid rgba(255,255,255,0.5);
+        color: #ffffff;
+        padding: 8px 16px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        font-size: 13px;
+        font-family: monospace;
+    }
+    
+    button:hover {
+        background: linear-gradient(135deg, #ffffff, #cccccc);
+        color: #1a1a2e;
+        transform: scale(1.05);
+    }
+    
+    .active-movement {
+        background: linear-gradient(135deg, #ffffff, #cccccc);
+        color: #1a1a2e;
+        box-shadow: 0 0 15px rgba(255,255,255,0.5);
+    }
+    
+    .status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.9);
+        padding: 12px 20px;
+        border-radius: 12px;
+        color: #ffffff;
+        font-family: monospace;
+        font-size: 12px;
+        z-index: 100;
+        pointer-events: none;
+        text-align: right;
+        border-right: 3px solid #ffffff;
+        backdrop-filter: blur(5px);
+    }
+    
+    .speed-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(0,0,0,0.5);
+        padding: 5px 15px;
+        border-radius: 25px;
+    }
+    
+    .speed-control label {
+        color: white;
+        font-size: 12px;
+    }
+    
+    input[type="range"] {
+        width: 140px;
+        cursor: pointer;
+    }
+    
+    .explanations-panel {
+        position: absolute;
+        top: 100px;
+        right: 20px;
+        width: 320px;
+        background: rgba(0,0,0,0.92);
+        backdrop-filter: blur(15px);
+        border-radius: 15px;
+        border-right: 3px solid #ffd700;
+        z-index: 101;
+        transform: translateX(100%);
+        transition: transform 0.4s ease;
+        pointer-events: auto;
+        max-height: 80vh;
+        overflow-y: auto;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    .explanations-panel.open {
+        transform: translateX(0);
+    }
+    
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border-radius: 15px 15px 0 0;
+        cursor: pointer;
+        border-bottom: 1px solid #ffd700;
+    }
+    
+    .panel-header h3 {
+        margin: 0;
+        color: #ffd700;
+        font-size: 16px;
+    }
+    
+    .close-panel {
+        background: none;
+        border: none;
+        color: #ffd700;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+    }
+    
+    .movement-explanation {
+        padding: 15px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .movement-explanation:hover {
+        background: rgba(255,215,0,0.1);
+    }
+    
+    .movement-explanation h4 {
+        color: #ffd700;
+        margin: 0 0 8px 0;
+        font-size: 14px;
+    }
+    
+    .movement-explanation p {
+        margin: 5px 0;
+        font-size: 12px;
+        line-height: 1.5;
+        color: #ffffff;
+    }
+    
+    .observacao {
+        background: rgba(100,100,200,0.2);
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 8px;
+        font-size: 11px;
+        border-left: 2px solid #88aaff;
+        color: #ffffff;
+    }
+    
+    .btn-explicacao {
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        color: #1a1a2e;
+        border: none;
+    }
+    
+    .btn-explicacao:hover {
+        background: linear-gradient(135deg, #ffffff, #ffd700);
+    }
+    
+    @media (max-width: 768px) {
+        .controls-panel { gap: 8px; }
+        button { padding: 6px 12px; font-size: 10px; }
+        #info { font-size: 9px; max-width: 220px; top: 10px; left: 10px; }
+        .status { font-size: 9px; top: 10px; right: 10px; }
+        .explanations-panel { width: 280px; top: 80px; right: 10px; }
+        .movement-explanation p { font-size: 10px; }
+    }
+    
+    .scrollable {
+        max-height: calc(80vh - 60px);
+        overflow-y: auto;
+    }
+    
+    ::-webkit-scrollbar {
+        width: 5px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #1a1a2e;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #ffd700;
+        border-radius: 5px;
+    }
+</style>
+<body>
+    <div id="info">
+        <h1 align="center"><font size="5">🌍 EVS | Movimentos da Terra</font></h1>
+        <h1 align="center">Prof. Luciano Soares Pedroso</h1>
+        <p>🔄 Rotação | 🌞 Translação | 🎯 Precessão | 📳 Nutação</p>
+        <div class="cientifico">
+            <font size="3">📐 Inclinação axial: 23,44° </font>
+			<p align="center"><font size="3" color="#FFFF00">Modelo Did&aacute;tico - FORA DE ESCALA</font></div>
+    </div>
+    
+    <div class="status" id="status">
+        🟢 MOVIMENTOS ATIVOS<br>
+        <span id="activeMov">ROTAÇÃO + TRANSLAÇÃO + PRECESSÃO + NUTAÇÃO</span><br>
+        ⚡ VELOCIDADE: <span id="speedVal">3.0</span>x
+    </div>
+    
+    <div class="controls-panel">
+        <button id="btnRotacao" onclick="toggleMovement('rotacao')">🔄 Rotação</button>
+        <button id="btnTranslacao" onclick="toggleMovement('translacao')">🌞 Translação</button>
+        <button id="btnPrecessao" onclick="toggleMovement('precessao')">🎯 Precessão</button>
+        <button id="btnNutacao" onclick="toggleMovement('nutacao')">📳 Nutação</button>
+        <button onclick="resetCamera()">🔄 Resetar Câmera</button>
+        <button onclick="setMaxSpeed()">⚡ VELOCIDADE MÁXIMA</button>
+        <button id="btnExplicacao" class="btn-explicacao" onclick="toggleExplanations()">📖 EXPLICAÇÕES PRÁTICAS</button>
+        <div class="speed-control">
+            <label>⚡ ACELERAÇÃO:</label>
+            <input type="range" id="speedSlider" min="0" max="5" step="0.1" value="3.0">
+        </div>
+    </div>
+    
+    <div id="explanationsPanel" class="explanations-panel">
+        <div class="panel-header" onclick="toggleExplanations()">
+            <h3>📖 COMO OBSERVAR CADA MOVIMENTO DA TERRA</h3>
+            <button class="close-panel" onclick="event.stopPropagation(); toggleExplanations()">✕</button>
+        </div>
+        <div class="scrollable">
+            <div class="movement-explanation" onclick="focusMovement('rotacao')">
+                <h4>🔄 ROTAÇÃO (Duração: 23h56m04s)</h4>
+                <p><strong>🌍 Efeito no Planeta:</strong> Cria o ciclo dia/noite, gera o campo magnético terrestre (dínamo), causa o movimento aparente do Sol e estrelas no céu, e produz o efeito Coriolis que influencia os ventos e correntes marítimas.</p>
+                <div class="observacao">
+                    <strong>🔭 Como observar da Terra:</strong> Olhe para o céu noturno e observe as estrelas "girando" ao redor do Polo Sul. Fotografe o céu com longa exposição - verá círculos concêntricos. O Pêndulo de Foucault prova a rotação.
+                </div>
+            </div>
+            
+            <div class="movement-explanation" onclick="focusMovement('translacao')">
+                <h4>🌞 TRANSLAÇÃO (Duração: 365,25 dias)</h4>
+                <p><strong>🌍 Efeito no Planeta:</strong> Responsável pelas estações do ano (combinada com a inclinação axial), variação da duração do dia e noite ao longo do ano, e mudança das constelações visíveis.</p>
+                <div class="observacao">
+                    <strong>🔭 Como observar da Terra:</strong> A altura do Sol ao meio-dia muda ao longo do ano. No verão do hemisfério sul (dezembro), o Sol está mais alto no céu. No inverno (junho), está mais baixo.
+                </div>
+            </div>
+            
+            <div class="movement-explanation" onclick="focusMovement('precessao')">
+                <h4>🎯 PRECESSÃO (Ciclo: ~26.000 anos)</h4>
+                <p><strong>🌍 Efeito no Planeta:</strong> Mudança gradual da estrela polar ao longo dos milênios (atualmente Polaris, há 5000 anos era Thuban). Altera as datas dos equinócios ao longo dos séculos.</p>
+                <div class="observacao">
+                    <strong>🔭 Como observar:</strong> Compare mapas estelares atuais com os de 2000 anos atrás. A Estrela Polar não era a mesma! Os signos do zodíaco estão "defasados" devido à precessão.
+                </div>
+            </div>
+            
+            <div class="movement-explanation" onclick="focusMovement('nutacao')">
+                <h4>📳 NUTAÇÃO (Ciclo: 18,6 anos)</h4>
+                <p><strong>🌍 Efeito no Planeta:</strong> Pequena oscilação do eixo terrestre (cerca de 9 arcossegundos) que afeta a posição exata dos polos celestes.</p>
+                <div class="observacao">
+                    <strong>🔭 Como observar:</strong> Não é visível a olho nu. Foi descoberta por James Bradley em 1748. Hoje é monitorada por VLBI e satélites como o GAIA da ESA.
+                </div>
+            </div>
+            
+            <div class="movement-explanation" style="border-bottom: none;">
+                <h4>⭐ EXPERIMENTOS PRÁTICOS</h4>
+                <div class="observacao" style="margin-top: 0;">
+                    <strong>🔬 Rotação:</strong> Pêndulo de Foucault - o plano de oscilação gira lentamente.<br>
+                    <strong>🌡️ Translação:</strong> Marque a sombra de uma haste ao meio-dia durante meses.<br>
+                    <strong>📷 Precessão:</strong> Use um app de astronomia para ver a posição da Estrela Polar daqui 13.000 anos (será Vega).<br>
+                    <strong>📊 Nutação:</strong> Acesse dados do USNO para ver as correções de nutação em tempo real.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        
+        // ==================== CONFIGURAÇÕES ASTROFÍSICAS ====================
+        const CONFIG = {
+            axialTilt: 23.44 * Math.PI / 180,  // 23,44° em radianos
+            orbitRadius: 5.2,
+            
+            rotationSpeed: 0.035,
+            translationSpeed: 0.012,
+            precessionSpeed: 0.008,
+            nutationSpeed: 0.025,
+            nutationAmplitude: 0.15
+        };
+        
+        // ==================== INICIALIZAÇÃO ====================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x010318);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(14, 7, 12);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.zoomSpeed = 1.2;
+        
+        // ==================== ESTRELAS ====================
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 4000;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 2000;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 1000;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 500 - 150;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.2 }));
+        scene.add(stars);
+        
+        // ==================== SOL ====================
+        const sunGeometry = new THREE.SphereGeometry(1.4, 128, 128);
+        const sunMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.0, metalness: 0.9
+        });
+        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        scene.add(sun);
+        
+        const sunLight = new THREE.PointLight(0xffffff, 2.0, 40);
+        sunLight.position.set(0, 0, 0);
+        scene.add(sunLight);
+        scene.add(new THREE.AmbientLight(0x111122));
+        
+        // ==================== ECLÍPTICA (Plano orbital) ====================
+        const eclipticPoints = [];
+        for (let i = 0; i <= 200; i++) {
+            const angle = (i / 200) * Math.PI * 2;
+            eclipticPoints.push(new THREE.Vector3(Math.cos(angle) * CONFIG.orbitRadius, 0, Math.sin(angle) * CONFIG.orbitRadius));
+        }
+        const eclipticLine = new THREE.LineLoop(
+            new THREE.BufferGeometry().setFromPoints(eclipticPoints),
+            new THREE.LineBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.4 })
+        );
+        scene.add(eclipticLine);
+        
+        // ==================== EQUINÓCIOS E SOLSTÍCIOS ====================
+        // GEOMETRIA CORRIGIDA:
+        // 
+        // Sistema de coordenadas:
+        // - Plano XZ é o plano da eclíptica (órbita da Terra)
+        // - Sol está na origem (0,0,0)
+        // - Terra orbita no sentido anti-horário (visto de cima, +Y)
+        //
+        // Orientação do eixo terrestre (CORRIGIDA):
+        // - O eixo da Terra está inclinado 23,44° em relação à perpendicular da eclíptica
+        // - O eixo aponta aproximadamente na direção +Z (para "cima" no plano da tela)
+        // - tiltGroup.rotation.x = -CONFIG.axialTilt (inclina o eixo para trás, em direção a +Z)
+        //
+        // Com esta orientação:
+        // - Polo Norte aponta para +Z com inclinação
+        // - Polo Sul aponta para -Z com inclinação
+        //
+        // VERIFICAÇÃO DOS PONTOS ORBITAIS:
+        //
+        // Posição (R, 0, 0) - ângulo 0°:
+        //   Terra à direita do Sol. Vetor Terra→Sol = (-1, 0, 0)
+        //   Eixo aponta para +Z. Produto escalar = 0 → Eixo perpendicular ao Sol
+        //   → EQUINÓCIO DE MARÇO ✓
+        //
+        // Posição (0, 0, R) - ângulo 90°:
+        //   Terra "acima" do Sol. Vetor Terra→Sol = (0, 0, -1)
+        //   Eixo aponta para +Z. Componente +Z do eixo aponta para longe do Sol
+        //   → Polo Sul está inclinado em direção ao Sol
+        //   → SOLSTÍCIO DE JUNHO (Inverno no Sul, Verão no Norte) ✓
+        //
+        // Posição (-R, 0, 0) - ângulo 180°:
+        //   Terra à esquerda do Sol. Vetor Terra→Sol = (1, 0, 0)
+        //   Eixo aponta para +Z. Produto escalar = 0 → Eixo perpendicular ao Sol
+        //   → EQUINÓCIO DE SETEMBRO ✓
+        //
+        // Posição (0, 0, -R) - ângulo 270°:
+        //   Terra "abaixo" do Sol. Vetor Terra→Sol = (0, 0, 1)
+        //   Eixo aponta para +Z. Componente +Z do eixo aponta em direção ao Sol
+        //   → Polo Norte está inclinado em direção ao Sol
+        //   → SOLSTÍCIO DE DEZEMBRO (Verão no Sul, Inverno no Norte) ✓
+        
+        const seasonalPoints = [
+            { angle: 0, name: "♈ EQUINÓCIO DE MARÇO", color: "#88ff88", offset: 0.8, icon: "🌱", desc: "Outono Sul / Primavera Norte" },
+            { angle: Math.PI/2, name: "♋ SOLSTÍCIO DE JUNHO", color: "#ff8888", offset: 0.9, icon: "☀️", desc: "Inverno Sul / Verão Norte" },
+            { angle: Math.PI, name: "♎ EQUINÓCIO DE SETEMBRO", color: "#ffcc88", offset: 0.8, icon: "🍂", desc: "Primavera Sul / Outono Norte" },
+            { angle: 3*Math.PI/2, name: "♑ SOLSTÍCIO DE DEZEMBRO", color: "#88aaff", offset: 0.9, icon: "❄️", desc: "Verão Sul / Inverno Norte" }
+        ];
+        
+        seasonalPoints.forEach(point => {
+            const div = document.createElement('div');
+            div.innerHTML = `${point.icon} ${point.name}<br><small>${point.desc}</small>`;
+            div.style.color = point.color;
+            div.style.fontSize = '9px';
+            div.style.background = 'rgba(0,0,0,0.85)';
+            div.style.padding = '4px 10px';
+            div.style.borderRadius = '12px';
+            div.style.fontFamily = 'monospace';
+            div.style.textAlign = 'center';
+            div.style.border = `2px solid ${point.color}`;
+            div.style.fontWeight = 'bold';
+            const label = new CSS2DObject(div);
+            const x = Math.cos(point.angle) * (CONFIG.orbitRadius + point.offset);
+            const z = Math.sin(point.angle) * (CONFIG.orbitRadius + point.offset);
+            label.position.set(x, 0.6, z);
+            scene.add(label);
+            
+            const markerGeo = new THREE.SphereGeometry(0.12, 16, 16);
+            const markerMat = new THREE.MeshStandardMaterial({ 
+                color: point.color, emissive: point.color, emissiveIntensity: 0.7 
+            });
+            const marker = new THREE.Mesh(markerGeo, markerMat);
+            marker.position.set(x, 0, z);
+            scene.add(marker);
+            
+            const ringGeo = new THREE.TorusGeometry(0.2, 0.02, 16, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: point.color, transparent: true, opacity: 0.5 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.position.set(x, 0, z);
+            ring.rotation.x = Math.PI / 2;
+            ring.name = "seasonRing";
+            ring.userData = { baseOpacity: 0.5 };
+            scene.add(ring);
+        });
+        
+        // ==================== TERRA ====================
+        const earthGroup = new THREE.Group();
+        scene.add(earthGroup);
+        
+        // Grupo de inclinação axial
+        const tiltGroup = new THREE.Group();
+        earthGroup.add(tiltGroup);
+        
+        // CORREÇÃO: Inclinação do eixo terrestre
+        // O eixo deve apontar para +Z (Estrela Polar) com inclinação de 23,44°
+        // tiltGroup.rotation.x = -CONFIG.axialTilt inclina o eixo para trás (direção +Z)
+        tiltGroup.rotation.x = -CONFIG.axialTilt;
+        
+        const textureLoader = new THREE.TextureLoader();
+        const earthGeometry = new THREE.SphereGeometry(0.82, 256, 256);
+        const earthMaterial = new THREE.MeshPhongMaterial({
+            map: textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'),
+            specularMap: textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg'),
+            normalMap: textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg'),
+            shininess: 5
+        });
+        const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+        tiltGroup.add(earth);
+        
+        const clouds = new THREE.Mesh(
+            new THREE.SphereGeometry(0.83, 256, 256),
+            new THREE.MeshPhongMaterial({
+                map: textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png'),
+                transparent: true, opacity: 0.12
+            })
+        );
+        tiltGroup.add(clouds);
+        
+        // ==================== EIXO TERRESTRE ====================
+        const axisGroup = new THREE.Group();
+        tiltGroup.add(axisGroup);
+        
+        // Cilindro do eixo (alinhado com Y local = eixo de rotação)
+        const axisCyl = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.04, 0.04, 2.4, 8),
+            new THREE.MeshStandardMaterial({ color: 0xff3366, emissive: 0x441122 })
+        );
+        axisGroup.add(axisCyl);
+        
+        // Polo Norte (topo do eixo, direção +Y local)
+        const northPole = new THREE.Mesh(
+            new THREE.SphereGeometry(0.1, 24, 24),
+            new THREE.MeshStandardMaterial({ color: 0xff4444, emissive: 0x442222 })
+        );
+        northPole.position.set(0, 1.2, 0);
+        axisGroup.add(northPole);
+        
+        // Polo Sul (base do eixo, direção -Y local)
+        const southPole = new THREE.Mesh(
+            new THREE.SphereGeometry(0.1, 24, 24),
+            new THREE.MeshStandardMaterial({ color: 0x4444ff, emissive: 0x222244 })
+        );
+        southPole.position.set(0, -1.2, 0);
+        axisGroup.add(southPole);
+        
+        // Seta indicando direção da Estrela Polar (para +Z no espaço global)
+        const arrowGroup = new THREE.Group();
+        tiltGroup.add(arrowGroup);
+        arrowGroup.position.set(0, 1.6, 0);
+        
+        const arrowCone = new THREE.Mesh(
+            new THREE.ConeGeometry(0.1, 0.4, 8),
+            new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0x444400 })
+        );
+        arrowCone.position.y = 0.25;
+        arrowGroup.add(arrowCone);
+        
+        const arrowCyl = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.03, 0.03, 0.5, 8),
+            new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0x444400 })
+        );
+        arrowCyl.position.y = 0;
+        arrowGroup.add(arrowCyl);
+        
+        // ==================== TRAJETÓRIA DA PRECESSÃO ====================
+        const precessionTrailGroup = new THREE.Group();
+        scene.add(precessionTrailGroup);
+        
+        const precessionCirclePoints = [];
+        for (let i = 0; i <= 100; i++) {
+            const angle = (i / 100) * Math.PI * 2;
+            precessionCirclePoints.push(new THREE.Vector3(Math.sin(angle) * 0.25, Math.cos(angle) * 0.15, 0));
+        }
+        const precessionCircle = new THREE.LineLoop(
+            new THREE.BufferGeometry().setFromPoints(precessionCirclePoints),
+            new THREE.LineBasicMaterial({ color: 0xff6666, transparent: true, opacity: 0.7 })
+        );
+        precessionTrailGroup.add(precessionCircle);
+        
+        // ==================== TRAJETÓRIA DA NUTAÇÃO ====================
+        const nutationTrailGroup = new THREE.Group();
+        scene.add(nutationTrailGroup);
+        
+        const nutationCirclePoints = [];
+        for (let i = 0; i <= 60; i++) {
+            const angle = (i / 60) * Math.PI * 2;
+            nutationCirclePoints.push(new THREE.Vector3(Math.sin(angle) * 0.06, Math.cos(angle) * 0.03, 0));
+        }
+        const nutationCircle = new THREE.LineLoop(
+            new THREE.BufferGeometry().setFromPoints(nutationCirclePoints),
+            new THREE.LineBasicMaterial({ color: 0xffff44, transparent: true, opacity: 0.9 })
+        );
+        nutationTrailGroup.add(nutationCircle);
+        
+        // ==================== RASTRO DO POLO NORTE ====================
+        const trailGroup = new THREE.Group();
+        scene.add(trailGroup);
+        const trailMaxPoints = 500;
+        const trailGeometry = new THREE.BufferGeometry();
+        const trailMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8 });
+        const trailLine = new THREE.Line(trailGeometry, trailMaterial);
+        trailGroup.add(trailLine);
+        
+        // ==================== ANEL EQUATORIAL ====================
+        const equatorRing = new THREE.Mesh(
+            new THREE.TorusGeometry(0.88, 0.015, 32, 200),
+            new THREE.MeshStandardMaterial({ color: 0x44aaff, emissive: 0x004466, transparent: true, opacity: 0.6 })
+        );
+        equatorRing.rotation.x = Math.PI / 2;
+        tiltGroup.add(equatorRing);
+        
+        // ==================== VARIÁVEIS DE ANIMAÇÃO ====================
+        let rotationAngle = 0, translationAngle = 0, precessionAngle = 0, nutationTime = 0;
+        const movements = { rotacao: true, translacao: true, precessao: true, nutacao: true };
+        let globalSpeed = 3.0;
+        
+        // Posição inicial: Equinócio de Março (ângulo 0 = +X)
+        earthGroup.position.set(CONFIG.orbitRadius, 0, 0);
+        let trailPoints = [];
+        
+        // ==================== FUNÇÕES GLOBAIS ====================
+        window.toggleMovement = function(movement) {
+            movements[movement] = !movements[movement];
+            const btn = document.getElementById(`btn${movement.charAt(0).toUpperCase() + movement.slice(1)}`);
+            if (movements[movement]) btn.classList.add('active-movement');
+            else btn.classList.remove('active-movement');
+            
+            if (movement === 'precessao') {
+                precessionCircle.visible = movements.precessao;
+            }
+            if (movement === 'nutacao') {
+                nutationCircle.visible = movements.nutacao;
+            }
+            if (!movements.precessao && !movements.nutacao) {
+                trailPoints = [];
+                updateTrailGeometry();
+            }
+            updateStatus();
+        };
+        
+        window.resetCamera = function() {
+            camera.position.set(14, 7, 12);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        };
+        
+        window.setMaxSpeed = function() {
+            globalSpeed = 5.0;
+            speedSlider.value = '5.0';
+            document.getElementById('speedVal').innerHTML = '5.00';
+        };
+        
+        window.toggleExplanations = function() {
+            document.getElementById('explanationsPanel').classList.toggle('open');
+        };
+        
+        window.focusMovement = function(movement) {
+            console.log(`Focando no movimento: ${movement}`);
+            document.getElementById('explanationsPanel').classList.remove('open');
+        };
+        
+        function updateStatus() {
+            const active = [];
+            if (movements.rotacao) active.push('ROTAÇÃO');
+            if (movements.translacao) active.push('TRANSLAÇÃO');
+            if (movements.precessao) active.push('PRECESSÃO');
+            if (movements.nutacao) active.push('NUTAÇÃO');
+            document.getElementById('activeMov').innerHTML = active.join(' + ');
+        }
+        
+        function updateTrailGeometry() {
+            if (trailPoints.length < 2) {
+                trailLine.visible = false;
+                return;
+            }
+            trailLine.visible = true;
+            const positions = new Float32Array(trailPoints.length * 3);
+            for (let i = 0; i < trailPoints.length; i++) {
+                positions[i * 3] = trailPoints[i].x;
+                positions[i * 3 + 1] = trailPoints[i].y;
+                positions[i * 3 + 2] = trailPoints[i].z;
+            }
+            trailGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            trailGeometry.setDrawRange(0, trailPoints.length);
+        }
+        
+        // CORREÇÃO: Função getCurrentSeason com ângulos corretos
+        function getCurrentSeason(angle) {
+            let a = angle % (Math.PI * 2);
+            if (a < 0) a += Math.PI * 2;
+            
+            // Ângulo 0 = +X = Equinócio de Março
+            // Ângulo π/2 = +Z = Solstício de Junho
+            // Ângulo π = -X = Equinócio de Setembro
+            // Ângulo 3π/2 = -Z = Solstício de Dezembro
+            if (a < Math.PI/4 || a >= 7*Math.PI/4) return "♈ EQUINÓCIO DE MARÇO (Outono Sul / Primavera Norte)";
+            if (a >= Math.PI/4 && a < 3*Math.PI/4) return "♋ SOLSTÍCIO DE JUNHO (Inverno Sul / Verão Norte)";
+            if (a >= 3*Math.PI/4 && a < 5*Math.PI/4) return "♎ EQUINÓCIO DE SETEMBRO (Primavera Sul / Outono Norte)";
+            return "♑ SOLSTÍCIO DE DEZEMBRO (Verão Sul / Inverno Norte)";
+        }
+        
+        const speedSlider = document.getElementById('speedSlider');
+        speedSlider.addEventListener('input', (e) => {
+            globalSpeed = parseFloat(e.target.value);
+            document.getElementById('speedVal').innerHTML = globalSpeed.toFixed(2);
+        });
+        
+        // ==================== LOOP PRINCIPAL ====================
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const rotSpd = CONFIG.rotationSpeed * globalSpeed;
+            const transSpd = CONFIG.translationSpeed * globalSpeed;
+            const precSpd = CONFIG.precessionSpeed * globalSpeed;
+            const nutSpd = CONFIG.nutationSpeed * globalSpeed;
+            
+            // Rotação da Terra em torno do próprio eixo
+            if (movements.rotacao) {
+                rotationAngle += rotSpd;
+                earth.rotation.y = rotationAngle;
+                clouds.rotation.y = rotationAngle + 0.003;
+            }
+            
+            // Translação ao redor do Sol
+            if (movements.translacao) {
+                translationAngle += transSpd;
+                earthGroup.position.x = Math.cos(translationAngle) * CONFIG.orbitRadius;
+                earthGroup.position.z = Math.sin(translationAngle) * CONFIG.orbitRadius;
+            }
+            
+            // Reset do axisGroup para aplicar precessão/nutação
+            axisGroup.rotation.set(0, 0, 0);
+            
+            if (movements.precessao) {
+                precessionAngle += precSpd;
+                axisGroup.rotation.x = Math.cos(precessionAngle) * 0.18;
+                axisGroup.rotation.z = Math.sin(precessionAngle) * 0.25;
+            }
+            
+            if (movements.nutacao) {
+                nutationTime += nutSpd;
+                axisGroup.rotation.x += Math.cos(nutationTime * 3.2) * CONFIG.nutationAmplitude * 0.6 * 0.4;
+                axisGroup.rotation.z += Math.sin(nutationTime * 3.5) * CONFIG.nutationAmplitude * 0.4;
+            }
+            
+            // Posições globais para as trajetórias
+            const poleWorldPos = new THREE.Vector3();
+            northPole.getWorldPosition(poleWorldPos);
+            const earthWorldPos = new THREE.Vector3();
+            earthGroup.getWorldPosition(earthWorldPos);
+            
+            precessionTrailGroup.position.copy(earthWorldPos);
+            precessionTrailGroup.rotation.set(-CONFIG.axialTilt, 0, 0);
+            
+            nutationTrailGroup.position.copy(poleWorldPos);
+            nutationTrailGroup.rotation.set(0, 0, 0);
+            
+            if (movements.precessao || movements.nutacao) {
+                trailPoints.push(poleWorldPos.clone());
+                if (trailPoints.length > trailMaxPoints) trailPoints.shift();
+                updateTrailGeometry();
+            }
+            
+            // Atualiza status com estação
+            const season = getCurrentSeason(translationAngle);
+            document.getElementById('status').innerHTML = 
+                `🟢 MOVIMENTOS ATIVOS<br>` +
+                `<span id="activeMov">${document.getElementById('activeMov').innerHTML}</span><br>` +
+                `📅 ${season}<br>` +
+                `⚡ VELOCIDADE: <span id="speedVal">${globalSpeed.toFixed(2)}</span>x`;
+            
+            // Pulsar anéis dos pontos sazonais
+            scene.children.forEach(child => {
+                if (child.name === "seasonRing") {
+                    child.material.opacity = child.userData.baseOpacity + Math.sin(Date.now() * 0.003) * 0.2;
+                }
+            });
+            
+            stars.rotation.y += 0.0002;
+            
+            const pulse = 0.3 + Math.sin(Date.now() * 0.01) * 0.2;
+            northPole.material.emissiveIntensity = pulse;
+            southPole.material.emissiveIntensity = pulse;
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        document.getElementById('btnRotacao').classList.add('active-movement');
+        document.getElementById('btnTranslacao').classList.add('active-movement');
+        document.getElementById('btnPrecessao').classList.add('active-movement');
+        document.getElementById('btnNutacao').classList.add('active-movement');
+        updateStatus();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
