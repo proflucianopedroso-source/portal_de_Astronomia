@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Calculadora Astronômica de Latitude</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #f39c12;
+            --dark: #2c3e50;
+            --light: #f4f7f6;
+            --accent: #e67e22;
+            --success: #27ae60;
+            --info: #3498db;
+            --danger: #e74c3c;
+            --reverse: #9b59b6;
+            --advanced: #e74c3c;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: var(--primary); 
+            text-align: center; 
+            font-size: 2.2rem; 
+            margin-bottom: 5px;
+        }
+        .autor {
+            text-align: center;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-style: italic;
+            font-size: 0.95rem;
+        }
+        h2 { 
+            color: var(--accent); 
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px; 
+            margin-top: 40px;
+        }
+        
+        .mode-selector {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+        .mode-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .mode-btn.direto {
+            background: var(--success);
+            color: white;
+        }
+        .mode-btn.reverso {
+            background: var(--reverse);
+            color: white;
+        }
+        .mode-btn.avancado {
+            background: var(--advanced);
+            color: white;
+        }
+        .mode-btn.active {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #ddd;
+            margin-bottom: 30px;
+        }
+        
+        .input-group { 
+            margin-bottom: 20px;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        label { 
+            display: block; 
+            font-weight: bold; 
+            margin-bottom: 8px; 
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-sizing: border-box;
+            background: white;
+        }
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(243,156,18,0.1);
+        }
+        small {
+            display: block;
+            color: #888;
+            margin-top: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .result-display {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--dark) 0%, #1a252f 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .res-val { 
+            font-size: 2.5rem; 
+            color: var(--primary); 
+            font-weight: bold; 
+            display: block;
+            margin: 10px 0;
+        }
+        .res-sub {
+            font-size: 1rem;
+            color: #ccc;
+            margin-top: 10px;
+        }
+        
+        .step-by-step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        .step {
+            background: white;
+            padding: 20px;
+            border-left: 5px solid var(--primary);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .step-header {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .formula {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+        .calc-value {
+            background: #e8f4f8;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .success-note {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .warning-note {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .info-note {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+            color: #0c5460;
+        }
+        hr {
+            margin: 20px 0;
+            border: 0;
+            border-top: 2px solid #eee;
+        }
+        
+        @media (max-width: 768px) { 
+            .calc-grid { 
+                grid-template-columns: 1fr; 
+            }
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+            .res-val {
+                font-size: 1.8rem;
+            }
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .test-btn {
+            background: var(--info);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .test-btn:hover {
+            background: var(--primary);
+            transform: translateY(-1px);
+        }
+        
+        .decimal-warning {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .meio-dia-box {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .meio-dia-box strong {
+            color: #f39c12;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌍 EVS - Calculadora Astronômica</h1>
+    <p class="autor">Prof. Luciano Soares Pedroso</p>
+    <p class="subtitle"><font size="5">Determine sua latitude usando a altura de uma haste e sua sombra</font></p>
+    
+    <div class="decimal-warning">
+        ⚠️ Use VÍRGULA (,) como separador decimal!
+    </div>
+
+    <div class="mode-selector">
+        <button class="mode-btn direto active" onclick="setModo('direto')">📐 MODO DIRETO<br><small>
+		<font color="#FFFF00">Medição ao Meio-Dia</font></small></button>
+        <button class="mode-btn reverso" onclick="setModo('reverso')">🔁 MODO REVERSO<br><small>
+		<font color="#FFFF00">Engenharia Reversa</font></small></button>
+        <button class="mode-btn avancado" onclick="setModo('avancado')">🕐 MODO AVANÇADO<br><small>
+		<font color="#FFFF00">Qualquer Horário</font></small></button>
+    </div>
+
+    <div class="calc-grid">
+        <!-- LINHA 1: Data e Hora -->
+        <div class="input-group">
+            <label>📅 Data da Observação</label>
+            <input type="date" id="dateIn">
+        </div>
+        
+        <div class="input-group" id="horaGroup" style="display: none;">
+            <label>🕐 Horário da Medição (HH:MM)</label>
+            <input type="time" id="horaIn" value="12:00">
+            <small>Horário do relógio no momento da medição</small>
+        </div>
+        
+        <!-- LINHA 2: Haste -->
+        <div class="input-group">
+            <label>📏 Altura da Haste (cm)</label>
+            <input type="text" id="hasteIn" value="100">
+            <small>Altura do objeto que projeta a sombra</small>
+        </div>
+        
+        <!-- LINHA 3: Sombra (Modos Direto e Avançado) -->
+        <div class="input-group" id="sombraGroup">
+            <label>📐 Comprimento da Sombra (cm)</label>
+            <input type="text" id="sombraIn" placeholder="Ex: 56,1">
+            <small>Medido do centro da base até a ponta da sombra</small>
+        </div>
+        
+        <!-- LINHA 4: Latitude (Modos Reverso e Avançado) -->
+        <div class="input-group" id="latGroup" style="display: none;">
+            <label>🌍 Latitude Conhecida (graus decimais)</label>
+            <input type="text" id="latIn" placeholder="Ex: -23,5">
+            <small>Positivo para NORTE, negativo para SUL</small>
+        </div>
+        
+        <!-- LINHA 5: Longitude (Modo Avançado) -->
+        <div class="input-group" id="longGroup" style="display: none;">
+            <label>🌐 Longitude Local (graus decimais)</label>
+            <input type="text" id="longIn" placeholder="Ex: -46,99">
+            <small>Negativo para OESTE (ex: -46,99 = 46,99° W)</small>
+        </div>
+        
+        <!-- LINHA 6: Direção da Sombra -->
+        <div class="input-group" id="direcaoGroup">
+            <label>🧭 Direção da Sombra</label>
+            <select id="direcaoSombra">
+                <option value="sul">Aponta para o SUL (Sol está ao NORTE)</option>
+                <option value="norte">Aponta para o NORTE (Sol está ao SUL)</option>
+            </select>
+            <small>💡 Hemisfério Sul: Sol ao NORTE → sombra para o SUL</small>
+        </div>
+
+        <!-- RESULTADO -->
+        <div class="result-display" id="mainResult">
+            <div style="font-size: 1.1rem;">📊 RESULTADO FINAL</div>
+            <div id="resultContent">Insira os dados para calcular</div>
+        </div>
+    </div>
+
+    <!-- BOTÕES DE TESTE -->
+    <div class="test-buttons">
+        <button class="test-btn" onclick="testarDireto_21_4289S()">📐 Teste Direto: 21,43°S</button>
+        <button class="test-btn" onclick="testarReverso_21_4289S()">🔁 Teste Reverso: 21,43°S</button>
+        <button class="test-btn" onclick="testarExemploEquador()">🌍 Teste: Equador</button>
+        <button class="test-btn" onclick="testarExemploAvancado()">🕐 Teste: Seu Experimento</button>
+        <button class="test-btn" onclick="limparCampos()">🗑️ Limpar Campos</button>
+    </div>
+
+    <!-- PASSOS DETALHADOS -->
+    <div class="step-by-step">
+        <h2>🔬 Cálculo Detalhado Passo a Passo</h2>
+        <div id="stepsContainer">
+            <div class="step">
+                <div class="step-header">Aguardando dados...</div>
+                <div>Preencha os campos acima para ver todos os cálculos detalhados.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== VARIÁVEIS GLOBAIS ====================
+    let modoAtual = 'direto';
+    
+    const dateIn = document.getElementById('dateIn');
+    const horaIn = document.getElementById('horaIn');
+    const hasteIn = document.getElementById('hasteIn');
+    const sombraIn = document.getElementById('sombraIn');
+    const latIn = document.getElementById('latIn');
+    const longIn = document.getElementById('longIn');
+    const direcaoSombra = document.getElementById('direcaoSombra');
+    const sombraGroup = document.getElementById('sombraGroup');
+    const latGroup = document.getElementById('latGroup');
+    const longGroup = document.getElementById('longGroup');
+    const horaGroup = document.getElementById('horaGroup');
+    const direcaoGroup = document.getElementById('direcaoGroup');
+    const stepsContainer = document.getElementById('stepsContainer');
+    const resultContent = document.getElementById('resultContent');
+
+    // Data padrão
+    dateIn.value = '2026-07-01';
+    horaIn.value = '12:00';
+
+    // ==================== FUNÇÕES AUXILIARES ====================
+    
+    /**
+     * Converte string com vírgula para número float
+     */
+    function parseDecimal(valor) {
+        if (!valor || valor === '') return NaN;
+        let str = valor.toString().replace(',', '.');
+        let num = parseFloat(str);
+        return isNaN(num) ? NaN : num;
+    }
+
+    /**
+     * Formata número para string com vírgula (alta precisão)
+     */
+    function formatDecimal(num, decimals = 6) {
+        if (isNaN(num)) return '0';
+        let fixed = num.toFixed(decimals);
+        return fixed.replace('.', ',');
+    }
+
+    /**
+     * Formata número para string com vírgula (baixa precisão)
+     */
+    function formatDecimal2(num, decimals = 2) {
+        if (isNaN(num)) return '0';
+        let fixed = num.toFixed(decimals);
+        return fixed.replace('.', ',');
+    }
+
+    /**
+     * Calcula a Declinação Solar usando a fórmula de Spencer (1971)
+     * @param {number} diaDoAno - Dia do ano (1 a 365/366)
+     * @returns {number} Declinação solar em graus
+     */
+    function calcularDeclinacaoSolar(diaDoAno) {
+        const D = diaDoAno;
+        // CORRIGIDO: Usar 365.25 para consistência com o ano tropical
+        const rad = (2 * Math.PI * (D - 1)) / 365.25;
+        
+        const deltaRad = 
+            0.006918 -
+            0.399912 * Math.cos(rad) +
+            0.070257 * Math.sin(rad) -
+            0.006758 * Math.cos(2 * rad) +
+            0.000907 * Math.sin(2 * rad) -
+            0.002697 * Math.cos(3 * rad) +
+            0.001480 * Math.sin(3 * rad);
+        
+        return deltaRad * (180 / Math.PI);
+    }
+
+    /**
+     * Calcula a Equação do Tempo (em minutos)
+     * @param {number} diaDoAno - Dia do ano (1 a 365/366)
+     * @returns {number} Equação do tempo em minutos
+     */
+    function calcularEquacaoDoTempo(diaDoAno) {
+        const B = (2 * Math.PI * (diaDoAno - 81)) / 365.25;
+        const EqT = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+        return EqT; // em minutos
+    }
+
+    /**
+     * Detecta o fuso horário baseado na longitude
+     */
+    function detectarFusoHorario(longitude) {
+        return Math.round(longitude / 15);
+    }
+
+    // ==================== MUDANÇA DE MODO ====================
+    
+    function setModo(modo) {
+        modoAtual = modo;
+        
+        // Resetar classes ativas
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Resetar visibilidade
+        sombraGroup.style.display = 'none';
+        latGroup.style.display = 'none';
+        longGroup.style.display = 'none';
+        horaGroup.style.display = 'none';
+        direcaoGroup.style.display = 'none';
+        
+        // Configurar conforme o modo
+        if (modo === 'direto') {
+            document.querySelector('.mode-btn.direto').classList.add('active');
+            sombraGroup.style.display = 'block';
+            direcaoGroup.style.display = 'block';
+        } else if (modo === 'reverso') {
+            document.querySelector('.mode-btn.reverso').classList.add('active');
+            latGroup.style.display = 'block';
+            direcaoGroup.style.display = 'block';
+        } else if (modo === 'avancado') {
+            document.querySelector('.mode-btn.avancado').classList.add('active');
+            sombraGroup.style.display = 'block';
+            latGroup.style.display = 'block';
+            longGroup.style.display = 'block';
+            horaGroup.style.display = 'block';
+            direcaoGroup.style.display = 'block';
+        }
+        
+        update();
+    }
+
+    // ==================== FUNÇÕES DE TESTE ====================
+    
+    function testarDireto_21_4289S() {
+        setModo('direto');
+        dateIn.value = '2026-04-10';
+        hasteIn.value = '100';
+        sombraIn.value = '55,8';
+        direcaoSombra.value = 'sul';
+        update();
+    }
+
+    function testarReverso_21_4289S() {
+        setModo('reverso');
+        dateIn.value = '2026-04-10';
+        hasteIn.value = '100';
+        latIn.value = '-21,4289';
+        update();
+    }
+    
+    function testarExemploEquador() {
+        setModo('direto');
+        dateIn.value = '2026-06-21';
+        hasteIn.value = '100';
+        sombraIn.value = '43,4';
+        direcaoSombra.value = 'sul';
+        update();
+    }
+    
+    function testarExemploAvancado() {
+        setModo('avancado');
+        dateIn.value = '2026-07-01';
+        horaIn.value = '09:55';
+        hasteIn.value = '24';
+        sombraIn.value = '35,4';
+        latIn.value = '-20,917';
+        longIn.value = '-46,991';
+        direcaoSombra.value = 'sul';
+        update();
+    }
+    
+    function limparCampos() {
+        sombraIn.value = '';
+        latIn.value = '';
+        longIn.value = '';
+        update();
+    }
+
+    // ==================== FUNÇÃO PRINCIPAL DE CÁLCULO ====================
+    
+    function update() {
+        const date = new Date(dateIn.value + 'T12:00:00'); // Evitar problemas de fuso
+        const h = parseDecimal(hasteIn.value);
+        
+        // Validações iniciais
+        if (isNaN(date.getTime())) {
+            stepsContainer.innerHTML = '<div class="step"><div class="step-header">❌ Erro</div><div>Data inválida. Por favor, selecione uma data.</div></div>';
+            resultContent.innerHTML = '<div style="color: #e74c3c;">⚠️ Data inválida</div>';
+            return;
+        }
+
+        if (isNaN(h) || h <= 0) {
+            stepsContainer.innerHTML = '<div class="step"><div class="step-header">⏸️ Aguardando dados</div><div>Por favor, insira uma altura válida para a haste (maior que zero).</div></div>';
+            resultContent.innerHTML = '<div style="color: #f39c12;">⚠️ Insira a altura da haste</div>';
+            return;
+        }
+
+        let steps = [];
+        
+        // ==================== PASSO 1: DIA DO ANO ====================
+        const start = new Date(date.getFullYear(), 0, 0);
+        const diff = date - start;
+        const N = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        steps.push(`
+            <div class="step">
+                <div class="step-header">📆 Passo 1: Determinação do Dia do Ano (N)</div>
+                <div>Para calcular a posição da Terra em sua órbita, precisamos saber qual é o dia do ano.</div>
+                <div class="formula">$$ N = \\text{número de dias desde 1º de janeiro} $$</div>
+                <div class="calc-value">📌 Data informada: ${date.toLocaleDateString('pt-BR')}</div>
+                <div class="calc-value"><strong>Resultado: N = ${N} (${N}º dia do ano ${date.getFullYear()})</strong></div>
+            </div>
+        `);
+
+        // ==================== PASSO 2: ÂNGULO GAMMA (CORRIGIDO) ====================
+        const gamma = (2 * Math.PI * (N - 1)) / 365.25; // CORRIGIDO!
+        
+        steps.push(`
+            <div class="step">
+                <div class="step-header">🔄 Passo 2: Cálculo do Ângulo Corretivo (Γ)</div>
+                <div>Este ângulo representa a posição angular da Terra em sua órbita elíptica ao redor do Sol.</div>
+                <div class="formula">$$ \\Gamma = \\frac{2\\pi (N - 1)}{365,25} $$</div>
+                <div class="calc-value">📌 Γ = (2 × π × ${N-1}) / 365,25</div>
+                <div class="calc-value">📌 Γ = ${formatDecimal(gamma, 6)} radianos</div>
+                <div class="calc-value">📌 Γ = ${formatDecimal(gamma * 180 / Math.PI, 4)}°</div>
+                <div class="note success-note">✅ CORRIGIDO: Agora usando 365,25 dias (ano tropical) para maior precisão</div>
+            </div>
+        `);
+
+        // ==================== PASSO 3: DECLINAÇÃO SOLAR ====================
+        let dDeg = calcularDeclinacaoSolar(N);
+        let dRad = dDeg * Math.PI / 180;
+        
+        steps.push(`
+            <div class="step">
+                <div class="step-header">☀️ Passo 3: Cálculo da Declinação Solar (δ)</div>
+                <div>A declinação solar é o ângulo entre os raios solares e o plano do Equador terrestre.</div>
+                <div class="formula">$$ \\delta = 0,006918 - 0,399912\\cos(\\Gamma) + 0,070257\\sin(\\Gamma) - 0,006758\\cos(2\\Gamma) + ... $$</div>
+                <div class="calc-value">📌 cos(Γ) = ${formatDecimal(Math.cos(gamma), 6)}</div>
+                <div class="calc-value">📌 sin(Γ) = ${formatDecimal(Math.sin(gamma), 6)}</div>
+                <div class="calc-value"><strong>📌 δ = ${formatDecimal(dDeg, 4)}°</strong></div>
+                <div class="note">💡 ${dDeg > 0 ? `Sol no Hemisfério NORTE (${formatDecimal(dDeg, 2)}° N)` : dDeg < 0 ? `Sol no Hemisfério SUL (${formatDecimal(Math.abs(dDeg), 2)}° S)` : 'Sol sobre a Linha do Equador (δ = 0°)'}</div>
+            </div>
+        `);
+
+        const direcao = direcaoSombra.value;
+        
+        // ==================== MODO DIRETO ====================
+        if (modoAtual === 'direto') {
+            const s = parseDecimal(sombraIn.value);
+            
+            if (isNaN(s) || s <= 0) {
+                steps.push(`
+                    <div class="step">
+                        <div class="step-header">⏸️ Passo 4: Aguardando dados da sombra</div>
+                        <div>Para continuar, informe o comprimento da sombra medida ao <strong>meio-dia solar</strong> (sombra mais curta do dia).</div>
+                    </div>
+                `);
+                stepsContainer.innerHTML = steps.join('');
+                resultContent.innerHTML = `
+                    <div>📅 ${date.toLocaleDateString('pt-BR')} (Dia ${N})</div>
+                    <div>☀️ Declinação δ = ${formatDecimal(dDeg, 4)}°</div>
+                    <div style="margin-top: 15px; color: #f39c12;">⚠️ Insira o comprimento da sombra ao meio-dia</div>
+                `;
+                if (window.MathJax) MathJax.typeset();
+                return;
+            }
+            
+            // PASSO 4: ÂNGULO ZENITAL
+            let zRad = Math.atan(s / h);
+            let zDeg = zRad * (180 / Math.PI);
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">📐 Passo 4: Cálculo do Ângulo Zenital (θz)</div>
+                    <div>O ângulo zenital é a distância angular entre o Sol e o ponto do zênite (diretamente acima do observador).</div>
+                    <div class="formula">$$ \\theta_z = \\arctan\\left(\\frac{\\text{Sombra}}{\\text{Haste}}\\right) $$</div>
+                    <div class="calc-value">📌 Razão Sombra/Haste = ${formatDecimal(s, 2)} cm / ${formatDecimal(h, 2)} cm = ${formatDecimal(s/h, 4)}</div>
+                    <div class="calc-value">📌 θz = arctan(${formatDecimal(s/h, 4)})</div>
+                    <div class="calc-value"><strong>📌 θz = ${formatDecimal(zDeg, 4)}°</strong></div>
+                    <div class="note">💡 Significa que o Sol está a ${formatDecimal(zDeg, 2)}° do zênite, ou ${formatDecimal(90 - zDeg, 2)}° acima do horizonte</div>
+                </div>
+            `);
+            
+            // PASSO 5: LATITUDE
+            let lat, formulaUsada, explicacao;
+            
+            if (direcao === 'sul') {
+                lat = dDeg - zDeg;
+                formulaUsada = "\\phi = \\delta - \\theta_z";
+                explicacao = "Sombra para SUL → Sol ao NORTE → zênite ao sul do Sol → φ = δ - θz";
+            } else {
+                lat = dDeg + zDeg;
+                formulaUsada = "\\phi = \\delta + \\theta_z";
+                explicacao = "Sombra para NORTE → Sol ao SUL → zênite ao norte do Sol → φ = δ + θz";
+            }
+            
+            // Verificar casos polares
+            let alertaPolar = '';
+            if (Math.abs(lat) > 90) {
+                alertaPolar = '<div class="note warning-note">⚠️ Latitude além de ±90°! Isso indica que o Sol está abaixo do horizonte ao meio-dia (noite polar). Verifique a direção da sombra.</div>';
+            }
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">🌐 Passo 5: Cálculo da Latitude Local (φ)</div>
+                    <div>A latitude é determinada pela relação entre a declinação solar e o ângulo zenital.</div>
+                    <div class="calc-value">📌 Direção da sombra: <strong>${direcao === 'sul' ? 'APONTA PARA O SUL' : 'APONTA PARA O NORTE'}</strong></div>
+                    <div class="calc-value">📌 ${explicacao}</div>
+                    <div class="formula">$$ ${formulaUsada} $$</div>
+                    <div class="calc-value">📌 φ = ${formatDecimal(dDeg, 4)}° ${direcao === 'sul' ? '-' : '+'} ${formatDecimal(zDeg, 4)}°</div>
+                    <div class="calc-value"><strong>📌 φ = ${formatDecimal(lat, 4)}°</strong></div>
+                    ${alertaPolar}
+                    ${!alertaPolar ? `<div class="note success-note">🌍 <strong>Localização:</strong> ${lat > 0 ? `Latitude ${formatDecimal(Math.abs(lat), 4)}° NORTE (Hemisfério Norte)` : lat < 0 ? `Latitude ${formatDecimal(Math.abs(lat), 4)}° SUL (Hemisfério Sul)` : 'Latitude 0° (Linha do Equador)'}</div>` : ''}
+                </div>
+            `);
+            
+            // PASSO 6: VERIFICAÇÃO
+            let thetaVerif = Math.abs(lat - dDeg);
+            let diferenca = Math.abs(thetaVerif - zDeg);
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">✅ Passo 6: Verificação da Consistência</div>
+                    <div>Verificamos se o ângulo zenital calculado a partir da latitude é consistente com o medido:</div>
+                    <div class="calc-value">📌 θz teórico = |φ - δ| = |${formatDecimal(lat, 4)}° - ${formatDecimal(dDeg, 4)}°| = ${formatDecimal(thetaVerif, 4)}°</div>
+                    <div class="calc-value">📌 θz medido (sombra) = ${formatDecimal(zDeg, 4)}°</div>
+                    <div class="calc-value">📌 Diferença = ${formatDecimal(diferenca, 10)}°</div>
+                    ${diferenca < 0.01 ? 
+                        '<div class="note success-note">✅ VERIFICAÇÃO APROVADA! Os dados são consistentes com a teoria astronômica.</div>' : 
+                        '<div class="note warning-note">⚠️ Inconsistência detectada. Verifique os dados de entrada.</div>'}
+                </div>
+            `);
+            
+            stepsContainer.innerHTML = steps.join('');
+            
+            const absLat = Math.abs(lat);
+            const hemisferio = lat > 0 ? 'NORTE' : (lat < 0 ? 'SUL' : 'EQUADOR');
+            const alturaSol = 90 - zDeg;
+            
+            resultContent.innerHTML = `
+                <div>📅 ${date.toLocaleDateString('pt-BR')} (Dia ${N})</div>
+                <div>☀️ δ = ${formatDecimal(dDeg, 4)}° | Sol a ${formatDecimal(alturaSol, 2)}° de altura</div>
+                <div>📐 θz = ${formatDecimal(zDeg, 4)}° | Sombra: ${direcao.toUpperCase()}</div>
+                <hr>
+                <span class="res-val">${formatDecimal(absLat, 4)}° ${hemisferio}</span>
+                <div class="res-sub">✅ Modo Direto (Medição ao Meio-Dia Solar)</div>
+            `;
+            
+        // ==================== MODO REVERSO ====================
+        } else if (modoAtual === 'reverso') {
+            const lat = parseDecimal(latIn.value);
+            
+            if (isNaN(lat) || Math.abs(lat) > 90) {
+                steps.push(`
+                    <div class="step">
+                        <div class="step-header">⏸️ Passo 4: Aguardando latitude válida</div>
+                        <div>Para engenharia reversa, informe uma latitude conhecida (entre -90° e +90°).</div>
+                    </div>
+                `);
+                stepsContainer.innerHTML = steps.join('');
+                resultContent.innerHTML = `
+                    <div>📅 ${date.toLocaleDateString('pt-BR')} (Dia ${N})</div>
+                    <div>☀️ δ = ${formatDecimal(dDeg, 4)}°</div>
+                    <div style="margin-top: 15px; color: #f39c12;">⚠️ Insira a latitude conhecida</div>
+                `;
+                if (window.MathJax) MathJax.typeset();
+                return;
+            }
+            
+            // PASSO 4: ÂNGULO ZENITAL
+            let zDeg = Math.abs(lat - dDeg);
+            let zRad = zDeg * Math.PI / 180;
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">📐 Passo 4: Cálculo do Ângulo Zenital (θz)</div>
+                    <div>Pela equação fundamental da Astronomia de Posição (válida ao meio-dia solar):</div>
+                    <div class="formula">$$ \\theta_z = |\\phi - \\delta| $$</div>
+                    <div class="calc-value">📌 θz = |${formatDecimal(lat, 4)}° - ${formatDecimal(dDeg, 4)}°|</div>
+                    <div class="calc-value"><strong>📌 θz = ${formatDecimal(zDeg, 4)}°</strong></div>
+                    <div class="note">💡 Este é o ângulo que o Sol fará com o zênite ao meio-dia solar</div>
+                </div>
+            `);
+            
+            // PASSO 5: COMPRIMENTO DA SOMBRA
+            let sombraCalc = h * Math.tan(zRad);
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">📏 Passo 5: Cálculo do Comprimento da Sombra</div>
+                    <div>Usando a relação trigonométrica no triângulo retângulo formado pela haste e sua sombra:</div>
+                    <div class="formula">$$ \\text{Sombra} = \\text{Haste} \\times \\tan(\\theta_z) $$</div>
+                    <div class="calc-value">📌 tan(${formatDecimal(zDeg, 4)}°) = ${formatDecimal(Math.tan(zRad), 6)}</div>
+                    <div class="calc-value">📌 Sombra = ${formatDecimal(h, 2)} cm × ${formatDecimal(Math.tan(zRad), 6)}</div>
+                    <div class="calc-value"><strong>📌 Sombra = ${formatDecimal2(sombraCalc, 2)} cm</strong></div>
+                    <div class="note">💡 Este é o comprimento esperado para a sombra da haste ao meio-dia solar</div>
+                </div>
+            `);
+            
+            // PASSO 6: DIREÇÃO DA SOMBRA
+            let direcaoCorreta;
+            if (Math.abs(lat - dDeg) < 0.005) {
+                direcaoCorreta = 'nenhuma';
+                steps.push(`
+                    <div class="step">
+                        <div class="step-header">🧭 Passo 6: Caso Especial - Sol no Zênite</div>
+                        <div class="calc-value">📌 φ ≈ δ → A latitude é praticamente igual à declinação solar</div>
+                        <div class="calc-value"><strong>📌 O Sol estará EXATAMENTE no zênite ao meio-dia!</strong></div>
+                        <div class="note">💡 Não haverá sombra projetada. A haste não produzirá sombra lateral.</div>
+                    </div>
+                `);
+            } else if (lat > dDeg) {
+                direcaoCorreta = 'norte';
+                steps.push(`
+                    <div class="step">
+                        <div class="step-header">🧭 Passo 6: Determinação da Direção da Sombra</div>
+                        <div>Comparando a latitude com a declinação solar:</div>
+                        <div class="calc-value">📌 φ (${formatDecimal(lat, 4)}°) > δ (${formatDecimal(dDeg, 4)}°)</div>
+                        <div class="calc-value">📌 O observador está mais ao NORTE que a posição subsolar</div>
+                        <div class="calc-value">📌 Portanto, o Sol está ao <strong>SUL</strong> do observador</div>
+                        <div class="calc-value"><strong>📌 A sombra aponta para o NORTE</strong></div>
+                        <div class="note">💡 No seletor acima, escolha "Aponta para o NORTE"</div>
+                    </div>
+                `);
+            } else {
+                direcaoCorreta = 'sul';
+                steps.push(`
+                    <div class="step">
+                        <div class="step-header">🧭 Passo 6: Determinação da Direção da Sombra</div>
+                        <div>Comparando a latitude com a declinação solar:</div>
+                        <div class="calc-value">📌 φ (${formatDecimal(lat, 4)}°) < δ (${formatDecimal(dDeg, 4)}°)</div>
+                        <div class="calc-value">📌 O observador está mais ao SUL que a posição subsolar</div>
+                        <div class="calc-value">📌 Portanto, o Sol está ao <strong>NORTE</strong> do observador</div>
+                        <div class="calc-value"><strong>📌 A sombra aponta para o SUL</strong></div>
+                        <div class="note">💡 No seletor acima, escolha "Aponta para o SUL"</div>
+                    </div>
+                `);
+            }
+            
+            // PASSO 7: VERIFICAÇÃO CRUZADA
+            let latVerif;
+            if (direcaoCorreta === 'sul') {
+                latVerif = dDeg - zDeg;
+            } else if (direcaoCorreta === 'norte') {
+                latVerif = dDeg + zDeg;
+            } else {
+                latVerif = lat;
+            }
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">✅ Passo 7: Verificação Cruzada</div>
+                    <div>Recalculamos a latitude a partir dos valores obtidos para confirmar:</div>
+                    <div class="calc-value">📌 φ_recalculada = δ ${direcaoCorreta === 'sul' ? '-' : '+'} θz = ${formatDecimal(latVerif, 4)}°</div>
+                    <div class="calc-value">📌 φ_original = ${formatDecimal(lat, 4)}°</div>
+                    <div class="calc-value">📌 Diferença = ${formatDecimal(Math.abs(latVerif - lat), 10)}°</div>
+                    <div class="note success-note">✅ VERIFICAÇÃO APROVADA! A engenharia reversa está correta.</div>
+                </div>
+            `);
+            
+            stepsContainer.innerHTML = steps.join('');
+            
+            const alturaSol = 90 - zDeg;
+            
+            resultContent.innerHTML = `
+                <div>📅 ${date.toLocaleDateString('pt-BR')} (Dia ${N})</div>
+                <div>☀️ δ = ${formatDecimal(dDeg, 4)}° | 🌍 φ = ${formatDecimal(Math.abs(lat), 4)}° ${lat > 0 ? 'N' : 'S'}</div>
+                <div>📐 θz = ${formatDecimal(zDeg, 4)}° | Sol a ${formatDecimal(alturaSol, 2)}° de altura</div>
+                <hr>
+                <span class="res-val">${formatDecimal2(sombraCalc, 2)} cm</span>
+                <div>🧭 Sombra aponta para: <strong>${direcaoCorreta.toUpperCase()}</strong></div>
+                <div class="res-sub">✅ Modo Reverso - Engenharia Reversa</div>
+            `;
+            
+        // ==================== MODO AVANÇADO ====================
+        } else if (modoAtual === 'avancado') {
+            const s = parseDecimal(sombraIn.value);
+            const lat = parseDecimal(latIn.value);
+            const long = parseDecimal(longIn.value);
+            const horaStr = horaIn.value;
+            
+            // Detectar fuso horário
+            const fusoHorario = detectarFusoHorario(long);
+            const meridianoFuso = fusoHorario * 15;
+            
+            if (isNaN(s) || s <= 0 || isNaN(lat) || Math.abs(lat) > 90 || isNaN(long) || Math.abs(long) > 180 || !horaStr) {
+                steps.push(`
+                    <div class="step">
+                        <div class="step-header">⏸️ Aguardando dados completos</div>
+                        <div>O Modo Avançado requer todos os campos preenchidos corretamente:
+                            <ul>
+                                <li>Data da observação</li>
+                                <li>Horário da medição</li>
+                                <li>Altura da haste (cm)</li>
+                                <li>Comprimento da sombra (cm)</li>
+                                <li>Latitude conhecida (graus decimais)</li>
+                                <li>Longitude local (graus decimais)</li>
+                            </ul>
+                        </div>
+                    </div>
+                `);
+                stepsContainer.innerHTML = steps.join('');
+                resultContent.innerHTML = `
+                    <div>📅 ${date.toLocaleDateString('pt-BR')} (Dia ${N})</div>
+                    <div>☀️ δ = ${formatDecimal(dDeg, 4)}°</div>
+                    <div style="margin-top: 15px; color: #f39c12;">⚠️ Preencha todos os campos para validação</div>
+                `;
+                if (window.MathJax) MathJax.typeset();
+                return;
+            }
+            
+            // PASSO 4: ÂNGULO ZENITAL MEDIDO
+            let zRad = Math.atan(s / h);
+            let zDeg = zRad * (180 / Math.PI);
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">📐 Passo 4: Ângulo Zenital Medido (θz)</div>
+                    <div>Calculado a partir da razão sombra/haste:</div>
+                    <div class="formula">$$ \\theta_z = \\arctan\\left(\\frac{\\text{Sombra}}{\\text{Haste}}\\right) $$</div>
+                    <div class="calc-value">📌 θz = arctan(${formatDecimal(s, 2)} / ${formatDecimal(h, 2)})</div>
+                    <div class="calc-value">📌 θz = arctan(${formatDecimal(s/h, 4)})</div>
+                    <div class="calc-value"><strong>📌 θz medido = ${formatDecimal(zDeg, 4)}°</strong></div>
+                    <div class="note">💡 Sol a ${formatDecimal(90 - zDeg, 2)}° acima do horizonte no momento da medição</div>
+                </div>
+            `);
+            
+            // PASSO 5: HORA SOLAR VERDADEIRA (FÓRMULA CORRIGIDA)
+            const [horas, minutos] = horaStr.split(':').map(Number);
+            const horaLocal = horas + minutos / 60;
+            const EqT = calcularEquacaoDoTempo(N);
+            
+            // FÓRMULA CORRIGIDA:
+            // HSV = HL + (λ_fuso - λ_local) × 4 min + EqT
+            const correcaoLongitudeMin = (meridianoFuso - long) * 4; // em minutos
+            const horaSolar = horaLocal + (correcaoLongitudeMin / 60) + (EqT / 60);
+            
+            const horaSolarHoras = Math.floor(((horaSolar % 24) + 24) % 24);
+            const horaSolarMinutos = Math.round(Math.abs(horaSolar % 1) * 60);
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">🕐 Passo 5: Cálculo da Hora Solar Verdadeira (CORRIGIDO)</div>
+                    <div>A hora solar verdadeira é baseada na posição real do Sol no céu, diferente da hora do relógio.</div>
+                    <div class="calc-value">📌 Hora Local (relógio): ${horaStr}</div>
+                    <div class="calc-value">📌 Fuso horário detectado: UTC${fusoHorario >= 0 ? '+' + fusoHorario : fusoHorario}</div>
+                    <div class="calc-value">📌 Meridiano central do fuso: ${meridianoFuso}°</div>
+                    <div class="calc-value">📌 Longitude local: ${formatDecimal(long, 4)}°</div>
+                    <div class="calc-value">📌 Correção de longitude: (${meridianoFuso}° - ${formatDecimal(long, 2)}°) × 4 = ${formatDecimal(correcaoLongitudeMin, 2)} min</div>
+                    <div class="calc-value">📌 Equação do Tempo (EqT): ${formatDecimal(EqT, 2)} min</div>
+                    <div class="formula">$$ HSV = HL + \\frac{(\\lambda_{fuso} - \\lambda_{local}) \\times 4}{60} + \\frac{EqT}{60} $$</div>
+                    <div class="calc-value"><strong>📌 Hora Solar Verdadeira = ${horaSolarHoras.toString().padStart(2, '0')}h${horaSolarMinutos.toString().padStart(2, '0')}min</strong></div>
+                    <div class="note">💡 A diferença entre a hora do relógio e a hora solar se deve à longitude e à equação do tempo</div>
+                </div>
+            `);
+            
+            // PASSO 6: ÂNGULO HORÁRIO
+            const H = (horaSolar - 12) * 15; // em graus
+            const H_rad = H * Math.PI / 180;
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">⏰ Passo 6: Cálculo do Ângulo Horário (H)</div>
+                    <div>O ângulo horário mede a distância angular do Sol ao meridiano do observador.</div>
+                    <div class="formula">$$ H = (HSV - 12) \\times 15° $$</div>
+                    <div class="calc-value">📌 H = (${formatDecimal(horaSolar, 4)} - 12) × 15°</div>
+                    <div class="calc-value"><strong>📌 H = ${formatDecimal(H, 4)}°</strong></div>
+                    <div class="note">💡 ${H < -0.1 ? '☀️ Manhã: Sol a caminho do meridiano (H negativo)' : H > 0.1 ? '🌤️ Tarde: Sol já passou do meridiano (H positivo)' : '🕛 Meio-dia solar exato! (H ≈ 0°)'}</div>
+                </div>
+            `);
+            
+            // PASSO 7: EQUAÇÃO GERAL DA ASTRONOMIA DE POSIÇÃO
+            const lat_rad = lat * Math.PI / 180;
+            const termo1 = Math.sin(lat_rad) * Math.sin(dRad);
+            const termo2 = Math.cos(lat_rad) * Math.cos(dRad) * Math.cos(H_rad);
+            const cos_theta_z_calc = termo1 + termo2;
+            
+            // Tratar erros de arredondamento (evitar NaN por arccos de valor >1 ou <-1)
+            let cos_theta_z_clamped = Math.max(-1, Math.min(1, cos_theta_z_calc));
+            const theta_z_calc = Math.acos(cos_theta_z_clamped) * (180 / Math.PI);
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">🔬 Passo 7: Equação Geral da Astronomia de Posição</div>
+                    <div>A equação completa que relaciona todos os parâmetros para qualquer horário do dia:</div>
+                    <div class="formula">$$ \\cos(\\theta_z) = \\sin(\\phi)\\sin(\\delta) + \\cos(\\phi)\\cos(\\delta)\\cos(H) $$</div>
+                    <div class="calc-value">📌 Termo 1: sin(φ) × sin(δ) = ${formatDecimal(termo1, 6)}</div>
+                    <div class="calc-value">📌 Termo 2: cos(φ) × cos(δ) × cos(H) = ${formatDecimal(termo2, 6)}</div>
+                    <div class="calc-value">📌 cos(θz) = ${formatDecimal(cos_theta_z_calc, 6)}</div>
+                    <div class="calc-value"><strong>📌 θz teórico = ${formatDecimal(theta_z_calc, 4)}°</strong></div>
+                </div>
+            `);
+            
+            // PASSO 8: COMPARAÇÃO E VALIDAÇÃO
+            const erroThetaZ = Math.abs(theta_z_calc - zDeg);
+            const erroRelativo = theta_z_calc > 0 ? (erroThetaZ / theta_z_calc) * 100 : 0;
+            
+            let statusValidacao, classeNota;
+            if (erroThetaZ < 0.1) {
+                statusValidacao = '✅ EXCELENTE!';
+                classeNota = 'success-note';
+            } else if (erroThetaZ < 0.5) {
+                statusValidacao = '✅ MUITO BOM!';
+                classeNota = 'success-note';
+            } else if (erroThetaZ < 1.0) {
+                statusValidacao = '⚠️ ACEITÁVEL';
+                classeNota = '';
+            } else {
+                statusValidacao = '❌ REVISAR DADOS';
+                classeNota = 'warning-note';
+            }
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">📊 Passo 8: Comparação e Validação</div>
+                    <div>Comparamos o ângulo zenital medido experimentalmente com o valor teórico:</div>
+                    <div class="calc-value">📌 θz medido (sombra): ${formatDecimal(zDeg, 4)}°</div>
+                    <div class="calc-value">📌 θz teórico (equação geral): ${formatDecimal(theta_z_calc, 4)}°</div>
+                    <div class="calc-value">📌 Erro absoluto: ${formatDecimal(erroThetaZ, 4)}°</div>
+                    <div class="calc-value">📌 Erro relativo: ${formatDecimal(erroRelativo, 2)}%</div>
+                    <div class="note ${classeNota}"><strong>${statusValidacao}</strong> ${erroThetaZ < 0.5 ? 'Medição consistente com a posição esperada do Sol!' : erroThetaZ < 1.0 ? 'Pequena discrepância. Verifique a precisão das medições.' : 'Erro significativo. Revise os dados de entrada e a medição.'}</div>
+                </div>
+            `);
+            
+            // PASSO 9: PREVISÃO DO MEIO-DIA SOLAR (FÓRMULA CORRIGIDA)
+            // Ao meio-dia solar, HSV = 12
+            // HL_meiodia = 12 - correcao_longitude - EqT
+            const horaMeioDiaSolar = 12 - (correcaoLongitudeMin / 60) - (EqT / 60);
+            
+            let horaInt = Math.floor(((horaMeioDiaSolar % 24) + 24) % 24);
+            let minInt = Math.round((horaMeioDiaSolar - Math.floor(horaMeioDiaSolar)) * 60);
+            if (minInt === 60) { horaInt++; minInt = 0; }
+            if (horaInt >= 24) horaInt -= 24;
+            
+            const zMeioDia = Math.abs(lat - dDeg);
+            const sombraMeioDia = h * Math.tan(zMeioDia * Math.PI / 180);
+            
+            steps.push(`
+                <div class="step">
+                    <div class="step-header">🔮 Passo 9: Previsão para o Meio-Dia Solar (CORRIGIDO)</div>
+                    <div>Com base nos dados, calculamos quando ocorrerá o meio-dia solar e qual será a sombra:</div>
+                    <div class="calc-value"><strong>📌 Meio-dia solar: ${horaInt.toString().padStart(2, '0')}h${minInt.toString().padStart(2, '0')}min</strong> (horário do relógio)</div>
+                    <div class="calc-value">📌 θz ao meio-dia: ${formatDecimal(zMeioDia, 4)}°</div>
+                    <div class="calc-value"><strong>📌 Sombra prevista ao meio-dia: ${formatDecimal2(sombraMeioDia, 2)} cm</strong></div>
+                    <div class="note info-note">💡 Neste horário, a sombra será a <strong>mais curta do dia</strong>. É o momento ideal para usar o Modo Direto!</div>
+                </div>
+            `);
+            
+            stepsContainer.innerHTML = steps.join('');
+            
+            const alturaSol = 90 - zDeg;
+            
+            resultContent.innerHTML = `
+                <div>📅 ${date.toLocaleDateString('pt-BR')} às ${horaStr} (Dia ${N})</div>
+                <div>☀️ δ = ${formatDecimal(dDeg, 4)}° | H = ${formatDecimal(H, 2)}°</div>
+                <div>📐 θz medido: ${formatDecimal(zDeg, 4)}° | θz teórico: ${formatDecimal(theta_z_calc, 4)}°</div>
+                <div>🌍 φ = ${formatDecimal(Math.abs(lat), 4)}° ${lat > 0 ? 'N' : 'S'} | λ = ${formatDecimal(Math.abs(long), 4)}° ${long < 0 ? 'W' : 'E'}</div>
+                <hr>
+                <span class="res-val" style="font-size: 1.8rem;">${statusValidacao}</span>
+                <div style="margin-top: 10px;">Erro: ${formatDecimal(erroThetaZ, 4)}° (${formatDecimal(erroRelativo, 2)}%)</div>
+                <div class="meio-dia-box">
+                    <div>🕐 <strong>Meio-dia solar: ${horaInt.toString().padStart(2, '0')}h${minInt.toString().padStart(2, '0')}min</strong></div>
+                    <div>📏 Sombra prevista: <strong>${formatDecimal2(sombraMeioDia, 2)} cm</strong></div>
+                </div>
+            `;
+        }
+
+        // Renderizar fórmulas MathJax
+        if (window.MathJax) {
+            MathJax.typeset();
+        }
+    }
+
+    // ==================== EVENT LISTENERS ====================
+    dateIn.addEventListener('input', update);
+    horaIn.addEventListener('input', update);
+    hasteIn.addEventListener('input', update);
+    sombraIn.addEventListener('input', update);
+    latIn.addEventListener('input', update);
+    longIn.addEventListener('input', update);
+    direcaoSombra.addEventListener('change', update);
+    
+    // Expor funções globalmente
+    window.setModo = setModo;
+    window.testarDireto_21_4289S = testarDireto_21_4289S;
+    window.testarReverso_21_4289S = testarReverso_21_4289S;
+    window.testarExemploEquador = testarExemploEquador;
+    window.testarExemploAvancado = testarExemploAvancado;
+    window.limparCampos = limparCampos;
+    
+    // Inicializar
+    update();
+</script>
+
+</body>
+</html>
