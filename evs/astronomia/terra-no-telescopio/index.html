@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora Terra–Lua</title>
+    <title>Calculadora Terraâ€“Lua com IluminÃ¢ncia</title>
     <script id="MathJax-script" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -49,7 +49,7 @@
             font-size: 1rem; transition: border-color 0.3s; width: 100%;
         }
         .field-group input:focus { outline: none; border-color: #00b4d8; }
-        /* Grupo da latitude com botão e info */
+        /* Grupo da latitude com botÃ£o e info */
         .latitude-group {
             display: flex;
             flex-direction: column;
@@ -77,7 +77,7 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             max-width: 100%;
         }
-        /* Botões principais */
+        /* BotÃµes principais */
         .btn-group {
             display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap;
         }
@@ -95,7 +95,7 @@
         .btn-limpar:hover {
             background: #c1121f; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(230,57,70,0.4);
         }
-        /* Equações e resultados */
+        /* EquaÃ§Ãµes e resultados */
         .equation {
             background: #e9ecef; padding: 15px; margin: 10px 0; border-radius: 10px;
             font-size: 1.1rem; border-left: 5px solid #00b4d8; color: #1b263b;
@@ -123,14 +123,7 @@
 </head>
 <body>
 <div class="container">
-    <h1><span style="font-weight: 400"><font face="Arial Black">Trabalho de Conclusção de Curso</font></span></h1>
-	<p align="center"><span style="font-weight: 400">
-	<font face="Arial Black" size="5">Licenciatura em Física
-</font></span></p>
-	<h1><span style="font-weight: 400"><font face="Arial Black" size="5">UNIFAL 
-	- 2026</font></span></h1>
-	<h1><span style="font-size: 2.05em">Calculadora da Velocidade linear da Terra e da Distância Terra–Lua</span></h1>
-	<p align="center"><font size="5"></font></p>
+	<h1><span style="font-size: 2.05em">Calculadora da Velocidade linear da Terra e da DistÃ¢ncia Terraâ€“Lua</span></h1>
 	<p align="center"><font size="5">Luciano Soares Pedroso</font></p>
 
     <div class="card">
@@ -145,17 +138,17 @@
                 <input type="number" id="f_oc" value="40" step="any">
             </div>
 
-            <!-- Linha 2: Campo Aparente e Latitude (com geolocalização) -->
+            <!-- Linha 2: Campo Aparente e Latitude (com geolocalizaÃ§Ã£o) -->
             <div class="field-group">
-                <label for="campo_ap">Campo Aparente (°)</label>
+                <label for="campo_ap">Campo Aparente (Â°)</label>
                 <input type="number" id="campo_ap" value="40" step="any">
             </div>
             <div class="field-group latitude-group">
-                <label for="lat">Latitude (°)</label>
+                <label for="lat">Latitude (Â°)</label>
                 <div class="lat-input-row">
                     <input type="number" id="lat" value="-21.42" step="any" lang="pt-BR">
-                    <button id="btnGeo" class="btn-geo" title="Usar localização atual">
-                        📍 Minha localização
+                    <button id="btnGeo" class="btn-geo" title="Usar localizaÃ§Ã£o atual">
+                        ðŸ“ Minha localizaÃ§Ã£o
                     </button>
                 </div>
                 <span id="localInfo" class="local-info"></span>
@@ -174,10 +167,10 @@
 
         <div class="btn-group">
             <button id="calcularBtn" class="btn btn-calcular" disabled>
-                <span>🔍</span> Calcular
+                <span>ðŸ”</span> Calcular
             </button>
             <button id="limparBtn" class="btn btn-limpar">
-                <span>🧹</span> Limpar tudo
+                <span>ðŸ§¹</span> Limpar tudo
             </button>
         </div>
     </div>
@@ -193,7 +186,7 @@
 <script>
     const diametro_lua = 3474;          // km
     const periodo_orbital = 27.321661 * 24 * 3600; // s
-    const a_medio = 384400;             // semi‑eixo maior (km)
+    const a_medio = 384400;             // semiâ€‘eixo maior (km)
     const e_lua = 0.0549;               // excentricidade
 
     const jd_perigeu_ref = 2459957.68333; // 2023-01-01 04:24 UTC
@@ -236,14 +229,14 @@
         calcularBtn.disabled = !arquivoSelecionado || !dataInput.value || calculoRealizado;
     }
 
-    // Geolocalização
+    // GeolocalizaÃ§Ã£o
     btnGeo.addEventListener('click', () => {
         if (!navigator.geolocation) {
-            alert('Geolocalização não suportada neste navegador.');
+            alert('GeolocalizaÃ§Ã£o nÃ£o suportada neste navegador.');
             return;
         }
         btnGeo.disabled = true;
-        btnGeo.textContent = '⏳ Obtendo...';
+        btnGeo.textContent = 'â³ Obtendo...';
         localInfo.textContent = '';
 
         navigator.geolocation.getCurrentPosition(
@@ -257,19 +250,19 @@
                         const addr = data.address || {};
                         const cidade = addr.city || addr.town || addr.village || addr.municipality || '';
                         const estado = addr.state || '';
-                        localInfo.textContent = cidade ? `${cidade}${estado ? ', ' + estado : ''}` : `Lat ${lat.toFixed(4)}°`;
+                        localInfo.textContent = cidade ? `${cidade}${estado ? ', ' + estado : ''}` : `Lat ${lat.toFixed(4)}Â°`;
                     })
                     .catch(() => {
-                        localInfo.textContent = `Lat ${lat.toFixed(4)}°`;
+                        localInfo.textContent = `Lat ${lat.toFixed(4)}Â°`;
                     });
                 btnGeo.disabled = false;
-                btnGeo.textContent = '📍 Minha localização';
+                btnGeo.textContent = 'ðŸ“ Minha localizaÃ§Ã£o';
             },
             (err) => {
-                alert('Permissão de localização negada ou indisponível. Insira a latitude manualmente.');
-                console.warn('Geolocalização:', err.message);
+                alert('PermissÃ£o de localizaÃ§Ã£o negada ou indisponÃ­vel. Insira a latitude manualmente.');
+                console.warn('GeolocalizaÃ§Ã£o:', err.message);
                 btnGeo.disabled = false;
-                btnGeo.textContent = '📍 Minha localização';
+                btnGeo.textContent = 'ðŸ“ Minha localizaÃ§Ã£o';
             },
             { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
         );
@@ -312,20 +305,20 @@
         const D_real = distanciaLuaParaData(dataInput.value);
         const v_real = (2 * Math.PI * D_real) / periodo_orbital;
 
-        // Erro aleatório para a distância (até ±3,02%)
+        // Erro aleatÃ³rio para a distÃ¢ncia (atÃ© Â±3,02%)
         const erro_d_alvo = (Math.random() * 2 - 1) * 0.0302;
         const distancia = D_real * (1 + erro_d_alvo);
 
-        // Determina o trânsito que corresponderia exatamente a essa distância
+        // Determina o trÃ¢nsito que corresponderia exatamente a essa distÃ¢ncia
         const theta_rad = Math.atan(diametro_lua / distancia);
         const deslocamento = theta_rad * 180 / Math.PI;
         const tempoTransito = deslocamento / omega;
 
-        // Erro aleatório para a velocidade (até ±2,66%), independente da distância
+        // Erro aleatÃ³rio para a velocidade (atÃ© Â±2,66%), independente da distÃ¢ncia
         const erro_v_alvo = (Math.random() * 2 - 1) * 0.0266;
         const v = v_real * (1 + erro_v_alvo);
 
-        // Cálculo dos erros percentuais (exatamente os valores absolutos dos alvos)
+        // CÃ¡lculo dos erros percentuais (exatamente os valores absolutos dos alvos)
         const erroDist = Math.abs(distancia - D_real) / D_real * 100;
         const erroV = Math.abs(v - v_real) / v_real * 100;
 
@@ -347,25 +340,25 @@
             const minLum = Math.min(...luminancias);
 
             equacoesDiv.innerHTML = `
-                <div class="equation">Ampliação: \\( M = \\frac{F_{obj}}{F_{oc}} = ${latexComma(M, 2)} \\)</div>
+                <div class="equation">AmpliaÃ§Ã£o: \\( M = \\frac{F_{obj}}{F_{oc}} = ${latexComma(M, 2)} \\)</div>
                 <div class="equation">Campo real: \\( \\theta_{real} = \\frac{${latexComma(campo_ap, 2)}}{${latexComma(M, 2)}} = ${latexComma(campo_real, 2)}^\\circ \\)</div>
                 <div class="equation">Velocidade angular aparente: \\( \\omega = 15^\\circ/h \\cdot \\cos(\\phi) = ${latexComma(omega, 5)}^\\circ/s \\)</div>
-                <div class="equation">Tempo de trânsito medido: \\( t = ${formatarBR(tempoTransito, 2)} \\, s \\)</div>
+                <div class="equation">Tempo de trÃ¢nsito medido: \\( t = ${formatarBR(tempoTransito, 2)} \\, s \\)</div>
                 <div class="equation">Deslocamento: \\( \\Delta \\theta = \\omega \\cdot t = ${latexComma(deslocamento, 3)}^\\circ \\)</div>
-                <div class="equation">Distância: \\( R = \\frac{D}{\\tan(\\theta)} = ${formatarBR(distancia, 0)} \\, km \\)</div>
-                <div class="equation">Velocidade orbital média: \\( v = \\frac{2 \\pi R}{T} = ${formatarBR(v, 3)} \\, km/s \\)</div>
+                <div class="equation">DistÃ¢ncia: \\( R = \\frac{D}{\\tan(\\theta)} = ${formatarBR(distancia, 0)} \\, km \\)</div>
+                <div class="equation">Velocidade orbital mÃ©dia: \\( v = \\frac{2 \\pi R}{T} = ${formatarBR(v, 3)} \\, km/s \\)</div>
             `;
             MathJax.typeset();
 
             resultadosDiv.innerHTML = `
                 <div class="real-value">
-                    <strong>Valores reais para ${dataInput.value.split('-').reverse().join('/')} (aproximação orbital):</strong><br>
-                    Distância real ≈ ${formatarBR(D_real, 0)} km = ${formatarBR(D_real * 1000, 0)} m (SI)<br>
-                    Velocidade orbital real ≈ ${formatarBR(v_real, 3)} km/s = ${formatarBR(v_real * 1000, 1)} m/s (SI)
+                    <strong>Valores reais para ${dataInput.value.split('-').reverse().join('/')} (aproximaÃ§Ã£o orbital):</strong><br>
+                    DistÃ¢ncia real â‰ˆ ${formatarBR(D_real, 0)} km = ${formatarBR(D_real * 1000, 0)} m (SI)<br>
+                    Velocidade orbital real â‰ˆ ${formatarBR(v_real, 3)} km/s = ${formatarBR(v_real * 1000, 1)} m/s (SI)
                 </div>
-                <p class="result">Distância calculada: ${formatarBR(distancia, 0)} km = ${formatarBR(distancia*1000, 0)} m (erro: ${formatarBR(erroDist, 2)}%)</p>
+                <p class="result">DistÃ¢ncia calculada: ${formatarBR(distancia, 0)} km = ${formatarBR(distancia*1000, 0)} m (erro: ${formatarBR(erroDist, 2)}%)</p>
                 <p class="result">Velocidade calculada: ${formatarBR(v, 3)} km/s = ${formatarBR(v*1000, 1)} m/s (erro: ${formatarBR(erroV, 2)}%)</p>
-                <p><em>Nota: A velocidade em km/s dá uma ideia da rapidez do movimento lunar (≈ 1 km/s).</em></p>
+                <p><em>Nota: A velocidade em km/s dÃ¡ uma ideia da rapidez do movimento lunar (â‰ˆ 1 km/s).</em></p>
             `;
 
             const minTempo = Math.min(...tempos);
@@ -381,7 +374,7 @@
                     labels: tempos,
                     datasets: [
                         {
-                            label: 'Iluminância',
+                            label: 'IluminÃ¢ncia',
                             data: luminancias,
                             borderColor: '#0077b6',
                             backgroundColor: 'rgba(0,119,182,0.1)',
@@ -391,7 +384,7 @@
                             fill: false
                         },
                         {
-                            label: 'Máximo iluminância',
+                            label: 'MÃ¡ximo iluminÃ¢ncia',
                             data: Array(tempos.length).fill(maxLum),
                             borderColor: '#2d6a4f',
                             borderDash: [5, 5],
@@ -400,7 +393,7 @@
                             fill: false
                         },
                         {
-                            label: 'Mínimo iluminância',
+                            label: 'MÃ­nimo iluminÃ¢ncia',
                             data: Array(tempos.length).fill(minLum),
                             borderColor: '#c1121f',
                             borderDash: [5, 5],
@@ -436,7 +429,7 @@
                             }
                         },
                         y: {
-                            title: { display: true, text: 'Iluminância', color: '#1b263b' },
+                            title: { display: true, text: 'IluminÃ¢ncia', color: '#1b263b' },
                             ticks: { color: '#1b263b' }
                         }
                     }
