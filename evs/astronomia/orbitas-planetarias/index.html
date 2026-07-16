@@ -12,7 +12,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
-        /* CORREÇÃO DE LAYOUT: Largura fixa e box-sizing para evitar expansão */
         #painel {
             position: absolute;
             top: 20px;
@@ -24,12 +23,12 @@
             border: 1px solid #444;
             z-index: 100;
             backdrop-filter: blur(5px);
-            width: 320px; /* Largura fixa */
+            width: 320px;
             max-width: 320px;
             pointer-events: auto;
             max-height: 90vh;
             overflow-y: auto;
-            box-sizing: border-box; /* Garante que o padding não aumente a largura */
+            box-sizing: border-box;
         }
         
         h2 {
@@ -161,7 +160,6 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* CORREÇÃO DE LAYOUT: Quebra de texto forçada para mensagens longas */
         #status-textura {
             margin-top: 10px;
             padding: 10px;
@@ -176,7 +174,7 @@
             justify-content: center;
             width: 100%;
             box-sizing: border-box;
-            overflow-wrap: break-word; /* Impede que o texto estoure a largura */
+            overflow-wrap: break-word;
             word-break: break-word;
         }
         
@@ -188,7 +186,7 @@
     </style>
 </head>
 <body>
-    <div id="painel" style="position: absolute; left: 20px; top: 20px; width: 341px">
+    <div id="painel" style="position: absolute; left: 20px; top: 20px; width: 341px; height:843px">
         <h2>🌌 EVS - ÓRBITA PLANETÁRIA</h2>
         <p align="center" style="margin: 0 0 5px 0; color: #ccc;">Prof. Luciano Soares Pedroso</p>
         <p align="center" style="margin: 0 0 15px 0; font-size: 0.85rem; color: #888;">(Fora de escala de Volume e Distância)</p>
@@ -248,7 +246,7 @@
     </div>
     
     <div id="instrucoes">
-        🖱️ Zoom: scroll | 🖱️ Rotação: clique + arraste | 🛰️ Texturas: NASA
+        🖱️ Zoom: scroll | 🖱️ Rotação: clique + arraste | 🛰️ Texturas: Solar System Scope
     </div>
 
     <script type="importmap">
@@ -264,15 +262,16 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+        // Texturas do Solar System Scope – alta qualidade, online e sem bloqueios
         const texturasURL = {
-            mercurio: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/mercury_1k.jpg',
-            venus: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/venus_atmos_2048.jpg',
-            terra: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg',
-            marte: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/mars_1k_color.jpg',
-            jupiter: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/jupiter_1k.jpg',
-            saturno: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/saturn_1k.jpg',
-            urano: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/uranus_1k.jpg',
-            netuno: 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/neptune_1k.jpg'
+            mercurio: 'https://www.solarsystemscope.com/textures/download/8k_mercury.jpg',
+            venus:    'https://www.solarsystemscope.com/textures/download/8k_venus_surface.jpg',
+            terra:    'https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg',
+            marte:    'https://www.solarsystemscope.com/textures/download/8k_mars.jpg',
+            jupiter:  'https://www.solarsystemscope.com/textures/download/8k_jupiter.jpg',
+            saturno:  'https://www.solarsystemscope.com/textures/download/8k_saturn.jpg',
+            urano:    'https://www.solarsystemscope.com/textures/download/8k_uranus.jpg',
+            netuno:   'https://www.solarsystemscope.com/textures/download/8k_neptune.jpg'
         };
 
         const coresFallback = {
@@ -408,6 +407,7 @@
             statusDiv.innerHTML = '<span class="loading"></span> Carregando textura...';
             statusDiv.style.background = 'rgba(255, 215, 0, 0.2)';
             
+            // Solar System Scope permite requisições cross-origin
             loader.crossOrigin = 'anonymous';
             
             loader.load(
@@ -415,14 +415,14 @@
                 (texture) => {
                     texture.minFilter = THREE.LinearFilter;
                     texture.magFilter = THREE.LinearFilter;
-                    statusDiv.innerHTML = '<span class="texto-sucesso">✅ Textura real da NASA carregada!</span>';
+                    statusDiv.innerHTML = '<span class="texto-sucesso">✅ Textura carregada!</span>';
                     statusDiv.style.background = 'rgba(46, 204, 113, 0.2)';
                     callback(texture);
                 },
                 undefined,
                 (err) => {
-                    console.warn(`CORS bloqueou ou URL inválida: ${url}. Usando fallback procedural.`);
-                    statusDiv.innerHTML = `⚠️ Navegador bloqueou imagem externa.<span class="texto-aviso">Usando textura gerada localmente (sem falhas)</span>`;
+                    console.warn(`Erro ao carregar textura: ${url}. Usando fallback procedural.`);
+                    statusDiv.innerHTML = `⚠️ Falha na textura.<span class="texto-aviso">Usando textura gerada localmente</span>`;
                     statusDiv.style.background = 'rgba(243, 156, 18, 0.2)';
                     callback(criarTexturaProcedural(corFallback));
                 }
