@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EVS - Órbita Planetária</title>
-    <!-- Favicon corrigido para a pasta assets/img -->
-    <link rel="icon" href="./assets/img/favicon.png" type="image/png">  
+    <link rel="icon" href="../../../assets/img/favicon.png" type="image/png">  
     <style>
         body {
             margin: 0;
@@ -247,7 +246,7 @@
     </div>
     
     <div id="instrucoes">
-        🖱️ Zoom: scroll | 🖱️ Rotação: clique + arraste | 🛰️ Texturas: Solar System Scope (4K local)
+        🖱️ Zoom: scroll | 🖱️ Rotação: clique + arraste | 🛰️ Texturas: Solar System Scope
     </div>
 
     <script type="importmap">
@@ -263,16 +262,16 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // Caminhos corrigidos para a pasta oficial "assets/img/"
+        // Texturas locais da pasta assets/img
         const texturasURL = {
-            mercurio: './assets/img/2k_mercury.jpg',
-            venus:    './assets/img/2k_venus_surface.jpg',
-            terra:    './assets/img/2k_earth_daymap.jpg',
-            marte:    './assets/img/2k_mars.jpg',
-            jupiter:  './assets/img/2k_jupiter.jpg',
-            saturno:  './assets/img/2k_saturn.jpg',
-            urano:    './assets/img/2k_uranus.jpg',
-            netuno:   './assets/img/2k_neptune.jpg'
+            mercurio: '../../../assets/img/2k_mercury.jpg',
+            venus:    'assets/img/2k_venus_surface.jpg',
+            terra:    'assets/img/2k_earth_daymap.jpg',
+            marte:    'assets/img/2k_mars.jpg',
+            jupiter:  'assets/img/2k_jupiter.jpg',
+            saturno:  'assets/img/2k_saturn.jpg',
+            urano:    'assets/img/2k_uranus.jpg',
+            netuno:   'assets/img/2k_neptune.jpg'
         };
 
         const coresFallback = {
@@ -408,6 +407,9 @@
             statusDiv.innerHTML = '<span class="loading"></span> Carregando textura...';
             statusDiv.style.background = 'rgba(255, 215, 0, 0.2)';
             
+            // Para arquivos locais não é necessário definir crossOrigin
+            // loader.crossOrigin = 'anonymous'; // removido para evitar warnings desnecessários
+            
             loader.load(
                 url,
                 (texture) => {
@@ -419,8 +421,8 @@
                 },
                 undefined,
                 (err) => {
-                    console.warn(`Erro ao carregar textura local: ${url}. Usando fallback procedural.`);
-                    statusDiv.innerHTML = `⚠️ Falha na textura local.<span class="texto-aviso">Usando textura gerada localmente</span>`;
+                    console.warn(`Erro ao carregar textura: ${url}. Usando fallback procedural.`);
+                    statusDiv.innerHTML = `⚠️ Falha na textura.<span class="texto-aviso">Usando textura gerada localmente</span>`;
                     statusDiv.style.background = 'rgba(243, 156, 18, 0.2)';
                     callback(criarTexturaProcedural(corFallback));
                 }
@@ -468,7 +470,7 @@
             btn.innerHTML = `⏩ ${fatorVelocidade}x`;
             
             const dados = planetas[planetaSelecionado];
-            document.getElementById('info').innerHTML = factorVelocidade > 1 ? `🚀 ${dados.nome} acelerado (${fatorVelocidade}x)` : `🔄 Simulando ${dados.nome}...`;
+            document.getElementById('info').innerHTML = fatorVelocidade > 1 ? `🚀 ${dados.nome} acelerado (${fatorVelocidade}x)` : `🔄 Simulando ${dados.nome}...`;
         };
 
         window.iniciarSimulacao = function() {
@@ -571,9 +573,9 @@
                 grupoPlanetaAtual.position.x = a * Math.cos(angulo) + foco;
                 grupoPlanetaAtual.position.z = -b * Math.sin(angulo);
                 
-                malhaPlanetaAtual.rotation.y += dados.velocidadeRotacao * factorVelocidade;
+                malhaPlanetaAtual.rotation.y += dados.velocidadeRotacao * fatorVelocidade;
                 
-                angulo += ((0.015 * 365.25) / dados.periodoReal) * factorVelocidade;
+                angulo += ((0.015 * 365.25) / dados.periodoReal) * fatorVelocidade;
                 
                 if (angulo >= Math.PI * 2) {
                     simulando = false; angulo = 0;
