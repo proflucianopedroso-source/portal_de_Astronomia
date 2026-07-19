@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVS - Cruzeiro do Sul - Visualização 3D</title>
+<link rel="icon" href="../../../assets/img/favicon.png" type="image/png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; overflow: hidden; }
+        #canvas-container { width: 100vw; height: 100vh; position: relative; }
+
+        #info-panel {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(10, 10, 30, 0.95); padding: 20px; border-radius: 10px;
+            border: 1px solid rgba(100, 150, 255, 0.4); max-width: 360px;
+            backdrop-filter: blur(10px); z-index: 100;
+        }
+        #info-panel h1 { font-size: 1.4em; margin-bottom: 10px; color: #6495ed; }
+        #info-panel p { font-size: 0.85em; line-height: 1.6; color: #ccc; margin-bottom: 6px; }
+        #info-panel .highlight { color: #87ceeb; font-weight: 600; }
+
+        #depth-panel {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(10, 10, 30, 0.95); padding: 18px 20px; border-radius: 10px;
+            border: 1px solid rgba(255, 200, 100, 0.5); width: 340px;
+            backdrop-filter: blur(10px); z-index: 100;
+            transition: opacity 0.3s;
+        }
+        #depth-panel.disabled { opacity: 0.4; pointer-events: none; }
+        #depth-panel h3 { color: #ffd93d; font-size: 1em; margin-bottom: 10px; }
+        #depth-slider {
+            width: 100%; accent-color: #ffd93d; cursor: pointer; margin-bottom: 10px;
+        }
+        #depth-readout { font-size: 0.78em; line-height: 1.7; color: #ddd; }
+        #depth-readout .star-row { display: flex; justify-content: space-between; }
+        #depth-readout .star-row span:first-child { color: #87ceeb; }
+        #depth-pct {
+            font-size: 0.85em; color: #ffd93d; font-weight: 700; margin-bottom: 8px; display: block;
+        }
+
+        #controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; background: rgba(10, 10, 30, 0.95);
+            padding: 15px 30px; border-radius: 30px;
+            border: 1px solid rgba(100, 150, 255, 0.4); backdrop-filter: blur(10px); z-index: 100;
+        }
+        .btn {
+            background: linear-gradient(135deg, #1e3c72, #2a5298); color: white;
+            border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer;
+            font-size: 0.9em; transition: all 0.3s; font-weight: 600;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(100, 150, 255, 0.5); }
+        .btn.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 0 20px rgba(102, 126, 234, 0.6); }
+
+        #star-info {
+            position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
+            background: rgba(10, 10, 30, 0.98); padding: 25px; border-radius: 15px;
+            border: 2px solid rgba(100, 150, 255, 0.6); max-width: 380px;
+            display: none; animation: slideIn 0.4s ease; z-index: 100;
+            max-height: 85vh; overflow-y: auto;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-50%) translateX(30px); }
+            to { opacity: 1; transform: translateY(-50%) translateX(0); }
+        }
+        #star-info h2 { color: #6495ed; margin-bottom: 15px; font-size: 1.8em; }
+        #star-info .info-item {
+            margin: 10px 0; padding: 10px;
+            background: rgba(100, 150, 255, 0.15); border-radius: 8px;
+            border-left: 3px solid #6495ed;
+        }
+        #star-info .info-label {
+            color: #87ceeb; font-weight: 700; font-size: 0.8em;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        #star-info .info-value { color: #fff; font-size: 0.95em; margin-top: 4px; }
+        #star-info .close-btn {
+            position: absolute; top: 10px; right: 15px;
+            background: none; border: none; color: #fff;
+            font-size: 1.8em; cursor: pointer;
+        }
+
+        #legend {
+            position: absolute; bottom: 110px; left: 20px;
+            background: rgba(10, 10, 30, 0.95); padding: 15px; border-radius: 10px;
+            border: 1px solid rgba(100, 150, 255, 0.4); z-index: 100;
+        }
+        #legend h3 { color: #6495ed; margin-bottom: 10px; font-size: 1em; }
+        .legend-item { display: flex; align-items: center; margin: 6px 0; font-size: 0.82em; }
+        .legend-color {
+            width: 14px; height: 14px; border-radius: 50%;
+            margin-right: 10px; box-shadow: 0 0 10px currentColor;
+        }
+        .legend-dist-box { margin-left: auto; text-align: right; }
+        .legend-distance { color: #87ceeb; font-weight: 600; display: block; }
+        .legend-pc { color: #999; font-size: 0.85em; display: block; }
+
+        #loading {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); font-size: 1.5em; color: #6495ed;
+        }
+
+        .star-label {
+            position: absolute; color: #fff; font-size: 0.9em; font-weight: 600;
+            pointer-events: none; text-shadow: 0 0 10px rgba(0,0,0,1);
+            padding: 3px 8px; background: rgba(0, 0, 0, 0.7); border-radius: 3px;
+        }
+        .star-label .dist { display: block; font-size: 0.75em; color: #87ceeb; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <div id="loading">Carregando...</div>
+    </div>
+
+    <div id="info-panel">
+        <h1>🌟 EVS - Cruzeiro do Sul</h1>
+		<p align="center"><font color="#FFFFFF">Prof. Luciano Soares Pedroso</font></p>
+        <p><span class="highlight">Terra:</span> Origem (0,0,0) — onde você está</p>
+        <p>📐 <span class="highlight">X e Y:</span> Posição no céu (formam a cruz que vemos)</p>
+        <p>📏 <span class="highlight">Z:</span> Distância real de cada estrela até a Terra</p>
+        <p style="margin-top: 10px; color: #ffd93d; font-size: 0.8em;">
+            ➡️ Use o controle "Revele as Distâncias Reais" à direita para ver que, apesar de parecerem
+            vizinhas no céu, as estrelas estão a distâncias muito diferentes umas das outras!</p>
+		<p style="margin-top: 10px; " align="center">
+            <font size="3" color="#FFFFFF">Saiba mais clicando na Estrela!
+			</font>
+        </p>
+    </div>
+
+    <div id="depth-panel">
+        <h3>📏 Revele as Distâncias Reais</h3>
+        <span id="depth-pct">Profundidade: 0%</span>
+        <input type="range" id="depth-slider" min="0" max="100" value="0" step="1">
+        <div id="depth-readout"></div>
+    </div>
+
+    <div id="controls">
+        <button class="btn active" id="btn-3d">🌌 Visão 3D</button>
+        <button class="btn" id="btn-earth">🌍 Visão da Terra</button>
+        <button class="btn" id="btn-side">↔️ Vista Lateral</button>
+    </div>
+
+    <div id="legend">
+        <h3>⭐ Estrelas (distância real da Terra)</h3>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ffd93d;"></div>
+            <span>Ginan (ε)</span>
+            <span class="legend-dist-box"><span class="legend-distance">72,7 al</span><span class="legend-pc">22,3 pc</span></span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff6b6b;"></div>
+            <span>Gacrux (γ)</span>
+            <span class="legend-dist-box"><span class="legend-distance">88,6 al</span><span class="legend-pc">27,2 pc</span></span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #9bb0ff;"></div>
+            <span>Mimosa (β)</span>
+            <span class="legend-dist-box"><span class="legend-distance">280 al</span><span class="legend-pc">85,9 pc</span></span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #9bb0ff;"></div>
+            <span>Acrux (α)</span>
+            <span class="legend-dist-box"><span class="legend-distance">320 al</span><span class="legend-pc">98,1 pc</span></span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #9bb0ff;"></div>
+            <span>δ Crucis</span>
+            <span class="legend-dist-box"><span class="legend-distance">345 al</span><span class="legend-pc">105,8 pc</span></span>
+        </div>
+    </div>
+
+    <div id="star-info">
+        <button class="close-btn" onclick="closeStarInfo()">×</button>
+        <h2 id="star-name"></h2>
+        <div id="star-details"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        const LY_PER_PC = 3.26156;
+
+        const starsData = {
+            'Gacrux': {
+                pos2d: { x: -7.1, y: 82.1 },
+                distance: 88.6,
+                mag: 1.64,
+                cor: 'Vermelha',
+                tipo: 'M3.5 III',
+                ar: '12h 31m 09s',
+                dec: '-57° 06\' 47"',
+                descricao: 'Gacrux (γ Crucis) é uma gigante vermelha no topo da cruz. É a segunda estrela mais próxima do Sistema Solar na constelação. Sua cor avermelhada é visível a olho nu e contrasta com as outras estrelas azuladas.',
+                massa: '1,5 massas solares',
+                luminosidade: '820 × Sol',
+                temperatura: '3.626 K'
+            },
+            'Mimosa': {
+                pos2d: { x: -82.0, y: -20.9 },
+                distance: 280,
+                mag: 1.25,
+                cor: 'Azul-branca',
+                tipo: 'B0.5 III',
+                ar: '12h 47m 43s',
+                dec: '-59° 41\' 20"',
+                descricao: 'Mimosa (β Crucis) é uma gigante azul brilhante e uma estrela variável do tipo Beta Cephei, o que significa que sua luminosidade varia ligeiramente devido a pulsações em sua superfície. É a segunda estrela mais brilhante da constelação.',
+                massa: '16 massas solares',
+                luminosidade: '34.000 × Sol',
+                temperatura: '27.000 K'
+            },
+            'Delta Crucis': {
+                pos2d: { x: 65.4, y: 16.7 },
+                distance: 345,
+                mag: 2.8,
+                cor: 'Azul-branca',
+                tipo: 'B2 IV',
+                ar: '12h 15m 09s',
+                dec: '-58° 44\' 56"',
+                descricao: 'Delta Crucis (δ Crucis) ou Imai é uma subgigante azul da classe B e uma estrela Be, o que significa que possui um disco de gás ao seu redor. É a estrela mais distante entre as cinco principais do Cruzeiro do Sul.',
+                massa: '8 massas solares',
+                luminosidade: '5.000 × Sol',
+                temperatura: '20.000 K'
+            },
+            'Acrux': {
+                pos2d: { x: 13.6, y: -157.3 },
+                distance: 320,
+                mag: 0.76,
+                cor: 'Azul-branca',
+                tipo: 'B0.5 IV + B1 V',
+                ar: '12h 26m 36s',
+                dec: '-63° 05\' 57"',
+                descricao: 'Acrux (α Crucis) é a estrela mais brilhante do Cruzeiro do Sul e a mais ao sul. É na verdade um sistema estelar múltiplo composto por pelo menos três estrelas. A componente principal é uma gigante azul de classe B0.5, muito mais quente e massiva que o Sol.',
+                massa: '14 massas solares',
+                luminosidade: '25.000 × Sol',
+                temperatura: '28.000 K'
+            },
+            'Ginan': {
+                pos2d: { x: 37.3, y: -49.4 },
+                distance: 72.7,
+                mag: 3.57,
+                cor: 'Amarela',
+                tipo: 'K0 III + K2 V',
+                ar: '12h 21m 22s',
+                dec: '-60° 24\' 04"',
+                descricao: 'Ginan (ε Crucis) é uma gigante laranja-amarelada e a estrela mais próxima do Sistema Solar na constelação. É um sistema binário composto por duas estrelas de tipo espectral K. Conhecida como a "estrela intrometida" por estar próxima mas não fazer parte da cruz principal.',
+                massa: '2,5 massas solares',
+                luminosidade: '200 × Sol',
+                temperatura: '4.600 K'
+            }
+        };
+
+        // Ordem de exibição no leitor de profundidade, da mais próxima à mais distante
+        const orderByDistance = Object.keys(starsData).sort((a, b) => starsData[a].distance - starsData[b].distance);
+
+        const starColors = { 'Azul-branca': 0x9bb0ff, 'Vermelha': 0xff6b6b, 'Amarela': 0xffd93d };
+        const SCALE = 1.5;
+        let scene, camera, renderer, controls;
+        let stars = {};
+        let lines, earthLines;
+        let raycaster, mouse;
+        let currentView = '3d';
+        let depthFactor = 0; // 0 = achatado (como visto da Terra), 1 = distância real total
+
+        // Converte anos-luz em parsecs (valor numérico puro)
+        function pcVal(aly) { return aly / LY_PER_PC; }
+
+        // Formata número no padrão decimal brasileiro (vírgula em vez de ponto)
+        function fmt(n, dec = 1) {
+            return n.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000005);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+            camera.position.set(400, 200, 500);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.minDistance = 100;
+            controls.maxDistance = 2000;
+            controls.target.set(0, 0, 150);
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            createAxes();
+            createEarthPlane();
+            createStars();
+            createLines();
+            createBackgroundStars();
+            updateDepthReadout();
+
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('click', onMouseClick);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+
+            document.getElementById('btn-3d').addEventListener('click', () => setView('3d'));
+            document.getElementById('btn-earth').addEventListener('click', () => setView('earth'));
+            document.getElementById('btn-side').addEventListener('click', () => setView('side'));
+
+            document.getElementById('depth-slider').addEventListener('input', (e) => {
+                depthFactor = Number(e.target.value) / 100;
+                document.getElementById('depth-pct').textContent = `Profundidade: ${e.target.value}%`;
+                applyDepth();
+                updateDepthReadout();
+            });
+
+            document.getElementById('loading').style.display = 'none';
+            animate();
+        }
+
+        function createAxes() {
+            const axisLength = 400;
+            const xMat = new THREE.LineBasicMaterial({ color: 0xff4444 });
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-axisLength, 0, 0), new THREE.Vector3(axisLength, 0, 0)
+            ]), xMat));
+
+            const yMat = new THREE.LineBasicMaterial({ color: 0x44ff44 });
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, -axisLength, 0), new THREE.Vector3(0, axisLength, 0)
+            ]), yMat));
+
+            const zMat = new THREE.LineBasicMaterial({ color: 0x4488ff, linewidth: 2 });
+            scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 400)
+            ]), zMat));
+
+            for (let d = 100; d <= 400; d += 100) {
+                scene.add(new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-5, 0, d), new THREE.Vector3(5, 0, d)]),
+                    new THREE.LineBasicMaterial({ color: 0x4488ff })
+                ));
+                const label = createTextSprite(`${d} al (${fmt(pcVal(d))} pc)`, '#87ceeb');
+                label.position.set(-20, -10, d);
+                label.scale.set(45, 12, 1);
+                scene.add(label);
+            }
+        }
+
+        function createTextSprite(text, color) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 400; canvas.height = 64;
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = 'bold 30px Arial';
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            const texture = new THREE.CanvasTexture(canvas);
+            return new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+        }
+
+        function createEarthPlane() {
+            const grid = new THREE.GridHelper(400, 20, 0x4488ff, 0x223366);
+            grid.rotation.x = Math.PI / 2;
+            grid.position.z = 0;
+            grid.material.transparent = true;
+            grid.material.opacity = 0.15;
+            scene.add(grid);
+        }
+
+        function createStars() {
+            Object.keys(starsData).forEach(name => {
+                const data = starsData[name];
+                const size = 8 + (5 - data.mag) * 2;
+                const x = data.pos2d.x * SCALE;
+                const y = data.pos2d.y * SCALE;
+
+                const star = new THREE.Mesh(
+                    new THREE.SphereGeometry(size, 32, 32),
+                    new THREE.MeshBasicMaterial({ color: starColors[data.cor] })
+                );
+                star.position.set(x, y, 0);
+                // pos guarda as coordenadas fixas (x,y = posição angular no céu; trueZ = distância real)
+                star.userData = { name, data, pos: { x, y, trueZ: data.distance } };
+                scene.add(star);
+                stars[name] = star;
+
+                const label = document.createElement('div');
+                label.className = 'star-label';
+                label.innerHTML = `${name}<span class="dist">${fmt(data.distance)} al / ${fmt(pcVal(data.distance))} pc</span>`;
+                document.body.appendChild(label);
+                star.userData.label = label;
+            });
+        }
+
+        function updateLabels() {
+            Object.values(stars).forEach(star => {
+                const vector = star.position.clone().project(camera);
+                if (vector.z > 1) { star.userData.label.style.display = 'none'; return; }
+                const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-(vector.y * 0.5) + 0.5) * window.innerHeight;
+                star.userData.label.style.left = (x + 15) + 'px';
+                star.userData.label.style.top = (y - 20) + 'px';
+                star.userData.label.style.display = 'block';
+            });
+        }
+
+        const connections = [['Gacrux', 'Acrux'], ['Mimosa', 'Delta Crucis']];
+
+        function createLines() {
+            lines = new THREE.Group();
+            connections.forEach(() => {
+                lines.add(new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+                    new THREE.LineBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.5 })
+                ));
+            });
+            scene.add(lines);
+
+            earthLines = new THREE.Group();
+            connections.forEach(([a, b]) => {
+                const dA = starsData[a], dB = starsData[b];
+                earthLines.add(new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(dA.pos2d.x * SCALE, dA.pos2d.y * SCALE, 0),
+                        new THREE.Vector3(dB.pos2d.x * SCALE, dB.pos2d.y * SCALE, 0)
+                    ]),
+                    new THREE.LineBasicMaterial({ color: 0x88ccff })
+                ));
+            });
+            earthLines.visible = false;
+            scene.add(earthLines);
+
+            updateConnectionLines();
+        }
+
+        function updateConnectionLines() {
+            connections.forEach(([a, b], i) => {
+                const line = lines.children[i];
+                const posAttr = line.geometry.attributes.position;
+                posAttr.setXYZ(0, stars[a].position.x, stars[a].position.y, stars[a].position.z);
+                posAttr.setXYZ(1, stars[b].position.x, stars[b].position.y, stars[b].position.z);
+                posAttr.needsUpdate = true;
+                line.geometry.computeBoundingSphere();
+            });
+        }
+
+        function createBackgroundStars() {
+            const vertices = [];
+            for (let i = 0; i < 2000; i++) {
+                vertices.push((Math.random() - 0.5) * 3000, (Math.random() - 0.5) * 3000, Math.random() * 2000);
+            }
+            scene.add(new THREE.Points(
+                new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)),
+                new THREE.PointsMaterial({ color: 0xffffff, size: 1.5, transparent: true, opacity: 0.6 })
+            ));
+        }
+
+        // A Terra não é renderizada como objeto — ela é apenas a origem (0,0,0)
+        // do sistema de coordenadas, já explicada no painel de informações e
+        // usada como referência para todas as distâncias (Z) das estrelas.
+
+        // Aplica o depthFactor às posições Z das estrelas (não usado na visão "Terra", que é sempre achatada)
+        function applyDepth() {
+            if (currentView === 'earth') return;
+            Object.values(stars).forEach(star => {
+                const z = star.userData.pos.trueZ * depthFactor;
+                star.position.z = z;
+            });
+            updateConnectionLines();
+        }
+
+        function updateDepthReadout() {
+            const readout = document.getElementById('depth-readout');
+            readout.innerHTML = orderByDistance.map(name => {
+                const d = starsData[name];
+                const shown = d.distance * depthFactor;
+                return `<div class="star-row"><span>${name}</span><span>${fmt(shown)} / ${fmt(d.distance)} al &nbsp;(${fmt(pcVal(d.distance))} pc)</span></div>`;
+            }).join('');
+        }
+
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            const depthPanel = document.getElementById('depth-panel');
+
+            if (view === 'earth') {
+                document.getElementById('btn-earth').classList.add('active');
+                Object.values(stars).forEach(star => {
+                    star.position.set(star.userData.pos.x, star.userData.pos.y, 0);
+                });
+                lines.visible = false;
+                earthLines.visible = true;
+                updateConnectionLines();
+                camera.position.set(0, 0, 500);
+                controls.target.set(0, 0, 0);
+                Object.values(stars).forEach(s => s.userData.label.style.display = 'none');
+                depthPanel.classList.add('disabled');
+            } else {
+                document.getElementById(view === '3d' ? 'btn-3d' : 'btn-side').classList.add('active');
+                applyDepth();
+                lines.visible = true;
+                earthLines.visible = false;
+                if (view === '3d') {
+                    camera.position.set(400, 200, 500);
+                    controls.target.set(0, 0, 150);
+                } else {
+                    camera.position.set(-500, 0, 200);
+                    controls.target.set(0, 0, 150);
+                }
+                Object.values(stars).forEach(s => s.userData.label.style.display = 'block');
+                depthPanel.classList.remove('disabled');
+            }
+            controls.update();
+        }
+
+        function onMouseClick(e) {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(Object.values(stars));
+            if (hits.length > 0) showStarInfo(hits[0].object.userData.name);
+        }
+
+        function onMouseMove(e) {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            document.body.style.cursor = raycaster.intersectObjects(Object.values(stars)).length > 0 ? 'pointer' : 'default';
+        }
+
+        function showStarInfo(name) {
+            const d = starsData[name];
+            document.getElementById('star-name').textContent = name;
+            document.getElementById('star-details').innerHTML = `
+                <div class="info-item"><div class="info-label">📖 Descrição</div><div class="info-value">${d.descricao}</div></div>
+                <div class="info-item"><div class="info-label">📏 Distância da Terra</div><div class="info-value">${fmt(d.distance)} anos-luz</div></div>
+                <div class="info-item"><div class="info-label">📐 Distância em Parsecs</div><div class="info-value">${fmt(pcVal(d.distance))} pc</div></div>
+                <div class="info-item"><div class="info-label">⭐ Magnitude Aparente</div><div class="info-value">${fmt(d.mag, 2)}</div></div>
+                <div class="info-item"><div class="info-label">🔬 Tipo Espectral</div><div class="info-value">${d.tipo}</div></div>
+                <div class="info-item"><div class="info-label">🎨 Cor</div><div class="info-value">${d.cor}</div></div>
+                <div class="info-item"><div class="info-label">📍 Ascensão Reta</div><div class="info-value">${d.ar}</div></div>
+                <div class="info-item"><div class="info-label">📍 Declinação</div><div class="info-value">${d.dec}</div></div>
+                <div class="info-item"><div class="info-label">⚖️ Massa</div><div class="info-value">${d.massa}</div></div>
+                <div class="info-item"><div class="info-label">💡 Luminosidade</div><div class="info-value">${d.luminosidade}</div></div>
+                <div class="info-item"><div class="info-label">🔥 Temperatura</div><div class="info-value">${d.temperatura}</div></div>
+            `;
+            document.getElementById('star-info').style.display = 'block';
+        }
+
+        function closeStarInfo() { document.getElementById('star-info').style.display = 'none'; }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateLabels();
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
