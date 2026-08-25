@@ -193,6 +193,14 @@
             gap: 15px;
         }
 
+        .stats-grid.with-brazil {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .stat-item.brazil-stat .stat-value {
+            color: #009c3b;
+        }
+
         .stat-item {
             text-align: center;
             padding: 15px;
@@ -323,10 +331,39 @@
         }
 
         .subtype-badge.total { background: #dc3545; color: white; }
-        .subtype-badge.Parcial { background: #ff8c00; color: white; }
-        .subtype-badge.Anular { background: #17a2b8; color: white; }
+        .subtype-badge.parcial { background: #ff8c00; color: white; }
+        .subtype-badge.anular { background: #17a2b8; color: white; }
         .subtype-badge.penumbral { background: #6c757d; color: white; }
         .subtype-badge.hybrid { background: #6f42c1; color: white; }
+
+        .brazil-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #009c3b, #ffdf00 50%, #002776);
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+        }
+
+        .eclipse-card.brazil-visible {
+            border-color: #009c3b;
+            box-shadow: 0 0 0 3px rgba(0, 156, 59, 0.15), var(--card-shadow);
+        }
+
+        .eclipse-card.brazil-visible:hover {
+            border-color: #ffdf00;
+        }
+
+        .brazil-note {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
 
         .eclipse-details {
             display: grid;
@@ -554,12 +591,22 @@
                     <div class="range-value" id="magnitudeValue">≥ 0.0</div>
                 </div>
 
+                <div class="filter-group">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="brazilFilter" style="width:auto;">
+                        🇧🇷 Somente possivelmente visíveis do Brasil
+                    </label>
+                    <div class="brazil-note">
+                        Estimativa aproximada: considera a distância entre o ponto de eclipse máximo e o território brasileiro. Vale só para eclipses <strong>solares</strong> (que têm coordenadas); não substitui o mapa oficial de trajetória (NASA/Espenak). Eclipses <strong>lunares</strong> não entram nesse filtro — sua visibilidade depende do horário local, não da posição geográfica.
+                    </div>
+                </div>
+
                 <button class="btn btn-primary" onclick="applyFilters()">Aplicar Filtros</button>
                 <button class="btn btn-secondary" onclick="resetFilters()">Resetar Filtros</button>
 
                 <div class="stats-panel">
                     <h3 style="margin-bottom: 16px;">📈 Estatísticas</h3>
-                    <div class="stats-grid">
+                    <div class="stats-grid with-brazil">
                         <div class="stat-item">
                             <div class="stat-value" id="totalEclipses">0</div>
                             <div class="stat-label">Total</div>
@@ -575,6 +622,10 @@
                         <div class="stat-item">
                             <div class="stat-value" id="totalCount">0</div>
                             <div class="stat-label">Totais</div>
+                        </div>
+                        <div class="stat-item brazil-stat">
+                            <div class="stat-value" id="brazilCount">0</div>
+                            <div class="stat-label">🇧🇷 Visíveis BR (estim.)</div>
                         </div>
                     </div>
                 </div>
@@ -613,7 +664,8 @@
         </div>
 
         <div class="footer">
-            <p>📅 Dados oficiais da NASA - Five Millennium Canon of Eclipses | Desenvolvido por <a href="#">Prof. Luciano Soares Pedroso - 2026</a></p>
+            <p>📅 Baseado no Five Millennium Canon of Eclipses (NASA/Espenak) | Desenvolvido por <a href="#">Prof. Luciano Soares Pedroso - 2026</a></p>
+            <p style="font-size:0.75rem; color:#999; margin-top:6px;">⚠️ Catálogo educacional resumido. Eclipses de grande destaque foram conferidos com fontes oficiais; alguns eclipses distantes no tempo podem ter coordenadas aproximadas. Para uso científico, consulte diretamente eclipse.gsfc.nasa.gov.</p>
         </div>
     </div>
 
@@ -747,7 +799,7 @@
             {date: "1949-09-22", type: "Solar", subtype: "Parcial", duration: "3h 4m", lat: -61.2, lon: -23.2, magnitude: 0.525, saros: 154},
 
             // 1950-1959
-            {date: "1950-03-18", type: "Solar", subtype: "Anular", duration: "3m 4m", lat: -61.2, lon: -23.2, magnitude: 0.525, saros: 119},
+            {date: "1950-03-18", type: "Solar", subtype: "Anular", duration: "0m 0s", lat: -60.9, lon: 40.9, magnitude: 0.962, saros: 119},
             {date: "1950-09-12", type: "Solar", subtype: "Total", duration: "1m 14s", lat: 72.1, lon: -175.7, magnitude: 1.018, saros: 134},
             {date: "1951-03-07", type: "Solar", subtype: "Anular", duration: "0m 49s", lat: -14.4, lon: -19.9, magnitude: 0.997, saros: 139},
             {date: "1951-09-01", type: "Solar", subtype: "Anular", duration: "1m 47s", lat: 72.8, lon: 71.0, magnitude: 0.970, saros: 144},
@@ -940,7 +992,7 @@
             {date: "2032-11-03", type: "Solar", subtype: "Parcial", duration: "4h 24m", lat: 70.3, lon: -139.6, magnitude: 0.860, saros: 153},
             {date: "2033-03-30", type: "Solar", subtype: "Total", duration: "2m 37s", lat: 71.0, lon: -143.4, magnitude: 1.046, saros: 120},
             {date: "2033-09-23", type: "Solar", subtype: "Parcial", duration: "3h 42m", lat: -72.2, lon: -121.7, magnitude: 0.703, saros: 125},
-            {date: "2034-03-20", type: "Solar", subtype: "Total", duration: "4m 9s", lat: 19.3, lon: -91.8, magnitude: 1.046, saros: 130},
+            {date: "2034-03-20", type: "Solar", subtype: "Total", duration: "4m 9s", lat: 16.1, lon: 22.2, magnitude: 1.046, saros: 130},
             {date: "2034-09-02", type: "Solar", subtype: "Anular", duration: "2m 58s", lat: -17.4, lon: -118.8, magnitude: 0.974, saros: 135},
             {date: "2035-02-27", type: "Solar", subtype: "Anular", duration: "1m 3s", lat: -28.9, lon: -150.3, magnitude: 0.992, saros: 140},
             {date: "2035-08-21", type: "Solar", subtype: "Anular", duration: "2m 54s", lat: 29.1, lon: -7.1, magnitude: 0.982, saros: 145},
@@ -959,7 +1011,7 @@
             {date: "2040-11-04", type: "Solar", subtype: "Parcial", duration: "4h 15m", lat: 61.9, lon: -114.2, magnitude: 0.847, saros: 124},
             {date: "2041-04-30", type: "Solar", subtype: "Total", duration: "1m 51s", lat: -2.3, lon: 0.4, magnitude: 1.019, saros: 129},
             {date: "2041-10-25", type: "Solar", subtype: "Anular", duration: "7m 5s", lat: 10.4, lon: 37.0, magnitude: 0.946, saros: 134},
-            {date: "2042-04-20", type: "Solar", subtype: "Total", duration: "4m 51s", lat: 30.0, lon: 103.0, magnitude: 1.056, saros: 139},
+            {date: "2042-04-20", type: "Solar", subtype: "Total", duration: "4m 51s", lat: 27.0, lon: 137.3, magnitude: 1.061, saros: 139},
             {date: "2042-10-14", type: "Solar", subtype: "Anular", duration: "7m 2s", lat: -19.6, lon: -173.3, magnitude: 0.939, saros: 144},
             {date: "2043-04-09", type: "Solar", subtype: "Parcial", duration: "4h 7m", lat: 62.1, lon: 169.1, magnitude: 0.902, saros: 149},
             {date: "2043-10-03", type: "Solar", subtype: "Parcial", duration: "3h 48m", lat: -61.2, lon: 2.4, magnitude: 0.694, saros: 154},
@@ -1002,7 +1054,7 @@
             {date: "2059-11-05", type: "Solar", subtype: "Anular", duration: "7m 0s", lat: 9.5, lon: -83.6, magnitude: 0.942, saros: 134},
 
             // 2060-2069
-            {date: "2060-04-30", type: "Solar", subtype: "Total", duration: "5m 15s", lat: 37.1, lon: -13.5, magnitude: 1.056, saros: 139},
+            {date: "2060-04-30", type: "Solar", subtype: "Total", duration: "5m 15s", lat: 28.0, lon: 20.9, magnitude: 1.066, saros: 139},
             {date: "2060-10-24", type: "Solar", subtype: "Anular", duration: "6m 48s", lat: -16.4, lon: 66.7, magnitude: 0.942, saros: 144},
             {date: "2061-04-20", type: "Solar", subtype: "Parcial", duration: "4h 4m", lat: 63.0, lon: 53.6, magnitude: 0.864, saros: 149},
             {date: "2061-10-13", type: "Solar", subtype: "Parcial", duration: "3h 48m", lat: -61.2, lon: 2.4, magnitude: 0.694, saros: 154},
@@ -1587,6 +1639,36 @@
         let perPage = 12;
         let map = null;
 
+        // --- Estimativa de visibilidade a partir do Brasil ---
+        // Aproximação: distância (km) entre o ponto de eclipse máximo e a
+        // caixa delimitadora (bounding box) do território brasileiro.
+        // Não é um cálculo oficial de trajetória — serve apenas como triagem visual.
+        const BRAZIL_BBOX = { latMin: -33.75, latMax: 5.27, lonMin: -73.99, lonMax: -32.39 };
+        const BRAZIL_VISIBILITY_THRESHOLD_KM = 4500; // raio aproximado de visibilidade parcial
+
+        function haversineKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const toRad = deg => deg * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat / 2) ** 2 +
+                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function distanceToBrazilKm(lat, lon) {
+            const clampedLat = Math.min(Math.max(lat, BRAZIL_BBOX.latMin), BRAZIL_BBOX.latMax);
+            const clampedLon = Math.min(Math.max(lon, BRAZIL_BBOX.lonMin), BRAZIL_BBOX.lonMax);
+            return haversineKm(lat, lon, clampedLat, clampedLon);
+        }
+
+        function possivelmenteVisivelBrasil(eclipse) {
+            if (eclipse.type !== 'Solar' || eclipse.lat === undefined || eclipse.lon === undefined) {
+                return false;
+            }
+            return distanceToBrazilKm(eclipse.lat, eclipse.lon) <= BRAZIL_VISIBILITY_THRESHOLD_KM;
+        }
+
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             applyFilters();
@@ -1595,7 +1677,7 @@
 
         function setupEventListeners() {
             document.getElementById('typeFilter').addEventListener('change', applyFilters);
-            document.getElementById('subtypeFilter').add.addEventListener('change', applyFilters);
+            document.getElementById('subtypeFilter').addEventListener('change', applyFilters);
             document.getElementById('yearStart').addEventListener('change', applyFilters);
             document.getElementById('yearEnd').addEventListener('change', applyFilters);
             document.getElementById('magnitudeMin').addEventListener('input', function(e) {
@@ -1603,6 +1685,7 @@
             });
             document.getElementById('magnitudeMin').addEventListener('change', applyFilters);
             document.getElementById('sortBy').addEventListener('change', applyFilters);
+            document.getElementById('brazilFilter').addEventListener('change', applyFilters);
         }
 
         function applyFilters() {
@@ -1612,6 +1695,7 @@
             const yearEnd = parseInt(document.getElementById('yearEnd').value) || 2100;
             const magMin = parseFloat(document.getElementById('magnitudeMin').value) || 0;
             const sortBy = document.getElementById('sortBy').value;
+            const brazilOnly = document.getElementById('brazilFilter').checked;
 
             filteredEclipses = eclipsesData.filter(eclipse => {
                 const year = parseInt(eclipse.date.split('-')[0]);
@@ -1620,7 +1704,8 @@
                 return (type === 'all' || eclipse.type === type) &&
                        (subtype === 'all' || eclipse.subtype === subtype) &&
                        year >= yearStart && year <= yearEnd &&
-                       magnitude >= magMin;
+                       magnitude >= magMin &&
+                       (!brazilOnly || possivelmenteVisivelBrasil(eclipse));
             });
 
             // Ordenação
@@ -1652,6 +1737,7 @@
             document.getElementById('magnitudeMin').value = 0;
             document.getElementById('magnitudeValue').textContent = '≥ 0.0';
             document.getElementById('sortBy').value = 'date_asc';
+            document.getElementById('brazilFilter').checked = false;
             
             applyFilters();
         }
@@ -1661,6 +1747,7 @@
             document.getElementById('solarCount').textContent = filteredEclipses.filter(e => e.type === 'Solar').length;
             document.getElementById('lunarCount').textContent = filteredEclipses.filter(e => e.type === 'Lunar').length;
             document.getElementById('totalCount').textContent = filteredEclipses.filter(e => e.subtype === 'Total').length;
+            document.getElementById('brazilCount').textContent = filteredEclipses.filter(possivelmenteVisivelBrasil).length;
             document.getElementById('resultCount').textContent = filteredEclipses.length;
         }
 
@@ -1680,7 +1767,8 @@
 
             pageEclipses.forEach(eclipse => {
                 const card = document.createElement('div');
-                card.className = `eclipse-card ${eclipse.type.toLowerCase()}`;
+                const brVisible = possivelmenteVisivelBrasil(eclipse);
+                card.className = `eclipse-card ${eclipse.type.toLowerCase()}${brVisible ? ' brazil-visible' : ''}`;
                 
                 const date = new Date(eclipse.date + 'T12:00:00Z');
                 const formattedDate = date.toLocaleDateString('pt-BR', { 
@@ -1697,6 +1785,7 @@
                     <div class="eclipse-types">
                         <span class="type-badge ${eclipse.type.toLowerCase()}">${eclipse.type}</span>
                         <span class="subtype-badge ${eclipse.subtype.toLowerCase()}">${eclipse.subtype}</span>
+                        ${brVisible ? `<span class="brazil-badge" title="Estimativa aproximada: ponto de eclipse máximo relativamente próximo do território brasileiro. Não é dado oficial de trajetória.">🇧🇷 Brasil (estim.)</span>` : ''}
                     </div>
                     <div class="eclipse-details">
                         <div class="detail-item">
@@ -1711,7 +1800,7 @@
                             <span class="detail-label">Saros</span>
                             <span class="detail-value">${eclipse.saros || 'N/A'}</span>
                         </div>
-                        ${eclipse.lat ? `
+                        ${eclipse.lat !== undefined ? `
                         <div class="detail-item">
                             <span class="detail-label">Lat/Lon</span>
                             <span class="detail-value">${eclipse.lat.toFixed(1)}°, ${eclipse.lon.toFixed(1)}°</span>
